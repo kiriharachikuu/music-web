@@ -1,0 +1,142 @@
+"use client";
+
+import * as React from "react";
+import { Play, Pause, SkipForward, ChevronUp, Music2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { usePlayerStore, formatTime as fmt } from "@/lib/store/player-store";
+
+/**
+ * 进度条（点击/拖拽定位）
+ * - 填充使用 primary-600 → primary-800 渐变（progress-fill 工具类）
+ */
+function ProgressBar({
+  value,
+  max,
+  onSeek,
+}: {
+  value: number;
+  max: number;
+  onSeek: (t: number) => void;
+}) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const pct = max > 0 ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+
+  const seekToClientX = (clientX: number) => {
+    const el = ref.current;
+    if (!el || max <= 0) return;
+    const rect = el.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    onSeek(ratio * max);
+  };
+
+  return (
+    <div
+      ref={ref}
+      onClick={(e) => seekToClientX(e.clientX)}
+      className="group relative h-1.5 w-full cursor-pointer rounded-full bg-primary/20"
+    >
+      <div
+        className="absolute inset-y-0 left-0 rounded-full progress-fill"
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
+/**
+ * 底部常驻迷你播放栏
+ * - 封面 + 歌名 + 歌手 + 播放/暂停 + 进度条 + 下一首 + 展开
+ * - 移动端位于底部 Tab 栏之上（bottom-16），桌面端 bottom-0
+ */
+export function MiniPlayer() {
+  const currentSong = usePlayerStore((s) => s.currentSong);
+  const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const currentTime = usePlayerStore((s) => s.currentTime);
+  const duration = usePlayerStore((s) => s.duration);
+  const toggle = usePlayerStore((s) => s.toggle);
+  const next = usePlayerStore((s) => s.next);
+  const seek = usePlayerStore((s) => s.seek);
+  const openLyricPage = usePlayerStore((s) => s.openLyricPage);
+
+  return (
+    <div className="fixed inset-x-0 bottom-16 z-40 md:bottom-0 md:left-64">
+      <div className="mx-auto border-t border-primary-500/10 bg-white/80 pb-safe backdrop-blur-xl dark:bg-gray-900/60">
+        <div className="flex items-center gap-3 px-3 py-2.5 md:gap-4 md:px-6 md:py-3">
+          {/* 封面 */}
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-primary-700/10 md:h-14 md:w-14">
+            {currentSong?.cover ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={currentSong.cover}
+                alt={currentSong.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+                <Music2 className="h-5 w-5" />
+              </div>
+            )}
+          </div>
+
+          {/* 歌名 / 歌手 + 进度条 */}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {currentSong?.title ?? "未在播放"}
+                </p>
+                <p className="truncate text-xs text-foreground/50">
+                  {currentSong?.artist ?? "—"}
+                </p>
+              </div>
+              {/* 时间（桌面端） */}
+              <span className="hidden shrink-0 font-mono text-xs text-foreground/50 md:inline">
+                {fmt(currentTime)} / {fmt(duration)}
+              </span>
+            </div>
+            <ProgressBar
+              value={currentTime}
+              max={duration}
+              onSeek={seek}
+            />
+          </div>
+
+          {/* 控制按钮 */}
+          <div className="flex shrink-0 items-center gap-1 md:gap-2">
+            <Button
+              onClick={toggle}
+              size="icon"
+              aria-label={isPlaying ? "暂停" : "播放"}
+              className="h-10 w-10 rounded-full bg-primary-700 text-white shadow-card hover:bg-primary-600 active:bg-primary-800"
+            >
+              {isPlaying ? (
+                <Pause className="h-5 w-5" />
+              ) : (
+                <Play className="h-5 w-5 translate-x-[1px]" />
+              )}
+            </Button>
+            <Button
+              onClick={next}
+              variant="ghost"
+              size="icon"
+              aria-label="下一首"
+              className="hidden text-foreground/70 hover:text-foreground sm:inline-flex"
+            >
+              <SkipForward className="h-5 w-5" />
+            </Button>
+            <Button
+              onClick={openLyricPage}
+              variant="ghost"
+              size="icon"
+              aria-label="展开播放页"
+              className="text-foreground/70 hover:text-foreground"
+            >
+              <ChevronUp className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

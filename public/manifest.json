@@ -1,0 +1,25 @@
+{
+  "name": "XingTone",
+  "short_name": "星瞳",
+  "description": "XingTone播放器",
+  "display": "standalone",
+  "theme_color": "#8B00FF",
+  "background_color": "#0a0a0a",
+  "start_url": "/",
+  "scope": "/",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

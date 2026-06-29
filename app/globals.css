@@ -1,26 +1,161 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * XingTone 全局样式
+ * - 亮/暗双模式通过 CSS 变量定义，由 next-themes 切换 .dark 类
+ * - 主色（--primary）= 星瞳紫 #8B00FF（HSL: 273 100% 50%），即 tailwind primary-700
+ * - 亮色：主文字 gray-900、次要 gray-600、背景 gray-50、卡片 white、毛玻璃 white/80
+ * - 暗色：主文字 white、次要 gray-400、背景 gray-950、卡片 gray-900/80、毛玻璃 gray-900/60
+ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* 背景 / 前景（亮色：背景接近 gray-50，主文字接近 gray-900） */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
+
+    /* 卡片 / 弹层 */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    /* 主色：星瞳紫 #8B00FF */
+    --primary: 273 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* 次要 / 静音 / 强调（次要文字接近 gray-600） */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 35%;
+    --accent: 273 30% 96%;
+    --accent-foreground: 273 100% 30%;
+
+    /* 危险 */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* 描边 / 输入 / 焦点环（极淡主色描边 primary-500/10 风格） */
+    --border: 273 30% 90%;
+    --input: 273 30% 90%;
+    --ring: 273 100% 50%;
+
+    --radius: 0.75rem;
+
+    /* 迷你播放栏进度条渐变端点（primary-600 → primary-800） */
+    --progress-from: #9333ea;
+    --progress-to: #6b21a8;
+
+    /* 侧边栏选中态 */
+    --sidebar-active-bg: 273 100% 50%; /* primary-50/10 等效由组件 rgba 处理 */
+  }
+
+  .dark {
+    /* 背景 / 前景（暗色：背景接近 gray-950，主文字 white） */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+
+    /* 卡片 / 弹层（卡片 gray-900/80 由组件透明度处理，这里给基色） */
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    /* 主色暗色下保持星瞳紫，略提亮以保证对比 */
+    --primary: 273 100% 56%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 64%; /* 接近 gray-400 */
+    --accent: 273 30% 16%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 273 100% 56%;
+
+    --progress-from: #9333ea;
+    --progress-to: #6b21a8;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  /* 选中文本主色 */
+  ::selection {
+    @apply bg-primary-700/30;
+  }
+  /* 自定义滚动条（细且与主色协调） */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-foreground/15 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-foreground/25;
+  }
+}
+
+@layer utilities {
+  /* 毛玻璃：PC 侧边栏 / 顶部导航 / 底部播放栏复用 */
+  .glass-light {
+    @apply bg-white/80 backdrop-blur-xl;
+  }
+  .glass-dark {
+    @apply bg-gray-900/60 backdrop-blur-xl;
+  }
+  /* 播放栏进度条渐变填充 */
+  .progress-fill {
+    background: linear-gradient(
+      to right,
+      var(--progress-from),
+      var(--progress-to)
+    );
+  }
+  /* 隐藏滚动条（横向 Tab 等） */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /*
+   * iOS PWA safe-area 适配
+   * 配合 viewport-fit=cover + black-translucent 状态栏使用
+   * standalone 模式下让内容避开状态栏 / 底部 Home 指示条
+   * 非 iOS 设备 env() 为 0，无副作用
+   */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
 }

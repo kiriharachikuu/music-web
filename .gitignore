@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# next-pwa 生成的 Service Worker 产物（每次 build 重新生成，无需提交）
+/public/sw.js
+/public/workbox-*.js
+/public/fallback-*.js
+/public/register.js
+
