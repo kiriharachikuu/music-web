@@ -1,5 +1,5 @@
 import { serverFetch } from "@/lib/api";
-import type { RankingsData } from "@/lib/types";
+import type { RankingsData, ApiSong } from "@/lib/types";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { RankingsClient } from "@/app/rankings/rankings-client";
 
@@ -18,10 +18,11 @@ export default async function RankingsPage() {
     return <PageSkeleton variant="list" />;
   }
 
-  // 兜底空对象，避免 client 端访问 undefined
+  // 后端返回 soaring/newSongs，前端类型用 soar/new，做字段映射
+  const raw = data as unknown as Record<string, ApiSong[] | undefined>;
   const safeData: RankingsData = {
-    soar: data.soar ?? [],
-    new: data.new ?? [],
+    soar: raw.soaring ?? data.soar ?? [],
+    new: raw.newSongs ?? data.new ?? [],
     hot: data.hot ?? [],
     original: data.original ?? [],
   };

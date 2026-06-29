@@ -4,12 +4,13 @@
  * - baseURL 从 NEXT_PUBLIC_API_BASE 读取（默认 /api）
  * - 统一处理 { code, data, message } 响应，直接返回 data
  * - 自动注入 Authorization: Bearer <token> 头（从 auth.ts 读取）
- * - 401 跳登录页
+ * - 401 在客户端弹出登录弹窗（不跳转页面），由 auth-store 控制
  * - 提供 api.get / post / put / del 客户端方法
  * - 提供 serverFetch 供 Server Component 使用（带 revalidate + 容错）
  */
 import type { ApiResponse } from "@/lib/types";
 import { getToken, clearAuth } from "@/lib/auth";
+import { useAuthStore } from "@/lib/store/auth-store";
 
 /** API 基址：客户端与服务端共用（Server Component 中也可读取 env） */
 export const API_BASE =
@@ -18,12 +19,6 @@ export const API_BASE =
 /** 后端管理后台地址（个人中心管理员入口跳转用） */
 export const ADMIN_URL =
   process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3001";
-
-/** 登录页路由 */
-const LOGIN_PATH = "/login";
-
-/** 标记当前是否正在跳转登录，避免 401 循环 */
-let isRedirecting = false;
 
 /**
  * 客户端 / 服务端通用请求方法
@@ -66,13 +61,12 @@ async function request<T>(
     throw new Error("网络请求失败，请稍后重试");
   }
 
-  // 401：未登录，清除登录态并跳转登录页（仅客户端，避免重复跳转）
+  // 401：未登录，清除登录态并弹出登录弹窗（仅客户端，不跳转页面）
+  // auth-store 内部去重，多次 401 仅弹一次
   if (res.status === 401) {
-    if (typeof window !== "undefined" && !isRedirecting) {
-      isRedirecting = true;
+    if (typeof window !== "undefined") {
       clearAuth();
-      const currentPath = window.location.pathname + window.location.search;
-      window.location.href = `${LOGIN_PATH}?from=${encodeURIComponent(currentPath)}`;
+      useAuthStore.getState().openLogin();
     }
     throw new Error("未登录");
   }

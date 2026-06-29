@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useTheme } from "next-themes";
 import {
   User,
@@ -34,6 +33,7 @@ import { toPlayerSong, toPlayerSongs } from "@/lib/types";
 import { api, API_BASE, ADMIN_URL } from "@/lib/api";
 import { clearAuth, getToken } from "@/lib/auth";
 import { usePlayerStore } from "@/lib/store/player-store";
+import { useAuthStore } from "@/lib/store/auth-store";
 import { SongList } from "@/components/common/song-list";
 import { PlaylistCard } from "@/components/common/playlist-card";
 import { EmptyState } from "@/components/common/empty-state";
@@ -93,6 +93,7 @@ export function ProfileClient() {
   const [profileLoaded, setProfileLoaded] = React.useState(false);
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
+  const openLogin = useAuthStore((s) => s.openLogin);
 
   // 首次挂载拉取用户信息（用原生 fetch，401 不跳转，显示登录引导）
   React.useEffect(() => {
@@ -126,7 +127,7 @@ export function ProfileClient() {
   // 首次加载骨架
   if (!profileLoaded) return <PageSkeleton variant="list" />;
 
-  // 未登录：登录引导
+  // 未登录：登录引导（点击按钮弹出登录弹窗，登录成功后重新拉取 profile）
   if (loggedOut || !profile) {
     return (
       <section className="animate-fade-in space-y-6">
@@ -136,11 +137,12 @@ export function ProfileClient() {
           title="未登录"
           description="登录后即可收藏歌曲、管理歌单、同步播放历史。"
           action={
-            <Link href="/login">
-              <Button className="rounded-full bg-primary-700 px-6 text-white hover:bg-primary-600">
-                立即登录
-              </Button>
-            </Link>
+            <Button
+              onClick={() => openLogin(() => void loadProfile())}
+              className="rounded-full bg-primary-700 px-6 text-white hover:bg-primary-600"
+            >
+              立即登录
+            </Button>
           }
         />
       </section>
@@ -239,17 +241,18 @@ export function ProfileClient() {
       {activeTab === "playlists" && <PlaylistsTab />}
       {activeTab === "history" && <HistoryTab />}
       {activeTab === "downloads" && <DownloadsTab />}
-      {activeTab === "settings" && <SettingsTab onLogout={() => void logout()} />}
+      {activeTab === "settings" && (
+        <SettingsTab
+          onLogout={() => {
+            clearAuth();
+            setProfile(null);
+            setLoggedOut(true);
+            setActiveTab("favorites");
+          }}
+        />
+      )}
     </section>
   );
-}
-
-/** 退出登录：清除本地登录态并跳转登录页 */
-function logout() {
-  clearAuth();
-  if (typeof window !== "undefined") {
-    window.location.href = "/login";
-  }
 }
 
 // ===== 子模块 1：我喜欢的音乐 =====
@@ -266,11 +269,12 @@ function FavoritesTab() {
 
   const load = async () => {
     try {
-      // 后端返回分页结构 { list, total, page, limit, totalPages }
-      const data = await api.get<{ list: ApiSong[]; total: number }>(
+      // 后端返回分页结构 { list: FavoriteItem[], total }
+      // FavoriteItem = { id, userId, songId, createdAt, song: ApiSong }
+      const data = await api.get<{ list: { song: ApiSong }[]; total: number }>(
         "/user/favorites"
       );
-      setSongs(data?.list ?? []);
+      setSongs(data?.list?.map((f) => f.song) ?? []);
     } catch {
       setSongs([]);
     }

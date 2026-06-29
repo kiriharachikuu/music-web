@@ -38,6 +38,11 @@ export interface Album {
   songCount: number;
 }
 
+/** 专辑详情（GET /api/albums/:id，含所属歌曲列表） */
+export interface AlbumDetail extends Album {
+  songs: ApiSong[];
+}
+
 /** 歌单 */
 export interface Playlist {
   id: string;
@@ -51,6 +56,29 @@ export interface Playlist {
   /** 歌单内歌曲数（后端可附带） */
   songCount?: number;
   createdAt: string;
+}
+
+/** 歌单详情中的关联项（PlaylistSong，含 song 与 album 关联） */
+export interface PlaylistSongItem {
+  id: string;
+  playlistId: string;
+  songId: string;
+  sort: number;
+  createdAt: string;
+  /** 后端 include: { album: true } 在 song 上附带关联专辑 */
+  song: ApiSong & {
+    album?: { id: string; name: string; artist: string; cover?: string | null } | null;
+  };
+}
+
+/** 歌单详情（GET /api/playlists/:id，含创建者与歌曲列表） */
+export interface PlaylistDetail extends Playlist {
+  user: {
+    id: string;
+    username: string;
+    avatar?: string | null;
+  };
+  playlistSongs: PlaylistSongItem[];
 }
 
 /** 首页 Banner */

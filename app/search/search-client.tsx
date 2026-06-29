@@ -15,6 +15,7 @@ import type {
   SearchCategory,
   SearchSort,
   ArtistBrief,
+  ApiSong,
 } from "@/lib/types";
 import { api } from "@/lib/api";
 import { SongList } from "@/components/common/song-list";
@@ -78,6 +79,37 @@ export function SearchClient({
   const [results, setResults] = React.useState<SearchResult | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState<string[]>([]);
+  const [likedIds, setLikedIds] = React.useState<Set<string>>(new Set());
+
+  /** 收藏 / 取消收藏歌曲（401 由 api.ts 自动触发登录弹窗） */
+  const handleLike = React.useCallback(
+    async (song: ApiSong) => {
+      const isLiked = likedIds.has(song.id);
+      // 乐观 UI
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        if (isLiked) next.delete(song.id);
+        else next.add(song.id);
+        return next;
+      });
+      try {
+        if (isLiked) {
+          await api.del(`/user/favorites/${song.id}`);
+        } else {
+          await api.post(`/user/favorites/${song.id}`);
+        }
+      } catch {
+        // 失败回滚（401 已由 api.ts 触发登录弹窗）
+        setLikedIds((prev) => {
+          const next = new Set(prev);
+          if (isLiked) next.add(song.id);
+          else next.delete(song.id);
+          return next;
+        });
+      }
+    },
+    [likedIds]
+  );
 
   // 读取本地历史（仅客户端）
   React.useEffect(() => {
@@ -352,6 +384,8 @@ export function SearchClient({
               results={results}
               category={category}
               query={debounced}
+              likedIds={likedIds}
+              onLike={handleLike}
             />
           ) : (
             <EmptyState
@@ -371,10 +405,14 @@ function SearchResults({
   results,
   category,
   query,
+  likedIds,
+  onLike,
 }: {
   results: SearchResult;
   category: SearchCategory;
   query: string;
+  likedIds: Set<string>;
+  onLike: (song: ApiSong) => void;
 }) {
   const { songs = [], albums = [], playlists = [], artists = [] } = results;
   const isEmpty =
@@ -406,10 +444,8 @@ function SearchResults({
           <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
             <SongList
               songs={songs}
-              onLike={(s) => {
-                /* 喜欢操作：交由上层 API，此处占位 */
-                void s;
-              }}
+              onLike={onLike}
+              likedIds={likedIds}
             />
           </div>
         </div>

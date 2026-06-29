@@ -319,9 +319,15 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       .get<unknown>(`/songs/${currentSong.id}/lyric`)
       .then((data) => {
         if (cancelled) return;
-        // 兼容后端返回 string 或 { lyric: string } 两种结构
+        // 兼容后端返回 string 或 { content: string } / { lyric: string } 结构
         if (typeof data === "string") {
           setLrc(data);
+        } else if (
+          data &&
+          typeof data === "object" &&
+          "content" in data
+        ) {
+          setLrc(String((data as { content?: unknown }).content ?? ""));
         } else if (
           data &&
           typeof data === "object" &&

@@ -1,11 +1,29 @@
 "use client";
 
 import * as React from "react";
-import { Play, Pause, Heart, Plus, MoreHorizontal, Music2, Check } from "lucide-react";
+import Link from "next/link";
+import {
+  Play,
+  Pause,
+  Heart,
+  Plus,
+  MoreHorizontal,
+  Music2,
+  Check,
+  ListMusic,
+  Disc,
+} from "lucide-react";
 
 import type { ApiSong } from "@/lib/types";
 import { toPlayerSong } from "@/lib/types";
 import { usePlayerStore, formatTime } from "@/lib/store/player-store";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 /**
@@ -209,11 +227,56 @@ export function SongList({
               </button>
               <button
                 type="button"
-                aria-label="更多"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-foreground/5 hover:text-foreground group-hover:opacity-100"
+                onClick={() => addToQueue(toPlayerSong(song))}
+                aria-label="添加到队列"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-primary-700/10 hover:text-primary-700 group-hover:opacity-100 dark:hover:text-primary-300"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <Plus className="h-4 w-4" />
               </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="更多操作"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-foreground/5 hover:text-foreground group-hover:opacity-100"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  {onLike && (
+                    <DropdownMenuItem onClick={() => onLike(song)}>
+                      <Heart
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          isLiked && "fill-current text-primary-700 dark:text-primary-300"
+                        )}
+                      />
+                      {isLiked ? "取消喜欢" : "喜欢"}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={() => addToQueue(toPlayerSong(song))}
+                  >
+                    <ListMusic className="mr-2 h-4 w-4" />
+                    添加到队列
+                  </DropdownMenuItem>
+                  {song.albumId && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/album/${song.albumId}`}
+                          className="flex items-center"
+                        >
+                          <Disc className="mr-2 h-4 w-4" />
+                          查看专辑
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         );
