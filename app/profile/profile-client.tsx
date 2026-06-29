@@ -266,8 +266,11 @@ function FavoritesTab() {
 
   const load = async () => {
     try {
-      const data = await api.get<ApiSong[]>("/user/favorites");
-      setSongs(data ?? []);
+      // 后端返回分页结构 { list, total, page, limit, totalPages }
+      const data = await api.get<{ list: ApiSong[]; total: number }>(
+        "/user/favorites"
+      );
+      setSongs(data?.list ?? []);
     } catch {
       setSongs([]);
     }
@@ -592,8 +595,11 @@ function HistoryTab() {
 
   const load = async () => {
     try {
-      const data = await api.get<PlayHistoryItem[]>("/user/history");
-      setItems(data ?? []);
+      // 后端返回分页结构 { list, total, page, limit, totalPages }
+      const data = await api.get<{ list: PlayHistoryItem[]; total: number }>(
+        "/user/history"
+      );
+      setItems(data?.list ?? []);
     } catch {
       setItems([]);
     }

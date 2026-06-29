@@ -187,7 +187,7 @@ export default function AboutPage() {
               XingTone
             </h1>
             <p className="mx-auto max-w-2xl text-base text-white/70 md:text-lg">
-              XingTone是一个基于 Vue3 + Node.js + NestJS + PostgreSQL的全栈音乐流媒体项目，
+              XingTone是一个基于Next.js + TypeScript + TailwindCSS的全栈音乐流媒体项目，
               Apple Music 风格的跨端音乐播放器 —— 沉浸式全屏歌词、
               跨平台兼容（Android / iOS / Web 三端）、PWA 覆盖
             </p>
