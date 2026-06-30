@@ -46,3 +46,46 @@ export function formatPlays(n: number): string {
   if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
   return String(n);
 }
+
+/**
+ * 媒体路径解析
+ * - 后端返回的图片/音频路径为 /uploads/... 相对路径
+ * - 部署在不同域名时需拼接后端 origin（从 NEXT_PUBLIC_API_BASE 提取）
+ * - 同域部署（API_BASE 为 /api）时保持相对路径，由 nginx 代理
+ */
+const _API_BASE = process.env.NEXT_PUBLIC_API_BASE || "/api";
+const _BACKEND_ORIGIN = /^https?:\/\//.test(_API_BASE)
+  ? _API_BASE.replace(/\/api\/?$/, "")
+  : "";
+
+export function resolveMediaUrl(url?: string | null): string {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/uploads/")) {
+    return _BACKEND_ORIGIN ? `${_BACKEND_ORIGIN}${url}` : url;
+  }
+  return url;
+}
+
+/**
+ * 递归遍历响应数据，将所有 /uploads/ 开头的字符串字段解析为可访问的绝对 URL
+ * 在 API 响应层统一调用，组件层无需逐个处理
+ */
+export function resolveMediaPaths<T>(data: T): T {
+  if (typeof data === "string") {
+    return (data.startsWith("/uploads/") ? resolveMediaUrl(data) : data) as T;
+  }
+  if (Array.isArray(data)) {
+    return data.map(resolveMediaPaths) as unknown as T;
+  }
+  if (data && typeof data === "object") {
+    const result: Record<string, unknown> = {};
+    for (const key of Object.keys(data as Record<string, unknown>)) {
+      result[key] = resolveMediaPaths(
+        (data as Record<string, unknown>)[key]
+      );
+    }
+    return result as unknown as T;
+  }
+  return data;
+}

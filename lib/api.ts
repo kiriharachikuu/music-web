@@ -11,6 +11,7 @@
 import type { ApiResponse } from "@/lib/types";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { resolveMediaPaths } from "@/lib/utils";
 
 /** API 基址：客户端与服务端共用（Server Component 中也可读取 env） */
 export const API_BASE =
@@ -85,7 +86,8 @@ async function request<T>(
 
   // 解析统一响应结构
   const json = (await res.json()) as ApiResponse<T>;
-  return json.data;
+  // 递归解析 /uploads/ 媒体路径为可访问的绝对 URL
+  return resolveMediaPaths(json.data);
 }
 
 /** 客户端 API 实例 */
