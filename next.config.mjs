@@ -53,6 +53,22 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // 开发环境下将 /api 和 /uploads 代理到后端（3000 端口）
+  // 生产环境由 Nginx 统一反向代理
+  async rewrites() {
+    const backendOrigin =
+      process.env.BACKEND_ORIGIN || "http://localhost:3000";
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${backendOrigin}/api/:path*`,
+      },
+      {
+        source: "/uploads/:path*",
+        destination: `${backendOrigin}/uploads/:path*`,
+      },
+    ];
+  },
 };
 
 export default withPWA(nextConfig);
