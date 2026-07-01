@@ -125,7 +125,9 @@ export async function serverFetch<T>(
     });
     if (!res.ok) return null;
     const json = (await res.json()) as ApiResponse<T>;
-    return json.data ?? null;
+    // SSR 也需要解析媒体路径，确保首屏渲染的图片/音频 URL 正确
+    const data = json.data ?? null;
+    return data ? resolveMediaPaths(data) : null;
   } catch {
     // 后端未启动 / 网络异常 / 超时：静默降级
     return null;
