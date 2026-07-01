@@ -1,11 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { Play, Heart, ListMusic, User2 } from "lucide-react";
+import {
+  Play,
+  Heart,
+  ListMusic,
+  User2,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 
 import type { PlaylistDetail, ApiSong } from "@/lib/types";
 import { toPlayerSong, toPlayerSongs } from "@/lib/types";
 import { usePlayerStore } from "@/lib/store/player-store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { api } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import { SongList } from "@/components/common/song-list";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
@@ -16,7 +27,7 @@ import { cn, formatPlays } from "@/lib/utils";
  * - Apple Music 风格 Hero：封面模糊放大做渐变背景 + 大封面 + 大标题
  * - 展示创建者（头像 + 用户名）、播放次数、歌曲数、描述
  * - 操作：播放全部 / 收藏
- * - 从 playlistSongs 映射出 songs（album.name 平铺到 albumName），传给 SongList
+ * - 歌单创建者可管理歌曲：删除、上下移动
  */
 export function PlaylistDetailClient({
   playlist,
@@ -24,11 +35,34 @@ export function PlaylistDetailClient({
   playlist: PlaylistDetail;
 }) {
   const play = usePlayerStore((s) => s.play);
+  const openLogin = useAuthStore((s) => s.openLogin);
   const [favorited, setFavorited] = React.useState(false);
+  const [favLoading, setFavLoading] = React.useState(false);
+  const [manageMode, setManageMode] = React.useState(false);
+  const [songList, setSongList] = React.useState<ApiSong[]>([]);
+  const [movingId, setMovingId] = React.useState<string | null>(null);
+  const [removingId, setRemovingId] = React.useState<string | null>(null);
 
-  // 从 playlistSongs 映射出歌曲数组，按 sort 升序，并把 album.name 平铺到 albumName
-  const songs: ApiSong[] = React.useMemo(() => {
-    return (playlist.playlistSongs ?? [])
+  // 是否为歌单创建者（可管理歌曲）
+  const isOwner = React.useMemo(() => {
+    const token = getToken();
+    if (!token || !playlist.user) return false;
+    // 通过 localStorage 中存储的用户信息判断
+    try {
+      const userStr = localStorage.getItem("xt_music_user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.id === playlist.user.id;
+      }
+    } catch {
+      /* 忽略 */
+    }
+    return false;
+  }, [playlist.user]);
+
+  // 从 playlistSongs 映射出歌曲数组，按 sort 升序
+  React.useEffect(() => {
+    const songs = (playlist.playlistSongs ?? [])
       .slice()
       .sort((a, b) => a.sort - b.sort)
       .map((ps) => {
@@ -38,12 +72,83 @@ export function PlaylistDetailClient({
           albumName: rest.albumName ?? album?.name ?? undefined,
         } as ApiSong;
       });
+    setSongList(songs);
   }, [playlist.playlistSongs]);
 
-  /** 播放全部：从第一首开始，列表循环 */
+  // 检查是否已收藏
+  React.useEffect(() => {
+    if (!getToken()) return;
+    api
+      .get<{ favorited: boolean }>(`/user/playlists/${playlist.id}/favorite`)
+      .then((res) => setFavorited(res.favorited))
+      .catch(() => {});
+  }, [playlist.id]);
+
+  // 切换收藏
+  const toggleFavorite = async () => {
+    if (!getToken()) {
+      openLogin();
+      return;
+    }
+    setFavLoading(true);
+    try {
+      const res = await api.post<{ favorited: boolean }>(
+        `/user/playlists/${playlist.id}/favorite`
+      );
+      setFavorited(res.favorited);
+    } catch {
+      /* 忽略 */
+    } finally {
+      setFavLoading(false);
+    }
+  };
+
+  /** 播放全部 */
   const playAll = () => {
-    if (songs.length === 0) return;
-    play(toPlayerSong(songs[0]), toPlayerSongs(songs));
+    if (songList.length === 0) return;
+    play(toPlayerSong(songList[0]), toPlayerSongs(songList));
+  };
+
+  /** 删除歌单中的歌曲 */
+  const handleRemoveSong = async (songId: string) => {
+    setRemovingId(songId);
+    try {
+      await api.del(`/user/playlists/${playlist.id}/songs/${songId}`);
+      setSongList((prev) => prev.filter((s) => s.id !== songId));
+    } catch {
+      /* 忽略 */
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  /** 上移 / 下移歌曲 */
+  const handleMove = async (songId: string, direction: "up" | "down") => {
+    const index = songList.findIndex((s) => s.id === songId);
+    if (index < 0) return;
+    const targetIndex =
+      direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= songList.length) return;
+
+    // 乐观更新：交换位置
+    const newList = [...songList];
+    [newList[index], newList[targetIndex]] = [
+      newList[targetIndex],
+      newList[index],
+    ];
+    setSongList(newList);
+
+    // 上报到后端
+    setMovingId(songId);
+    try {
+      await api.put(`/user/playlists/${playlist.id}/songs/reorder`, {
+        songIds: newList.map((s) => s.id),
+      });
+    } catch {
+      /* 回滚？暂时忽略 */
+    } finally {
+      setMovingId(null);
+    }
   };
 
   const creator = playlist.user;
@@ -116,7 +221,7 @@ export function PlaylistDetailClient({
                   <span>·</span>
                 </>
               )}
-              <span>{songs.length} 首歌</span>
+              <span>{songList.length} 首歌</span>
             </div>
 
             {playlist.description && (
@@ -132,14 +237,15 @@ export function PlaylistDetailClient({
       <div className="flex flex-wrap items-center gap-2.5">
         <Button
           onClick={playAll}
-          disabled={songs.length === 0}
+          disabled={songList.length === 0}
           className="rounded-full bg-primary-700 px-5 text-white shadow-card hover:bg-primary-600 active:bg-primary-800"
         >
           <Play className="h-4 w-4 translate-x-[1px]" />
           播放全部
         </Button>
         <Button
-          onClick={() => setFavorited((f) => !f)}
+          onClick={toggleFavorite}
+          disabled={favLoading}
           variant="outline"
           className="rounded-full px-5"
           aria-label={favorited ? "取消收藏" : "收藏"}
@@ -152,15 +258,76 @@ export function PlaylistDetailClient({
           />
           {favorited ? "已收藏" : "收藏"}
         </Button>
+        {isOwner && songList.length > 0 && (
+          <Button
+            onClick={() => setManageMode((m) => !m)}
+            variant={manageMode ? "default" : "outline"}
+            className="rounded-full px-5"
+          >
+            <ListMusic className="h-4 w-4" />
+            {manageMode ? "完成管理" : "管理歌曲"}
+          </Button>
+        )}
         <span className="ml-auto text-xs text-foreground/40">
-          共 {songs.length} 首
+          共 {songList.length} 首
         </span>
       </div>
 
       {/* ===== 曲目列表 ===== */}
-      {songs.length > 0 ? (
+      {songList.length > 0 ? (
         <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
-          <SongList songs={songs} />
+          {!manageMode ? (
+            <SongList songs={songList} />
+          ) : (
+            /* 管理模式：每行显示删除和上下移动按钮 */
+            <div className="space-y-1">
+              {songList.map((song, index) => (
+                <div
+                  key={song.id}
+                  className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-foreground/5"
+                >
+                  <span className="w-6 shrink-0 text-center text-xs text-foreground/40">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{song.title}</p>
+                    <p className="truncate text-xs text-foreground/50">
+                      {song.artist}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleMove(song.id, "up")}
+                    disabled={index === 0 || movingId === song.id}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-primary-700/10 hover:text-primary-700 disabled:opacity-30"
+                    aria-label="上移"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMove(song.id, "down")}
+                    disabled={
+                      index === songList.length - 1 || movingId === song.id
+                    }
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-primary-700/10 hover:text-primary-700 disabled:opacity-30"
+                    aria-label="下移"
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSong(song.id)}
+                    disabled={removingId === song.id}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-30"
+                    aria-label="删除"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <EmptyState

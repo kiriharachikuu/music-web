@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
 
 /**
  * 通用歌曲列表
@@ -69,6 +70,10 @@ export function SongList({
   const currentSong = usePlayerStore((s) => s.currentSong);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const addToQueue = usePlayerStore((s) => s.addToQueue);
+  const [addToPlaylistSongId, setAddToPlaylistSongId] = React.useState<
+    string | null
+  >(null);
+  const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
 
   if (songs.length === 0 && emptyText) {
     return (
@@ -261,6 +266,16 @@ export function SongList({
                     <ListMusic className="mr-2 h-4 w-4" />
                     添加到队列
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setAddToPlaylistSongId(song.id);
+                      setPlaylistDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    添加到歌单
+                  </DropdownMenuItem>
                   {song.albumId && (
                     <>
                       <DropdownMenuSeparator />
@@ -281,6 +296,11 @@ export function SongList({
           </div>
         );
       })}
+      <AddToPlaylistDialog
+        songId={addToPlaylistSongId}
+        open={playlistDialogOpen}
+        onOpenChange={setPlaylistDialogOpen}
+      />
     </div>
   );
 }

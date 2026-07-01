@@ -3,6 +3,30 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { Howl as HowlType } from "howler";
+import { API_BASE } from "@/lib/api";
+import { getToken } from "@/lib/auth";
+
+/**
+ * 上报播放记录到后端（静默失败，不阻塞播放）
+ * - 未登录时跳过
+ * - 网络错误时忽略
+ */
+async function reportPlayHistory(songId: string) {
+  try {
+    const token = getToken();
+    if (!token) return;
+    await fetch(`${API_BASE}/user/history`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ songId }),
+    });
+  } catch {
+    // 静默失败：不影响播放体验
+  }
+}
 
 /**
  * XingTone —— 全局播放状态 store（Zustand）
@@ -187,6 +211,9 @@ export const usePlayerStore = create<PlayerState>()(
 
         howl.play();
         startProgressTimer(get);
+
+        // 上报播放记录（静默，不阻塞播放）
+        void reportPlayHistory(targetSong.id);
       },
 
       pause: () => {

@@ -6,6 +6,9 @@ import { Play, Shuffle, Heart, Disc3, Music2 } from "lucide-react";
 import type { AlbumDetail, Album, ApiSong } from "@/lib/types";
 import { toPlayerSong, toPlayerSongs } from "@/lib/types";
 import { usePlayerStore } from "@/lib/store/player-store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { api } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import { SongList } from "@/components/common/song-list";
 import { AlbumCard } from "@/components/common/album-card";
 import { EmptyState } from "@/components/common/empty-state";
@@ -28,7 +31,37 @@ export function AlbumDetailClient({
 }) {
   const play = usePlayerStore((s) => s.play);
   const setPlayMode = usePlayerStore((s) => s.setPlayMode);
+  const openLogin = useAuthStore((s) => s.openLogin);
   const [favorited, setFavorited] = React.useState(false);
+  const [favLoading, setFavLoading] = React.useState(false);
+
+  // 检查是否已收藏
+  React.useEffect(() => {
+    if (!getToken()) return;
+    api
+      .get<{ favorited: boolean }>(`/user/albums/${album.id}/favorite`)
+      .then((res) => setFavorited(res.favorited))
+      .catch(() => {});
+  }, [album.id]);
+
+  // 切换收藏
+  const toggleFavorite = async () => {
+    if (!getToken()) {
+      openLogin();
+      return;
+    }
+    setFavLoading(true);
+    try {
+      const res = await api.post<{ favorited: boolean }>(
+        `/user/albums/${album.id}/favorite`
+      );
+      setFavorited(res.favorited);
+    } catch {
+      /* 忽略 */
+    } finally {
+      setFavLoading(false);
+    }
+  };
 
   // 仅展示已发布歌曲（公开页面不暴露 DRAFT）
   const songs: ApiSong[] = React.useMemo(
@@ -140,7 +173,8 @@ export function AlbumDetailClient({
           随机播放
         </Button>
         <Button
-          onClick={() => setFavorited((f) => !f)}
+          onClick={toggleFavorite}
+          disabled={favLoading}
           variant="outline"
           className="rounded-full px-5"
           aria-label={favorited ? "取消收藏" : "收藏"}
