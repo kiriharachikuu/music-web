@@ -456,7 +456,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         {/* 顶部下拉手柄条（仅此区域可启动拖拽关闭） */}
         <div
           onPointerDown={(e) => dragControls.start(e.nativeEvent)}
-          className="flex shrink-0 cursor-grab justify-center pt-3 active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab justify-center pt-3 pt-safe active:cursor-grabbing"
           aria-label="下拉关闭"
         >
           <div className="h-1.5 w-12 rounded-full bg-white/30" />
@@ -534,7 +534,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </main>
 
         {/* ===== 底部控制区 ===== */}
-        <footer className="shrink-0 px-4 pb-6 pt-2 md:px-8 md:pb-8">
+        <footer className="shrink-0 px-4 pb-6 pb-safe pt-2 md:px-8 md:pb-8">
           {/* 进度条 + 时间 */}
           <div className="mb-3 flex items-center gap-3">
             <span className="w-12 shrink-0 text-right font-mono text-xs text-white/60">

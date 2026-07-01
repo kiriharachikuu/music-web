@@ -414,9 +414,12 @@ function SearchResults({
   likedIds: Set<string>;
   onLike: (song: ApiSong) => void;
 }) {
-  const { songs = [], albums = [], playlists = [], artists = [] } = results;
+  const songList = results.songs?.list ?? [];
+  const albums = results.albums ?? [];
+  const playlists = results.playlists ?? [];
+  const artists: ArtistBrief[] = [];
   const isEmpty =
-    songs.length === 0 &&
+    songList.length === 0 &&
     albums.length === 0 &&
     playlists.length === 0 &&
     artists.length === 0;
@@ -434,7 +437,7 @@ function SearchResults({
   return (
     <div className="space-y-8">
       {/* 歌曲 */}
-      {(category === "all" || category === "songs") && songs.length > 0 && (
+      {(category === "all" || category === "songs") && songList.length > 0 && (
         <div>
           {category === "all" && (
             <h3 className="mb-2 text-sm font-semibold text-foreground/70">
@@ -443,7 +446,7 @@ function SearchResults({
           )}
           <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
             <SongList
-              songs={songs}
+              songs={songList}
               onLike={onLike}
               likedIds={likedIds}
             />

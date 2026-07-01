@@ -16,13 +16,13 @@ const withPWA = withPWAInit({
   register: true,
   disable: process.env.NODE_ENV === "development",
   runtimeCaching: [
-    // 音频资源
+    // 音频资源（CacheFirst，离线可播，限制缓存数量以节省空间）
     {
       urlPattern: /\.(?:mp3|flac|wav|ogg|aac|m4a)$/i,
       handler: "CacheFirst",
       options: {
         cacheName: "xt-audio-cache",
-        expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
+        expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 14 },
         cacheableResponse: { statuses: [0, 200] },
       },
     },

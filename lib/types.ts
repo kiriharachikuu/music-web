@@ -170,13 +170,21 @@ export interface RankingsData {
 /** 排行榜分类 key */
 export type RankingType = "soar" | "new" | "hot" | "original";
 
+/** 分页结果通用结构 */
+export interface Paginated<T> {
+  list: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 /** 搜索结果聚合（GET /api/search） */
 export interface SearchResult {
-  songs: ApiSong[];
+  songs: Paginated<ApiSong>;
   albums: Album[];
   playlists: Playlist[];
   artists: ArtistBrief[];
-  total: number;
 }
 
 /** 歌手概要（搜索结果中） */
