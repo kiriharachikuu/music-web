@@ -5,6 +5,8 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { Banner } from "@/lib/types";
+import { toPlayerSong } from "@/lib/types";
+import { usePlayerStore } from "@/lib/store/player-store";
 import { cn } from "@/lib/utils";
 
 /**
@@ -12,7 +14,7 @@ import { cn } from "@/lib/utils";
  * - 大图圆角 2xl
  * - 自动切换（默认 4s）+ 手动左右切换
  * - 主色实心指示器
- * - 点击跳转 linkUrl
+ * - 点击优先级：songId → 播放 > adUrl → 外链 > linkUrl → 内部跳转
  */
 export function BannerCarousel({
   banners,
@@ -26,6 +28,7 @@ export function BannerCarousel({
   const [active, setActive] = React.useState(0);
   const [paused, setPaused] = React.useState(false);
   const count = banners.length;
+  const play = usePlayerStore((s) => s.play);
 
   // 自动轮播
   React.useEffect(() => {
@@ -74,10 +77,41 @@ export function BannerCarousel({
             </div>
           );
 
-          return (
-            <div key={b.id} className="w-full shrink-0">
-              {b.linkUrl ? (
-                b.linkUrl.startsWith("http") ? (
+          // 点击优先级：songId 播放 > adUrl 外链 > linkUrl 跳转
+          // 1) 关联歌曲：直接播放
+          if (b.song) {
+            return (
+              <div key={b.id} className="w-full shrink-0">
+                <button
+                  type="button"
+                  onClick={() => play(toPlayerSong(b.song!))}
+                  aria-label={`播放 ${b.title}`}
+                  className="block w-full text-left"
+                >
+                  {inner}
+                </button>
+              </div>
+            );
+          }
+          // 2) 广告外链
+          if (b.adUrl) {
+            return (
+              <div key={b.id} className="w-full shrink-0">
+                <a
+                  href={b.adUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {inner}
+                </a>
+              </div>
+            );
+          }
+          // 3) linkUrl：http 外链 / 内部跳转
+          if (b.linkUrl) {
+            return (
+              <div key={b.id} className="w-full shrink-0">
+                {b.linkUrl.startsWith("http") ? (
                   <a
                     href={b.linkUrl}
                     target="_blank"
@@ -87,10 +121,14 @@ export function BannerCarousel({
                   </a>
                 ) : (
                   <Link href={b.linkUrl}>{inner}</Link>
-                )
-              ) : (
-                inner
-              )}
+                )}
+              </div>
+            );
+          }
+          // 4) 无任何链接
+          return (
+            <div key={b.id} className="w-full shrink-0">
+              {inner}
             </div>
           );
         })}

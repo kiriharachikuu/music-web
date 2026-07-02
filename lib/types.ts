@@ -86,7 +86,14 @@ export interface Banner {
   id: string;
   title: string;
   imageUrl: string;
+  /** 点击跳转内部路径（优先级最低） */
   linkUrl?: string | null;
+  /** 关联歌曲 ID：点击优先播放该歌曲（优先级最高） */
+  songId?: string | null;
+  /** 广告外链：点击打开新窗口（优先级中） */
+  adUrl?: string | null;
+  /** 关联歌曲数据（discover / admin 接口 include 返回） */
+  song?: ApiSong | null;
   sort: number;
 }
 
@@ -147,8 +154,8 @@ export interface Paginated<T> {
 /** 发现页聚合数据（GET /api/discover） */
 export interface DiscoverData {
   banners: Banner[];
-  /** 每日推荐（歌单） */
-  dailyRecommend: Playlist[];
+  /** 每日推荐（30 首歌曲） */
+  dailyRecommend: ApiSong[];
   /** 新歌推送 */
   newSongs: ApiSong[];
   /** 精选歌单 */

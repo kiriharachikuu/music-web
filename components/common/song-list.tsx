@@ -95,8 +95,14 @@ export function SongList({
         const isActive = currentSong?.id === song.id;
         const isLiked = likedIds?.has(song.id) ?? false;
         const isSelected = selectedIds?.has(song.id) ?? false;
-        // Top3 渐变填充
+        // Top3 金银铜徽章：第1名金、第2名银、第3名铜
         const isTop3 = showRank && rank <= 3;
+        const top3BadgeClass =
+          rank === 1
+            ? "bg-gradient-to-b from-yellow-400 to-yellow-600 shadow-lg shadow-yellow-500/50"
+            : rank === 2
+              ? "bg-gradient-to-b from-gray-300 to-gray-500 shadow-lg shadow-gray-400/50"
+              : "bg-gradient-to-b from-orange-400 to-orange-600 shadow-lg shadow-orange-500/50";
 
         const handlePlay = () => {
           if (isActive) {
@@ -138,7 +144,12 @@ export function SongList({
             ) : showRank ? (
               <div className="flex w-8 shrink-0 justify-center md:w-10">
                 {isTop3 ? (
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-b from-primary-500 to-primary-700 text-sm font-bold text-white shadow-lg shadow-primary-500/50">
+                  <span
+                    className={cn(
+                      "flex h-7 w-7 items-center justify-center rounded-lg text-sm font-bold text-white",
+                      top3BadgeClass
+                    )}
+                  >
                     {rank}
                   </span>
                 ) : (

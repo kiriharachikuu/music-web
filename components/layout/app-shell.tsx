@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
@@ -15,15 +15,29 @@ import { usePlayerStore } from "@/lib/store/player-store";
 /** 不显示应用外壳的路径（全屏独立页面） */
 const STANDALONE_PATHS = ["/login"];
 
+/** 判断元素是否为可输入控件（输入框 / 文本域 / 可编辑区域） */
+function isEditableTarget(el: EventTarget | null): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  const tag = el.tagName.toLowerCase();
+  return (
+    tag === "input" ||
+    tag === "textarea" ||
+    tag === "select" ||
+    el.isContentEditable
+  );
+}
+
 /**
  * 应用外壳：组合 侧边栏 + 顶部导航 + 主内容 + 迷你播放栏 + 移动端 Tab
  * - 客户端组件：含 usePathname / scroll 监听 / store 交互
  * - 挂载后手动 rehydrate 持久化的播放状态（store 采用 skipHydration 规避 SSR mismatch）
  * - /login 等独立页面跳过外壳，全屏渲染
  * - LoginDialog 全局挂载，401 或主动调用 openLogin 时弹出，不跳转页面
+ * - 全局 "/" 快捷键：聚焦搜索框（不在输入态时触发）
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isStandalone = STANDALONE_PATHS.some((p) => pathname === p);
   const error = usePlayerStore((s) => s.error);
   const clearError = usePlayerStore((s) => s.clearError);
@@ -39,6 +53,34 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const timer = setTimeout(() => clearError(), 3000);
     return () => clearTimeout(timer);
   }, [error, clearError]);
+
+  // 全局 "/" 快捷键：聚焦 / 跳转搜索框
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // 仅响应无修饰键的 "/"，且当前焦点不在输入控件中
+      if (
+        e.key !== "/" ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        e.shiftKey ||
+        isEditableTarget(e.target)
+      ) {
+        return;
+      }
+      e.preventDefault();
+      if (pathname === "/search") {
+        // 已在搜索页：直接聚焦
+        document.getElementById("search-input")?.focus();
+      } else {
+        // 其他页：跳转后由 SearchClient 自动聚焦
+        sessionStorage.setItem("xt-focus-search", "1");
+        router.push("/search");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [pathname, router]);
 
   // 独立页面：全屏渲染，不加载外壳组件，但仍挂载 LoginDialog 以便 401 兜底
   if (isStandalone) {

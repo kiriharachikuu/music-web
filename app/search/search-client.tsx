@@ -80,6 +80,15 @@ export function SearchClient({
   const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState<string[]>([]);
   const [likedIds, setLikedIds] = React.useState<Set<string>>(new Set());
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  // 通过 "/" 快捷键跳转过来时自动聚焦搜索框（由 AppShell 设置标记）
+  React.useEffect(() => {
+    if (sessionStorage.getItem("xt-focus-search") === "1") {
+      sessionStorage.removeItem("xt-focus-search");
+      searchInputRef.current?.focus();
+    }
+  }, []);
 
   /** 收藏 / 取消收藏歌曲（401 由 api.ts 自动触发登录弹窗） */
   const handleLike = React.useCallback(
@@ -201,6 +210,8 @@ export function SearchClient({
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
         <input
+          id="search-input"
+          ref={searchInputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
