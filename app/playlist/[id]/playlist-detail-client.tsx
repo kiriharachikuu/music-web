@@ -7,9 +7,26 @@ import {
   ListMusic,
   User2,
   Trash2,
-  ArrowUp,
-  ArrowDown,
+  GripVertical,
+  Music2,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import type { PlaylistDetail, ApiSong } from "@/lib/types";
 import { toPlayerSong, toPlayerSongs } from "@/lib/types";
@@ -27,7 +44,7 @@ import { cn, formatPlays } from "@/lib/utils";
  * - Apple Music 风格 Hero：封面模糊放大做渐变背景 + 大封面 + 大标题
  * - 展示创建者（头像 + 用户名）、播放次数、歌曲数、描述
  * - 操作：播放全部 / 收藏
- * - 歌单创建者可管理歌曲：删除、上下移动
+ * - 歌单创建者可管理歌曲：拖拽排序 + 删除
  */
 export function PlaylistDetailClient({
   playlist,
@@ -40,14 +57,13 @@ export function PlaylistDetailClient({
   const [favLoading, setFavLoading] = React.useState(false);
   const [manageMode, setManageMode] = React.useState(false);
   const [songList, setSongList] = React.useState<ApiSong[]>([]);
-  const [movingId, setMovingId] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
   const [removingId, setRemovingId] = React.useState<string | null>(null);
 
   // 是否为歌单创建者（可管理歌曲）
   const isOwner = React.useMemo(() => {
     const token = getToken();
     if (!token || !playlist.user) return false;
-    // 通过 localStorage 中存储的用户信息判断
     try {
       const userStr = localStorage.getItem("xt_music_user");
       if (userStr) {
@@ -122,32 +138,41 @@ export function PlaylistDetailClient({
     }
   };
 
-  /** 上移 / 下移歌曲 */
-  const handleMove = async (songId: string, direction: "up" | "down") => {
-    const index = songList.findIndex((s) => s.id === songId);
-    if (index < 0) return;
-    const targetIndex =
-      direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= songList.length) return;
+  // dnd-kit 传感器：PointerSensor（鼠标/触摸）+ KeyboardSensor（无障碍）
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-    // 乐观更新：交换位置
-    const newList = [...songList];
-    [newList[index], newList[targetIndex]] = [
-      newList[targetIndex],
-      newList[index],
-    ];
+  /** 拖拽结束：乐观更新 + 调用后端 reorder + 失败回滚 */
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = songList.findIndex((s) => s.id === active.id);
+    const newIndex = songList.findIndex((s) => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    // 保存旧顺序用于回滚
+    const oldList = [...songList];
+    // 乐观更新：立即交换位置
+    const newList = arrayMove(songList, oldIndex, newIndex);
     setSongList(newList);
 
-    // 上报到后端
-    setMovingId(songId);
+    setSaving(true);
     try {
       await api.put(`/user/playlists/${playlist.id}/songs/reorder`, {
         songIds: newList.map((s) => s.id),
       });
     } catch {
-      /* 回滚？暂时忽略 */
+      // 失败回滚到旧顺序
+      setSongList(oldList);
     } finally {
-      setMovingId(null);
+      setSaving(false);
     }
   };
 
@@ -262,11 +287,17 @@ export function PlaylistDetailClient({
           <Button
             onClick={() => setManageMode((m) => !m)}
             variant={manageMode ? "default" : "outline"}
+            disabled={saving}
             className="rounded-full px-5"
           >
             <ListMusic className="h-4 w-4" />
             {manageMode ? "完成管理" : "管理歌曲"}
           </Button>
+        )}
+        {manageMode && (
+          <span className="text-xs text-foreground/40">
+            拖拽手柄调整顺序，点击删除移除歌曲
+          </span>
         )}
         <span className="ml-auto text-xs text-foreground/40">
           共 {songList.length} 首
@@ -279,54 +310,29 @@ export function PlaylistDetailClient({
           {!manageMode ? (
             <SongList songs={songList} />
           ) : (
-            /* 管理模式：每行显示删除和上下移动按钮 */
-            <div className="space-y-1">
-              {songList.map((song, index) => (
-                <div
-                  key={song.id}
-                  className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-foreground/5"
-                >
-                  <span className="w-6 shrink-0 text-center text-xs text-foreground/40">
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{song.title}</p>
-                    <p className="truncate text-xs text-foreground/50">
-                      {song.artist}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleMove(song.id, "up")}
-                    disabled={index === 0 || movingId === song.id}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-primary-700/10 hover:text-primary-700 disabled:opacity-30"
-                    aria-label="上移"
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMove(song.id, "down")}
-                    disabled={
-                      index === songList.length - 1 || movingId === song.id
-                    }
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-primary-700/10 hover:text-primary-700 disabled:opacity-30"
-                    aria-label="下移"
-                  >
-                    <ArrowDown className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSong(song.id)}
-                    disabled={removingId === song.id}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-30"
-                    aria-label="删除"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+            /* 管理模式：拖拽排序 + 删除 */
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={songList.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-1">
+                  {songList.map((song, index) => (
+                    <SortableSongRow
+                      key={song.id}
+                      song={song}
+                      index={index}
+                      onRemove={handleRemoveSong}
+                      removingId={removingId}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       ) : (
@@ -337,5 +343,93 @@ export function PlaylistDetailClient({
         />
       )}
     </section>
+  );
+}
+
+// ===== 可拖拽歌曲行 =====
+
+interface SortableSongRowProps {
+  song: ApiSong;
+  index: number;
+  onRemove: (songId: string) => void;
+  removingId: string | null;
+}
+
+function SortableSongRow({
+  song,
+  index,
+  onRemove,
+  removingId,
+}: SortableSongRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: song.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-foreground/5",
+        isDragging && "bg-background opacity-80 shadow-lg ring-1 ring-primary-500/30"
+      )}
+    >
+      {/* 拖拽手柄（仅手柄区域可发起拖拽） */}
+      <button
+        ref={setActivatorNodeRef}
+        {...attributes}
+        {...listeners}
+        className="flex h-8 w-6 shrink-0 cursor-grab items-center justify-center text-foreground/30 transition-colors hover:text-foreground/60 active:cursor-grabbing"
+        aria-label="拖拽排序"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      {/* 序号 */}
+      <span className="w-6 shrink-0 text-center text-xs text-foreground/40">
+        {index + 1}
+      </span>
+      {/* 封面 */}
+      <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-primary-700/5">
+        {song.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={song.coverUrl}
+            alt={song.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-primary-700/30">
+            <Music2 className="h-4 w-4" />
+          </div>
+        )}
+      </div>
+      {/* 歌名 + 歌手 */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{song.title}</p>
+        <p className="truncate text-xs text-foreground/50">{song.artist}</p>
+      </div>
+      {/* 删除按钮 */}
+      <button
+        type="button"
+        onClick={() => onRemove(song.id)}
+        disabled={removingId === song.id}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100 disabled:opacity-30"
+        aria-label="删除"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
   );
 }

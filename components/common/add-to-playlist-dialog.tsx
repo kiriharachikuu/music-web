@@ -24,11 +24,12 @@ import { Input } from "@/components/ui/input";
  * - 支持快速新建歌单
  */
 export function AddToPlaylistDialog({
-  songId,
+  songIds,
   open,
   onOpenChange,
 }: {
-  songId: string | null;
+  /** 要添加的歌曲 ID 列表（支持单首或多首批量） */
+  songIds: string[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -54,10 +55,10 @@ export function AddToPlaylistDialog({
 
   // 添加到歌单
   const handleAdd = async (playlistId: string) => {
-    if (!songId) return;
+    if (songIds.length === 0) return;
     setAddingId(playlistId);
     try {
-      await api.post(`/user/playlists/${playlistId}/songs`, { songIds: [songId] });
+      await api.post(`/user/playlists/${playlistId}/songs`, { songIds });
       setAddedIds((prev) => new Set(prev).add(playlistId));
     } catch {
       /* 忽略 */
@@ -68,13 +69,13 @@ export function AddToPlaylistDialog({
 
   // 快速新建歌单并添加
   const handleCreateAndAdd = async () => {
-    if (!songId || !newPlaylistName.trim()) return;
+    if (songIds.length === 0 || !newPlaylistName.trim()) return;
     setCreating(true);
     try {
       const pl = await api.post<Playlist>("/user/playlists", {
         name: newPlaylistName.trim(),
       });
-      await api.post(`/user/playlists/${pl.id}/songs`, { songIds: [songId] });
+      await api.post(`/user/playlists/${pl.id}/songs`, { songIds });
       setPlaylists((prev) => [pl, ...prev]);
       setAddedIds((prev) => new Set(prev).add(pl.id));
       setNewPlaylistName("");
@@ -93,7 +94,9 @@ export function AddToPlaylistDialog({
             <ListMusic className="h-5 w-5 text-primary-700" />
             添加到歌单
           </DialogTitle>
-          <DialogDescription>选择一个歌单，将歌曲添加进去</DialogDescription>
+          <DialogDescription>
+            选择一个歌单，将{songIds.length > 1 ? ` ${songIds.length} 首歌曲 ` : "歌曲"}添加进去
+          </DialogDescription>
         </DialogHeader>
 
         {/* 快速新建歌单 */}

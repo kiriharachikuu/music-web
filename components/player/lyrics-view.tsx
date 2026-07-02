@@ -20,7 +20,7 @@ import {
  * 3. 上下两端 mask-image 渐隐柔化
  * 4. 自动滚动：当前行始终居中（scrollTo + smooth）
  * 5. 用户主动滚动后暂停跟随 3 秒，避免与手动浏览冲突
- * 6. 点击任意行 → onSeek 跳转播放
+ * 6. 点击任意行 → onSeek 跳转播放 + 闪光反馈 + 触感反馈 + 按压缩放
  * 7. 无歌词降级显示文案
  */
 
@@ -54,6 +54,32 @@ export function LyricsView({
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const lineRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+
+  // 点击跳转：记录最近点击的行索引，用于闪光反馈
+  const [clickedIndex, setClickedIndex] = React.useState<number | null>(null);
+  const clickTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSeek = React.useCallback(
+    (index: number, time: number) => {
+      // 触觉反馈（移动端）
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(15);
+      }
+      // 闪光反馈：标记该行 400ms
+      setClickedIndex(index);
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      clickTimerRef.current = setTimeout(() => setClickedIndex(null), 400);
+      onSeek(time);
+    },
+    [onSeek]
+  );
+
+  // 卸载时清理定时器
+  React.useEffect(() => {
+    return () => {
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    };
+  }, []);
 
   // 用户主动滚动检测：滚动后暂停自动跟随 3 秒
   const userScrollingRef = React.useRef(false);
@@ -115,7 +141,12 @@ export function LyricsView({
   if (lines.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-white/50">
-        <Music2 className="h-10 w-10 opacity-50" />
+        <motion.div
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Music2 className="h-10 w-10" />
+        </motion.div>
         <p className="text-sm">暂无歌词</p>
       </div>
     );
@@ -135,6 +166,7 @@ export function LyricsView({
       <div className="flex min-h-full flex-col items-center justify-center gap-6 py-[35vh] text-center">
         {lines.map((line, i) => {
           const isActive = i === activeIndex;
+          const isClicked = i === clickedIndex;
           const distance = Math.abs(i - activeIndex);
           // 当前行 1，非当前行按距离衰减（最低 0.25）
           const opacity = isActive
@@ -147,12 +179,14 @@ export function LyricsView({
                 lineRefs.current[i] = el;
               }}
               type="button"
-              onClick={() => onSeek(line.time)}
+              onClick={() => handleSeek(i, line.time)}
               animate={{ scale: isActive ? 1.1 : 1, opacity }}
+              whileTap={{ scale: 0.95 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
               aria-current={isActive ? "true" : undefined}
+              aria-label={`跳转到 ${formatLabelTime(line.time)}`}
               className={cn(
-                "group max-w-full cursor-pointer rounded-lg px-2 transition-colors",
+                "group relative max-w-full cursor-pointer rounded-lg px-2 transition-colors",
                 isActive
                   ? "text-white"
                   : "text-white/70 hover:text-white"
@@ -163,6 +197,15 @@ export function LyricsView({
                   : undefined
               }
             >
+              {/* 点击闪光反馈层 */}
+              {isClicked && (
+                <motion.span
+                  className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-primary-500/30"
+                  initial={{ opacity: 0.8, scale: 0.9 }}
+                  animate={{ opacity: 0, scale: 1.15 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                />
+              )}
               {/* 原文：空行用占位符避免高度塌陷 */}
               <span className="block text-lg font-semibold leading-relaxed drop-shadow-sm md:text-2xl md:leading-relaxed">
                 {line.text || "···"}
@@ -178,10 +221,23 @@ export function LyricsView({
                   {line.translation}
                 </span>
               )}
+              {/* 悬停可点击提示（非当前行） */}
+              {!isActive && (
+                <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+                  点击跳转
+                </span>
+              )}
             </motion.button>
           );
         })}
       </div>
     </div>
   );
+}
+
+/** 格式化秒为 mm:ss，用于 aria-label 无障碍提示 */
+function formatLabelTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }

@@ -11,7 +11,9 @@ import {
   Music2,
   Check,
   ListMusic,
+  ListStart,
   Disc,
+  Trash2,
 } from "lucide-react";
 
 import type { ApiSong } from "@/lib/types";
@@ -26,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
+import { SwipeableRow } from "@/components/common/swipeable-row";
 
 /**
  * 通用歌曲列表
@@ -44,6 +47,7 @@ export function SongList({
   onToggleSelect,
   onLike,
   likedIds,
+  onDelete,
   className,
   emptyText,
 }: {
@@ -62,6 +66,8 @@ export function SongList({
   onLike?: (song: ApiSong) => void;
   /** 已喜欢的歌曲 id 集合 */
   likedIds?: Set<string>;
+  /** 删除回调（用于播放历史单条删除） */
+  onDelete?: (song: ApiSong) => void;
   className?: string;
   emptyText?: string;
 }) {
@@ -70,9 +76,10 @@ export function SongList({
   const currentSong = usePlayerStore((s) => s.currentSong);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const addToQueue = usePlayerStore((s) => s.addToQueue);
-  const [addToPlaylistSongId, setAddToPlaylistSongId] = React.useState<
-    string | null
-  >(null);
+  const playNext = usePlayerStore((s) => s.playNext);
+  const [addToPlaylistSongIds, setAddToPlaylistSongIds] = React.useState<
+    string[]
+  >([]);
   const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
 
   if (songs.length === 0 && emptyText) {
@@ -100,8 +107,12 @@ export function SongList({
         };
 
         return (
-          <div
+          <SwipeableRow
             key={song.id}
+            onDelete={onDelete ? () => onDelete(song) : undefined}
+            className={onDelete ? "md:hidden" : undefined}
+          >
+          <div
             className={cn(
               "group flex items-center gap-3 px-2.5 py-2.5 transition-colors md:gap-4 md:px-4",
               isActive
@@ -230,14 +241,16 @@ export function SongList({
               >
                 <Plus className="h-4 w-4" />
               </button>
-              <button
-                type="button"
-                onClick={() => addToQueue(toPlayerSong(song))}
-                aria-label="添加到队列"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-primary-700/10 hover:text-primary-700 group-hover:opacity-100 dark:hover:text-primary-300"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(song)}
+                  aria-label="删除"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -266,10 +279,16 @@ export function SongList({
                     <ListMusic className="mr-2 h-4 w-4" />
                     添加到队列
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => playNext(toPlayerSong(song))}
+                  >
+                    <ListStart className="mr-2 h-4 w-4" />
+                    下一首播放
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => {
-                      setAddToPlaylistSongId(song.id);
+                      setAddToPlaylistSongIds([song.id]);
                       setPlaylistDialogOpen(true);
                     }}
                   >
@@ -294,10 +313,11 @@ export function SongList({
               </DropdownMenu>
             </div>
           </div>
+          </SwipeableRow>
         );
       })}
       <AddToPlaylistDialog
-        songId={addToPlaylistSongId}
+        songIds={addToPlaylistSongIds}
         open={playlistDialogOpen}
         onOpenChange={setPlaylistDialogOpen}
       />

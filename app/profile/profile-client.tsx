@@ -21,6 +21,7 @@ import {
   Moon,
   Monitor,
   Music2,
+  ListStart,
 } from "lucide-react";
 
 import type {
@@ -38,6 +39,7 @@ import { SongList } from "@/components/common/song-list";
 import { PlaylistCard } from "@/components/common/playlist-card";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
+import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -93,6 +95,7 @@ export function ProfileClient() {
   const [profileLoaded, setProfileLoaded] = React.useState(false);
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
+  const [editOpen, setEditOpen] = React.useState(false);
   const openLogin = useAuthStore((s) => s.openLogin);
 
   // 首次挂载拉取用户信息（用原生 fetch，401 不跳转，显示登录引导）
@@ -176,7 +179,19 @@ export function ProfileClient() {
           <p className="mt-0.5 truncate text-sm text-foreground/50">
             {profile.email}
           </p>
+          <p className="mt-0.5 font-mono text-xs text-foreground/30">
+            UID: {profile.id.slice(-8).toUpperCase()}
+          </p>
         </div>
+        {/* 编辑资料按钮 */}
+        <Button
+          variant="outline"
+          onClick={() => setEditOpen(true)}
+          className="rounded-full px-4"
+        >
+          <Pencil className="h-4 w-4" />
+          编辑资料
+        </Button>
         {/* 管理员入口 */}
         {profile.role === "ADMIN" && (
           <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer">
@@ -251,7 +266,128 @@ export function ProfileClient() {
           }}
         />
       )}
+
+      {/* 编辑资料弹窗 */}
+      <EditProfileDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        profile={profile}
+        onUpdated={(updated) => {
+          setProfile(updated);
+          setEditOpen(false);
+        }}
+      />
     </section>
+  );
+}
+
+// ===== 编辑资料弹窗 =====
+
+interface EditProfileDialogProps {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  profile: UserProfile;
+  onUpdated: (profile: UserProfile) => void;
+}
+
+function EditProfileDialog({
+  open,
+  onOpenChange,
+  profile,
+  onUpdated,
+}: EditProfileDialogProps) {
+  const [username, setUsername] = React.useState("");
+  const [avatar, setAvatar] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  // 打开时回显
+  React.useEffect(() => {
+    if (open) {
+      setUsername(profile.username);
+      setAvatar(profile.avatar || "");
+    }
+  }, [open, profile]);
+
+  const handleSave = async () => {
+    if (!username.trim()) return;
+    setSaving(true);
+    try {
+      const updated = await api.patch<UserProfile>("/user/profile", {
+        username: username.trim(),
+        avatar: avatar.trim() || undefined,
+      });
+      onUpdated(updated);
+    } catch (err) {
+      // 忽略，api 层已有 toast
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>编辑资料</DialogTitle>
+          <DialogDescription>修改昵称和头像</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          {/* 头像预览 */}
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 overflow-hidden rounded-full bg-primary-700/10 ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
+              {avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatar}
+                  alt="头像预览"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+                  <User className="h-8 w-8" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <label className="text-sm font-medium">头像 URL</label>
+              <Input
+                value={avatar}
+                onChange={(e) => setAvatar(e.target.value)}
+                placeholder="粘贴图片链接"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          {/* 昵称 */}
+          <div>
+            <label className="text-sm font-medium">昵称</label>
+            <Input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="输入新昵称"
+              className="mt-1"
+              maxLength={20}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={saving}
+          >
+            取消
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={saving || !username.trim()}
+            className="bg-primary-700 text-white hover:bg-primary-600"
+          >
+            {saving ? "保存中…" : "保存"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -261,7 +397,9 @@ function FavoritesTab() {
   const [songs, setSongs] = React.useState<ApiSong[] | null>(null);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [manageMode, setManageMode] = React.useState(false);
+  const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
   const play = usePlayerStore((s) => s.play);
+  const playNextMany = usePlayerStore((s) => s.playNextMany);
 
   React.useEffect(() => {
     void load();
@@ -359,14 +497,38 @@ function FavoritesTab() {
               全选
             </Button>
             {selected.size > 0 && (
-              <Button
-                variant="ghost"
-                onClick={removeSelected}
-                className="rounded-full px-3 text-sm text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-                删除选中
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    if (!songs) return;
+                    const list = songs.filter((s) => selected.has(s.id));
+                    playNextMany(toPlayerSongs(list));
+                    setSelected(new Set());
+                    setManageMode(false);
+                  }}
+                  className="rounded-full px-3 text-sm"
+                >
+                  <ListStart className="h-4 w-4" />
+                  下一首播放
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setPlaylistDialogOpen(true)}
+                  className="rounded-full px-3 text-sm"
+                >
+                  <ListMusic className="h-4 w-4" />
+                  加入歌单
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={removeSelected}
+                  className="rounded-full px-3 text-sm text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  删除选中
+                </Button>
+              </>
             )}
           </>
         )}
@@ -392,6 +554,19 @@ function FavoritesTab() {
           description="去发现页找找喜欢的歌吧～"
         />
       )}
+
+      {/* 批量加入歌单弹窗 */}
+      <AddToPlaylistDialog
+        songIds={Array.from(selected)}
+        open={playlistDialogOpen}
+        onOpenChange={(v) => {
+          setPlaylistDialogOpen(v);
+          if (!v) {
+            setSelected(new Set());
+            setManageMode(false);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -623,6 +798,16 @@ function HistoryTab() {
     }
   };
 
+  // 删除单条播放历史
+  const deleteItem = async (songId: string) => {
+    try {
+      await api.del(`/user/history/${songId}`);
+      setItems((prev) => prev ? prev.filter((it) => it.song.id !== songId) : prev);
+    } catch {
+      /* 忽略 */
+    }
+  };
+
   if (items === null) return <PageSkeleton variant="list" />;
 
   // 按日期分组
@@ -659,7 +844,10 @@ function HistoryTab() {
               {g.label}
             </h3>
             <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
-              <SongList songs={g.items.map((it) => it.song)} />
+              <SongList
+                songs={g.items.map((it) => it.song)}
+                onDelete={(song) => void deleteItem(song.id)}
+              />
             </div>
           </div>
         ))

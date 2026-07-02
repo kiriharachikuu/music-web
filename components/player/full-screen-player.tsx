@@ -392,9 +392,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     }
   };
 
-  // ----- 循环模式切换：single → list → shuffle → single -----
+  // ----- 循环模式切换：list → single → sequential → shuffle → list -----
   const cyclePlayMode = () => {
-    const order: PlayMode[] = ["single", "list", "shuffle"];
+    const order: PlayMode[] = ["list", "single", "sequential", "shuffle"];
     const idx = order.indexOf(playMode);
     const nextMode = order[(idx + 1) % order.length];
     setPlayMode(nextMode);
@@ -409,7 +409,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       ? "单曲循环"
       : playMode === "shuffle"
         ? "随机播放"
-        : "列表循环";
+        : playMode === "sequential"
+          ? "顺序播放"
+          : "列表循环";
 
   return (
     <motion.div
@@ -554,9 +556,11 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               onClick={cyclePlayMode}
               className={cn(
                 "rounded-full p-2 transition-colors",
-                playMode !== "list"
-                  ? "text-primary-500"
-                  : "text-white/70 hover:text-white"
+                playMode === "list"
+                  ? "text-white/70 hover:text-white"
+                  : playMode === "sequential"
+                    ? "text-amber-400"
+                    : "text-primary-500"
               )}
               aria-label={playModeLabel}
             >

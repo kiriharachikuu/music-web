@@ -9,6 +9,7 @@ import { MiniPlayer } from "@/components/layout/mini-player";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { FullScreenPlayer } from "@/components/player/full-screen-player";
 import { LoginDialog } from "@/components/auth/login-dialog";
+import { UpdateDialog } from "@/components/common/update-dialog";
 import { usePlayerStore } from "@/lib/store/player-store";
 
 /** 不显示应用外壳的路径（全屏独立页面） */
@@ -24,11 +25,20 @@ const STANDALONE_PATHS = ["/login"];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isStandalone = STANDALONE_PATHS.some((p) => pathname === p);
+  const error = usePlayerStore((s) => s.error);
+  const clearError = usePlayerStore((s) => s.clearError);
 
   React.useEffect(() => {
     // 客户端挂载后从 localStorage 恢复 volume / playMode / queue 等
     usePlayerStore.persist.rehydrate();
   }, []);
+
+  // 监听播放器错误，3 秒后自动清除
+  React.useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => clearError(), 3000);
+    return () => clearTimeout(timer);
+  }, [error, clearError]);
 
   // 独立页面：全屏渲染，不加载外壳组件，但仍挂载 LoginDialog 以便 401 兜底
   if (isStandalone) {
@@ -36,6 +46,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="min-h-dvh">
         {children}
         <LoginDialog />
+        <UpdateDialog />
+        {error && (
+          <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg">
+            {error}
+          </div>
+        )}
       </div>
     );
   }
@@ -64,6 +80,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* 全局登录弹窗：401 或主动触发时弹出，z-50 */}
       <LoginDialog />
+
+      {/* 版本检查弹窗：挂载 2 秒后检查更新 */}
+      <UpdateDialog />
+
+      {/* 播放器错误提示：fixed 底部居中，3 秒自动消失 */}
+      {error && (
+        <div className="fixed bottom-24 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg md:bottom-32">
+          {error}
+        </div>
+      )}
     </div>
   );
 }

@@ -96,7 +96,7 @@ export function SearchClient({
         if (isLiked) {
           await api.del(`/user/favorites/${song.id}`);
         } else {
-          await api.post(`/user/favorites/${song.id}`);
+          await api.post("/user/favorites", { songId: song.id });
         }
       } catch {
         // 失败回滚（401 已由 api.ts 触发登录弹窗）
