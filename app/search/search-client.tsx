@@ -1,32 +1,20 @@
 "use client";
 
 import * as React from "react";
-import {
-  Search,
-  X,
-  Clock,
-  Flame,
-  User2,
-  Loader2,
-} from "lucide-react";
+import { Search, X, Clock, Flame } from "lucide-react";
 
 import type {
   SearchResult,
   SearchCategory,
   SearchSort,
-  ArtistBrief,
   ApiSong,
 } from "@/lib/types";
 import { api } from "@/lib/api";
-import { SongList } from "@/components/common/song-list";
-import { AlbumCard } from "@/components/common/album-card";
-import { PlaylistCard } from "@/components/common/playlist-card";
 import { EmptyState } from "@/components/common/empty-state";
-import {
-  SongListSkeleton,
-  CardGridSkeleton,
-} from "@/components/common/loading-skeleton";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+import { SearchResults, SearchResultsSkeleton } from "./search-results";
 
 /** localStorage 历史 key */
 const HISTORY_KEY = "xt-music-search-history";
@@ -80,7 +68,11 @@ export function SearchClient({
   const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState<string[]>([]);
   const [likedIds, setLikedIds] = React.useState<Set<string>>(new Set());
+  const [hasMore, setHasMore] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
+  /** 当前分页（ref，不触发重渲染，避免与搜索 effect 形成循环） */
+  const pageRef = React.useRef(1);
 
   // 通过 "/" 快捷键跳转过来时自动聚焦搜索框（由 AppShell 设置标记）
   React.useEffect(() => {
@@ -136,11 +128,14 @@ export function SearchClient({
     return () => clearTimeout(t);
   }, [query]);
 
-  // 执行搜索（debounced / sort / tag 变化触发）
+  // 执行搜索（debounced / sort / tag 变化触发，每次重置到第 1 页）
   React.useEffect(() => {
+    // 搜索条件变化时重置分页
+    pageRef.current = 1;
     if (!debounced) {
       setResults(null);
       setLoading(false);
+      setHasMore(false);
       return;
     }
     let cancelled = false;
@@ -158,6 +153,8 @@ export function SearchClient({
         if (!cancelled) {
           setResults(res);
           addHistory(debounced);
+          // 返回满 30 条认为可能还有更多
+          setHasMore((res.songs?.list?.length ?? 0) >= 30);
         }
       } catch {
         if (!cancelled) setResults(null);
@@ -199,6 +196,40 @@ export function SearchClient({
   const pickKeyword = (kw: string) => {
     setQuery(kw);
     setDebounced(kw);
+  };
+
+  /** 加载更多歌曲（下一页，仅追加 songs 列表） */
+  const handleLoadMore = async () => {
+    if (loadingMore || !debounced) return;
+    const nextPage = pageRef.current + 1;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({
+        q: debounced,
+        sort: SORTS.find((s) => s.key === sort)?.param ?? "time",
+        page: String(nextPage),
+        limit: "30",
+      });
+      if (tag) params.set("tag", tag);
+      const res = await api.get<SearchResult>(`/search?${params}`);
+      setResults((prev) =>
+        prev
+          ? {
+              ...res,
+              songs: {
+                ...res.songs,
+                list: [...prev.songs.list, ...(res.songs?.list ?? [])],
+              },
+            }
+          : res
+      );
+      setHasMore((res.songs?.list?.length ?? 0) >= 30);
+      pageRef.current = nextPage;
+    } catch {
+      // 加载更多失败静默处理
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   const hasQuery = debounced.length > 0;
@@ -391,13 +422,29 @@ export function SearchClient({
           {loading ? (
             <SearchResultsSkeleton category={category} />
           ) : results ? (
-            <SearchResults
-              results={results}
-              category={category}
-              query={debounced}
-              likedIds={likedIds}
-              onLike={handleLike}
-            />
+            <>
+              <SearchResults
+                results={results}
+                category={category}
+                query={debounced}
+                likedIds={likedIds}
+                onLike={handleLike}
+              />
+              {/* 加载更多：仅歌曲相关分类且有更多时显示 */}
+              {hasMore &&
+                (category === "all" || category === "songs") && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => void handleLoadMore()}
+                      disabled={loadingMore}
+                      className="rounded-full px-6"
+                    >
+                      {loadingMore ? "加载中..." : "加载更多"}
+                    </Button>
+                  </div>
+                )}
+            </>
           ) : (
             <EmptyState
               icon={Search}
@@ -408,153 +455,5 @@ export function SearchClient({
         </>
       )}
     </section>
-  );
-}
-
-/** 搜索结果渲染（按分类） */
-function SearchResults({
-  results,
-  category,
-  query,
-  likedIds,
-  onLike,
-}: {
-  results: SearchResult;
-  category: SearchCategory;
-  query: string;
-  likedIds: Set<string>;
-  onLike: (song: ApiSong) => void;
-}) {
-  const songList = results.songs?.list ?? [];
-  const albums = results.albums ?? [];
-  const playlists = results.playlists ?? [];
-  const artists: ArtistBrief[] = [];
-  const isEmpty =
-    songList.length === 0 &&
-    albums.length === 0 &&
-    playlists.length === 0 &&
-    artists.length === 0;
-
-  if (isEmpty) {
-    return (
-      <EmptyState
-        icon={Search}
-        title={`未找到「${query}」的相关结果`}
-        description="换个关键词试试吧～"
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-8">
-      {/* 歌曲 */}
-      {(category === "all" || category === "songs") && songList.length > 0 && (
-        <div>
-          {category === "all" && (
-            <h3 className="mb-2 text-sm font-semibold text-foreground/70">
-              歌曲
-            </h3>
-          )}
-          <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
-            <SongList
-              songs={songList}
-              onLike={onLike}
-              likedIds={likedIds}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* 专辑 */}
-      {(category === "all" || category === "albums") && albums.length > 0 && (
-        <div>
-          {category === "all" && (
-            <h3 className="mb-2 text-sm font-semibold text-foreground/70">
-              专辑
-            </h3>
-          )}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {albums.map((a) => (
-              <AlbumCard key={a.id} album={a} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 歌单 */}
-      {(category === "all" || category === "playlists") &&
-        playlists.length > 0 && (
-          <div>
-            {category === "all" && (
-              <h3 className="mb-2 text-sm font-semibold text-foreground/70">
-                歌单
-              </h3>
-            )}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {playlists.map((p) => (
-                <PlaylistCard key={p.id} playlist={p} />
-              ))}
-            </div>
-          </div>
-        )}
-
-      {/* 歌手 */}
-      {(category === "all" || category === "artists") &&
-        artists.length > 0 && (
-          <div>
-            {category === "all" && (
-              <h3 className="mb-2 text-sm font-semibold text-foreground/70">
-                歌手
-              </h3>
-            )}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {artists.map((a) => (
-                <ArtistCard key={a.name} artist={a} />
-              ))}
-            </div>
-          </div>
-        )}
-    </div>
-  );
-}
-
-/** 歌手卡片：圆形头像 + 名字 + 歌曲数 */
-function ArtistCard({ artist }: { artist: ArtistBrief }) {
-  return (
-    <div className="flex flex-col items-center gap-2 text-center">
-      <div className="h-24 w-24 overflow-hidden rounded-full bg-primary-700/5 shadow-card md:h-28 md:w-28">
-        {artist.cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={artist.cover}
-            alt={artist.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-primary-700/30">
-            <User2 className="h-10 w-10" />
-          </div>
-        )}
-      </div>
-      <p className="text-sm font-medium">{artist.name}</p>
-      <p className="text-xs text-foreground/40">{artist.songCount} 首</p>
-    </div>
-  );
-}
-
-/** 搜索结果骨架 */
-function SearchResultsSkeleton({ category }: { category: SearchCategory }) {
-  return (
-    <div className="space-y-3">
-      {category === "all" || category === "songs" ? (
-        <SongListSkeleton count={6} />
-      ) : (
-        <CardGridSkeleton count={6} />
-      )}
-      <div className="flex items-center justify-center gap-2 py-2 text-sm text-foreground/40">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        搜索中...
-      </div>
-    </div>
   );
 }

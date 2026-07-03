@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useScroll, useMotionValueEvent } from "framer-motion";
-import { Info, Menu } from "lucide-react";
+import { Info, Menu, Search } from "lucide-react";
 
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,8 @@ export function TopNav() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            // 移动端触控目标 ≥ 44px
+            className="h-11 w-11 md:hidden"
             aria-label="打开菜单"
           >
             <Menu className="h-5 w-5" />
@@ -126,6 +127,18 @@ export function TopNav() {
 
       {/* 占位伸缩区 */}
       <div className="flex-1" />
+
+      {/* 搜索入口：搜索 Tab 已合并至顶栏 */}
+      <Link href="/search" aria-label="搜索">
+        <Button
+          variant="ghost"
+          size="icon"
+          // 移动端触控目标 ≥ 44px，桌面端保持 36px
+          className="h-11 w-11 text-foreground/70 hover:text-foreground md:h-9 md:w-9"
+        >
+          <Search className="h-5 w-5" />
+        </Button>
+      </Link>
 
       {/* 主题切换 */}
       <ThemeToggle />

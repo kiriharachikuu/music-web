@@ -100,6 +100,10 @@ interface PlayerState {
 let howl: HowlType | null = null;
 let HowlCtor: typeof HowlType | null = null;
 let progressTimer: ReturnType<typeof setInterval> | null = null;
+/** 当前 howl 实例的 src URL（用于卸载时 revoke blob: URL，避免内存泄漏） */
+let currentHowlUrl: string | null = null;
+/** play() 调用计数器：用于检测并发 play 调用，避免竞态（每次 play 自增） */
+let playCallId = 0;
 
 // ===== 预加载管理 =====
 
@@ -193,6 +197,11 @@ function clearPreload() {
 function unloadHowl() {
   stopProgressTimer();
   if (howl) {
+    // 释放 blob: URL 避免内存泄漏（下载离线播放场景会用到 blob URL）
+    if (currentHowlUrl && currentHowlUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(currentHowlUrl);
+    }
+    currentHowlUrl = null;
     howl.unload();
     howl = null;
   }
@@ -226,6 +235,8 @@ export const usePlayerStore = create<PlayerState>()(
       // 播放：可传入新歌曲与队列；不传则播放队列当前位置
       play: async (song, queue) => {
         if (typeof window === "undefined") return;
+        // 生成本次调用的唯一 token，用于检测 await 期间是否有更新的 play 调用接管
+        const myCallId = ++playCallId;
         const state = get();
 
         // 更新队列 / 当前歌曲
@@ -238,11 +249,12 @@ export const usePlayerStore = create<PlayerState>()(
         const targetSong = song ?? nextQueue[nextIndex] ?? state.currentSong;
         if (!targetSong) return;
 
+        // 注意：isPlaying 不在此处预设，改为监听 howl 的 'play' 事件再同步，
+        // 避免浏览器拦截自动播放时 UI 显示正在播放但实际没声音
         set({
           currentSong: targetSong,
           queue: nextQueue,
           currentIndex: nextIndex < 0 ? 0 : nextIndex,
-          isPlaying: true,
           currentTime: 0,
         });
 
@@ -250,10 +262,26 @@ export const usePlayerStore = create<PlayerState>()(
         const Howl = await ensureHowlCtor();
         unloadHowl();
 
+        // 竞态保护：若 await 期间又有新的 play 调用接管，则中止本次播放
+        // （旧调用不再创建 howl，避免被新调用的 unloadHowl 卸载导致状态错乱）
+        if (myCallId !== playCallId) return;
+
+        // 记录当前 howl 的 URL（卸载时用于 revoke blob: URL，避免内存泄漏）
+        currentHowlUrl = targetSong.url;
+
         // 尝试复用预加载的实例（音频已缓存，播放更流畅）
         const preloaded = tryConsumePreload(targetSong.url);
         if (preloaded) {
           howl = preloaded;
+          // 预加载实例的 load 事件可能已在复用前触发，立即读取 duration；
+          // 若尚未加载完成则监听一次 load 事件补设（用 once 避免重复监听）
+          if (howl.duration() > 0) {
+            usePlayerStore.setState({ duration: howl.duration() });
+          } else {
+            howl.once("load", () => {
+              if (howl) usePlayerStore.setState({ duration: howl.duration() || 0 });
+            });
+          }
           // 恢复音量（预加载时设为 0）
           howl.volume(get().volume);
           // 重置到开头
@@ -305,6 +333,10 @@ export const usePlayerStore = create<PlayerState>()(
         });
 
         howl.play();
+        // 实际开始播放时再同步 isPlaying，避免自动播放被拦截时 UI 撒谎
+        howl.on("play", () => {
+          usePlayerStore.setState({ isPlaying: true });
+        });
         startProgressTimer(get);
 
         // 上报播放记录（静默，不阻塞播放）

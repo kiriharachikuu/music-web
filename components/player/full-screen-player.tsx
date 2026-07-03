@@ -7,28 +7,16 @@ import {
   useDragControls,
   type PanInfo,
 } from "framer-motion";
-import {
-  ChevronDown,
-  ListMusic,
-  Music2,
-  Pause,
-  Play,
-  Repeat,
-  Repeat1,
-  Shuffle,
-  SkipBack,
-  SkipForward,
-} from "lucide-react";
+import { ChevronDown, ListMusic, Music2 } from "lucide-react";
 
 import {
   usePlayerStore,
-  formatTime,
   type PlayMode,
 } from "@/lib/store/player-store";
 import { api } from "@/lib/api";
-import { cn } from "@/lib/utils";
 import { LyricsView } from "./lyrics-view";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { QueueSheet } from "./queue-sheet";
+import { FullScreenControls } from "./full-screen-controls";
 import {
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
@@ -63,208 +51,6 @@ export function FullScreenPlayer() {
     <AnimatePresence>
       {isOpen && <FullScreenPlayerInner key="fsp" onClose={close} />}
     </AnimatePresence>
-  );
-}
-
-// ===== 自定义进度条 =====
-
-interface ProgressBarProps {
-  value: number;
-  max: number;
-  onSeek: (t: number) => void;
-}
-
-/**
- * 横向进度条：支持点击跳转 + 拖拽跳转
- * - 已播放部分：from-primary-600 to-primary-700 线性渐变
- * - 拖拽圆点：白边 + primary-700 实心
- * - 使用 Pointer Events + setPointerCapture 保证拖拽中不丢失指针
- */
-function ProgressBar({ value, max, onSeek }: ProgressBarProps) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = React.useState(false);
-  const [dragValue, setDragValue] = React.useState<number | null>(null);
-
-  // 拖拽中显示 dragValue，松开后提交 onSeek
-  const currentValue = dragValue ?? value;
-  const pct =
-    max > 0 ? Math.min(100, Math.max(0, (currentValue / max) * 100)) : 0;
-
-  // 根据 clientX 计算对应时间
-  const calcTime = React.useCallback(
-    (clientX: number): number | null => {
-      const el = ref.current;
-      if (!el || max <= 0) return null;
-      const rect = el.getBoundingClientRect();
-      const ratio = Math.min(
-        1,
-        Math.max(0, (clientX - rect.left) / rect.width)
-      );
-      return ratio * max;
-    },
-    [max]
-  );
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (max <= 0) return;
-    e.preventDefault();
-    const t = calcTime(e.clientX);
-    if (t == null) return;
-    setDragging(true);
-    setDragValue(t);
-    try {
-      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    } catch {
-      /* 忽略 capture 失败 */
-    }
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragging) return;
-    const t = calcTime(e.clientX);
-    if (t == null) return;
-    setDragValue(t);
-  };
-
-  const endDrag = (e: React.PointerEvent) => {
-    if (!dragging) return;
-    const t = calcTime(e.clientX);
-    try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      /* 忽略 release 失败 */
-    }
-    setDragging(false);
-    setDragValue(null);
-    if (t != null) onSeek(t);
-  };
-
-  return (
-    <div
-      ref={ref}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
-      className="group relative flex h-6 w-full cursor-pointer touch-none items-center"
-    >
-      {/* 轨道 */}
-      <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/20" />
-      {/* 已播放填充：primary-600 → primary-700 渐变 */}
-      <div
-        className="absolute left-0 h-1.5 rounded-full bg-gradient-to-r from-primary-600 to-primary-700"
-        style={{ width: `${pct}%` }}
-      />
-      {/* 拖拽圆点：白边 + primary-700 实心 */}
-      <div
-        className={cn(
-          "absolute h-4 w-4 rounded-full border-2 border-white bg-primary-700 shadow-md transition-transform",
-          "group-hover:scale-110",
-          dragging && "scale-125"
-        )}
-        style={{ left: `calc(${pct}% - 8px)` }}
-      />
-    </div>
-  );
-}
-
-// ===== 播放队列抽屉 =====
-
-interface QueueSheetProps {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-}
-
-/**
- * 播放队列抽屉：右侧滑出，毛玻璃背景
- * - 列表显示 queue 中所有歌曲（封面 + 歌名 + 歌手）
- * - 当前播放行：text-primary-300 + 左侧 primary-700 圆点标记
- * - 点击切换播放
- */
-function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
-  const queue = usePlayerStore((s) => s.queue);
-  const currentIndex = usePlayerStore((s) => s.currentIndex);
-  const play = usePlayerStore((s) => s.play);
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className={cn(
-          "flex flex-col gap-0 border-white/10 bg-black/40 p-0 text-white backdrop-blur-xl sm:max-w-md",
-          // 让 Sheet 自带的关闭按钮（直接子 button）变白
-          "[&>button]:text-white/70 [&>button:hover]:text-white"
-        )}
-      >
-        <SheetHeader className="border-b border-white/10 px-5 py-4">
-          <SheetTitle className="text-white">播放队列</SheetTitle>
-          <p className="text-xs text-white/50">共 {queue.length} 首</p>
-        </SheetHeader>
-
-        {/* 列表：原生 overflow + no-scrollbar，与歌词区视觉一致 */}
-        <div className="no-scrollbar flex-1 overflow-y-auto py-2">
-          <ul className="flex flex-col">
-            {queue.map((song, i) => {
-              const isCurrent = i === currentIndex;
-              return (
-                <li key={`${song.id}-${i}`}>
-                  <button
-                    type="button"
-                    onClick={() => play(song)}
-                    className={cn(
-                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-white/5",
-                      isCurrent && "bg-white/5"
-                    )}
-                  >
-                    {/* 当前播放左侧标记条 */}
-                    <span className="w-1 shrink-0 self-stretch">
-                      {isCurrent && (
-                        <span className="block h-full w-1 rounded-full bg-primary-700" />
-                      )}
-                    </span>
-                    {/* 封面缩略图 */}
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-white/10">
-                      {song.cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={song.cover}
-                          alt=""
-                          className="h-full w-full object-cover"
-                          draggable={false}
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <Music2 className="h-4 w-4 text-white/40" />
-                        </div>
-                      )}
-                    </div>
-                    {/* 歌名 + 歌手 */}
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "truncate text-sm",
-                          isCurrent ? "text-primary-300" : "text-white"
-                        )}
-                      >
-                        {song.title}
-                      </p>
-                      <p className="truncate text-xs text-white/50">
-                        {song.artist}
-                      </p>
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-            {queue.length === 0 && (
-              <li className="px-5 py-8 text-center text-sm text-white/50">
-                队列为空
-              </li>
-            )}
-          </ul>
-        </div>
-      </SheetContent>
-    </Sheet>
   );
 }
 
@@ -404,14 +190,6 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   if (!currentSong) return null;
 
   const cover = currentSong.cover;
-  const playModeLabel =
-    playMode === "single"
-      ? "单曲循环"
-      : playMode === "shuffle"
-        ? "随机播放"
-        : playMode === "sequential"
-          ? "顺序播放"
-          : "列表循环";
 
   return (
     <motion.div
@@ -536,91 +314,18 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </main>
 
         {/* ===== 底部控制区 ===== */}
-        <footer className="shrink-0 px-4 pb-6 pb-safe pt-2 md:px-8 md:pb-8">
-          {/* 进度条 + 时间 */}
-          <div className="mb-3 flex items-center gap-3">
-            <span className="w-12 shrink-0 text-right font-mono text-xs text-white/60">
-              {formatTime(currentTime)}
-            </span>
-            <ProgressBar value={currentTime} max={duration} onSeek={seek} />
-            <span className="w-12 shrink-0 font-mono text-xs text-white/60">
-              {formatTime(duration)}
-            </span>
-          </div>
-
-          {/* 控制按钮 */}
-          <div className="flex items-center justify-center gap-5 md:gap-10">
-            {/* 循环模式：激活态变 primary-500 */}
-            <button
-              type="button"
-              onClick={cyclePlayMode}
-              className={cn(
-                "rounded-full p-2 transition-colors",
-                playMode === "list"
-                  ? "text-white/70 hover:text-white"
-                  : playMode === "sequential"
-                    ? "text-amber-400"
-                    : "text-primary-500"
-              )}
-              aria-label={playModeLabel}
-            >
-              {playMode === "single" ? (
-                <Repeat1 className="h-5 w-5" />
-              ) : playMode === "shuffle" ? (
-                <Shuffle className="h-5 w-5" />
-              ) : (
-                <Repeat className="h-5 w-5" />
-              )}
-            </button>
-
-            {/* 上一首 */}
-            <button
-              type="button"
-              onClick={prev}
-              className="rounded-full p-2 text-white/80 transition-colors hover:text-white"
-              aria-label="上一首"
-            >
-              <SkipBack className="h-7 w-7" fill="currentColor" />
-            </button>
-
-            {/* 主播放按钮：白色圆形实心，图标 primary-700 */}
-            <button
-              type="button"
-              onClick={toggle}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xl transition-transform hover:scale-105 active:scale-95"
-              aria-label={isPlaying ? "暂停" : "播放"}
-            >
-              {isPlaying ? (
-                <Pause className="h-7 w-7 text-primary-700" fill="currentColor" />
-              ) : (
-                <Play
-                  className="h-7 w-7 translate-x-[2px] text-primary-700"
-                  fill="currentColor"
-                />
-              )}
-            </button>
-
-            {/* 下一首 */}
-            <button
-              type="button"
-              onClick={next}
-              className="rounded-full p-2 text-white/80 transition-colors hover:text-white"
-              aria-label="下一首"
-            >
-              <SkipForward className="h-7 w-7" fill="currentColor" />
-            </button>
-
-            {/* 队列 */}
-            <button
-              type="button"
-              onClick={() => setQueueOpen(true)}
-              className="rounded-full p-2 text-white/70 transition-colors hover:text-white"
-              aria-label="播放队列"
-            >
-              <ListMusic className="h-5 w-5" />
-            </button>
-          </div>
-        </footer>
+        <FullScreenControls
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={duration}
+          playMode={playMode}
+          onToggle={toggle}
+          onPrev={prev}
+          onNext={next}
+          onSeek={seek}
+          onCyclePlayMode={cyclePlayMode}
+          onOpenQueue={() => setQueueOpen(true)}
+        />
       </div>
 
       {/* ===== 播放队列抽屉 ===== */}

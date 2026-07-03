@@ -25,7 +25,8 @@ export function ThemeToggle() {
       size="icon"
       aria-label="切换主题"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="text-foreground/70 hover:text-foreground"
+      // 移动端触控目标 ≥ 44px，桌面端保持 36px
+      className="h-11 w-11 text-foreground/70 hover:text-foreground md:h-9 md:w-9"
     >
       {/* 占位防止 SSR 与首帧尺寸抖动；挂载后再渲染实际图标 */}
       {mounted ? (

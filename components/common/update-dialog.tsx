@@ -41,6 +41,23 @@ const CURRENT_VERSION_CODE = Number(
 const IGNORE_KEY = "xt_music_ignored_version";
 
 /**
+ * 检测当前运行平台，供后端按平台匹配版本
+ * - ios：iPhone / iPad（含 iPadOS 13+ 桌面 UA 特例）
+ * - android：其他移动端 UA
+ * - desktop：桌面浏览器
+ */
+function detectPlatform(): "desktop" | "android" | "ios" {
+  if (typeof navigator === "undefined") return "desktop";
+  const ua = navigator.userAgent.toLowerCase();
+  const isIOS =
+    /iphone|ipad|ipod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (isIOS) return "ios";
+  if (/android|mobile|touch/.test(ua)) return "android";
+  return "desktop";
+}
+
+/**
  * 版本检查弹窗
  * - 应用挂载时调用 GET /api/app/version/latest 检查更新
  * - 有新版本时弹出弹窗：版本名 + changelog + 立即更新 / 本次忽略
@@ -58,7 +75,7 @@ export function UpdateDialog() {
     async function checkVersion() {
       try {
         const result = await api.get<VersionCheckResult>(
-          `/app/version/latest?platform=desktop&versionCode=${CURRENT_VERSION_CODE}`
+          `/app/version/latest?platform=${detectPlatform()}&versionCode=${CURRENT_VERSION_CODE}`
         );
         if (cancelled || !result.hasUpdate || !result.latest) return;
 

@@ -22,6 +22,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.42.0",
     "howler": "^2.2.4",
+    "idb": "^8.0.3",
     "lucide-react": "^1.22.0",
     "next": "^15.5.19",
     "next-pwa": "^5.6.0",
@@ -41,5 +42,13 @@
     "postcss": "^8.5.16",
     "tailwindcss": "^3.4.19",
     "typescript": "^5"
-  }
+  },
+  "browserslist": [
+    "iOS >= 14",
+    "Android >= 90",
+    "Chrome >= 90",
+    "Firefox >= 90",
+    "Safari >= 14",
+    "Edge >= 90"
+  ]
 }

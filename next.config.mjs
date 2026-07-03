@@ -36,7 +36,7 @@ const withPWA = withPWAInit({
         cacheableResponse: { statuses: [0, 200] },
       },
     },
-    // 接口（NetworkFirst，超时 5s 回退缓存）
+    // 接口（NetworkFirst，超时 5s 回退缓存，失败写请求后台排队重试）
     {
       urlPattern: /^\/api\//i,
       handler: "NetworkFirst",
@@ -45,6 +45,15 @@ const withPWA = withPWAInit({
         networkTimeoutSeconds: 5,
         expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
         cacheableResponse: { statuses: [0, 200] },
+        // Background Sync：离线时失败的写请求（POST/PUT/DELETE）进入队列，
+        // 恢复网络后由 Service Worker 自动重放
+        backgroundSync: {
+          name: "xt-api-queue",
+          options: {
+            // 最长保留 24 小时（单位：分钟），超时丢弃
+            maxRetentionTime: 24 * 60,
+          },
+        },
       },
     },
   ],

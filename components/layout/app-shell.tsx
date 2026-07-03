@@ -7,9 +7,11 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
 import { MiniPlayer } from "@/components/layout/mini-player";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
+import { QueuePanel } from "@/components/layout/queue-panel";
 import { FullScreenPlayer } from "@/components/player/full-screen-player";
 import { LoginDialog } from "@/components/auth/login-dialog";
 import { UpdateDialog } from "@/components/common/update-dialog";
+import { Toaster } from "@/components/ui/toaster";
 import { usePlayerStore } from "@/lib/store/player-store";
 
 /** 不显示应用外壳的路径（全屏独立页面） */
@@ -41,10 +43,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isStandalone = STANDALONE_PATHS.some((p) => pathname === p);
   const error = usePlayerStore((s) => s.error);
   const clearError = usePlayerStore((s) => s.clearError);
+  // 守卫：自动播放恢复只在首次挂载执行一次（避免 React 严格模式双触发）
+  const autoPlayRestoredRef = React.useRef(false);
 
   React.useEffect(() => {
     // 客户端挂载后从 localStorage 恢复 volume / playMode / queue 等
     usePlayerStore.persist.rehydrate();
+
+    // 自动播放：用户在设置中开启且存在上次播放的歌曲时，恢复播放
+    if (autoPlayRestoredRef.current) return;
+    autoPlayRestoredRef.current = true;
+    try {
+      const raw = localStorage.getItem("xt-music-settings");
+      const autoplay = raw ? JSON.parse(raw)?.autoplay === true : false;
+      if (autoplay) {
+        const { currentSong, play } = usePlayerStore.getState();
+        if (currentSong) {
+          // 恢复播放：重新加载 Howl 并播放（currentTime 不持久化，从头开始）
+          void play(currentSong);
+        }
+      }
+    } catch {
+      // 忽略设置读取异常
+    }
   }, []);
 
   // 监听播放器错误，3 秒后自动清除
@@ -89,6 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
         <LoginDialog />
         <UpdateDialog />
+        <Toaster />
         {error && (
           <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg">
             {error}
@@ -103,8 +125,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* PC 侧边栏 */}
       <Sidebar />
 
-      {/* 主区域：桌面端左移 w-64 */}
-      <div className="md:pl-64">
+      {/* PC 右侧播放队列面板（lg 及以上） */}
+      <QueuePanel />
+
+      {/* 主区域：桌面端左移 w-64，lg 右移 w-80 留给队列面板 */}
+      <div className="md:pl-64 lg:pr-80">
         <TopNav />
         <main className="mx-auto max-w-[1400px] px-4 pb-40 pt-6 md:px-6 md:pb-32">
           {children}
@@ -125,6 +150,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* 版本检查弹窗：挂载 2 秒后检查更新 */}
       <UpdateDialog />
+
+      {/* 全局 Toast 容器：下载/收藏等操作反馈 */}
+      <Toaster />
 
       {/* 播放器错误提示：fixed 底部居中，3 秒自动消失 */}
       {error && (

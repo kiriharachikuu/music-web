@@ -14,6 +14,8 @@ import {
   ListStart,
   Disc,
   Trash2,
+  Download,
+  Loader2,
 } from "lucide-react";
 
 import type { ApiSong } from "@/lib/types";
@@ -29,6 +31,8 @@ import {
 import { cn } from "@/lib/utils";
 import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
 import { SwipeableRow } from "@/components/common/swipeable-row";
+import { downloadSong, listDownloads } from "@/lib/download";
+import { useToast } from "@/components/ui/toaster";
 
 /**
  * 通用歌曲列表
@@ -81,6 +85,62 @@ export function SongList({
     string[]
   >([]);
   const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
+  // 下载状态：已缓存 id 集合 + 正在下载 id 集合
+  const [downloadedIds, setDownloadedIds] = React.useState<Set<string>>(
+    new Set()
+  );
+  const [downloadingIds, setDownloadingIds] = React.useState<Set<string>>(
+    new Set()
+  );
+  const toast = useToast();
+
+  // 初始化：加载本地已缓存歌曲 id（listDownloads 一次性查回，避免逐条查 IndexedDB）
+  React.useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const list = await listDownloads();
+        if (!cancelled && list.length > 0) {
+          setDownloadedIds(new Set(list.map((d) => d.songId)));
+        }
+      } catch {
+        /* DB 不可用时静默降级，按钮统一显示为未下载态 */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** 触发下载某首歌曲，更新下载态并 toast 反馈 */
+  const handleDownload = async (song: ApiSong) => {
+    if (downloadingIds.has(song.id)) return;
+    // 已下载则不重复下载，提示已在本地
+    if (downloadedIds.has(song.id)) {
+      toast.show("已下载到本地", { description: song.title });
+      return;
+    }
+    setDownloadingIds((prev) => new Set(prev).add(song.id));
+    try {
+      const result = await downloadSong(song);
+      setDownloadedIds((prev) => new Set(prev).add(song.id));
+      if (result.newlyDownloaded) {
+        toast.success("下载完成", { description: song.title });
+      } else {
+        toast.show("已在本地缓存", { description: song.title });
+      }
+    } catch (e) {
+      toast.error("下载失败", {
+        description: e instanceof Error ? e.message : undefined,
+      });
+    } finally {
+      setDownloadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(song.id);
+        return next;
+      });
+    }
+  };
 
   if (songs.length === 0 && emptyText) {
     return (
@@ -120,7 +180,7 @@ export function SongList({
           >
           <div
             className={cn(
-              "group flex items-center gap-3 px-2.5 py-2.5 transition-colors md:gap-4 md:px-4",
+              "group flex items-center gap-3 px-2.5 py-2.5 transition-colors md:gap-4 md:px-4 [content-visibility:auto] [contain-intrinsic-size:64px]",
               isActive
                 ? "bg-primary-700/5"
                 : "hover:bg-foreground/[0.03]"
@@ -184,6 +244,7 @@ export function SongList({
                 <img
                   src={song.coverUrl}
                   alt={song.title}
+                  loading="lazy"
                   className="h-full w-full object-cover"
                 />
               ) : (
@@ -244,6 +305,43 @@ export function SongList({
                   />
                 </button>
               )}
+              {/* 下载按钮：未下载(空心 hover 显示) / 已下载(实心 primary 常显) / 下载中(旋转) */}
+              {(() => {
+                const isDownloading = downloadingIds.has(song.id);
+                const isDownloaded = downloadedIds.has(song.id);
+                return (
+                  <button
+                    type="button"
+                    onClick={() => void handleDownload(song)}
+                    disabled={isDownloading}
+                    aria-label={
+                      isDownloading
+                        ? "下载中"
+                        : isDownloaded
+                          ? "已下载"
+                          : "下载"
+                    }
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                      isDownloading || isDownloaded
+                        ? "text-primary-700 dark:text-primary-300"
+                        : "text-foreground/40 opacity-0 hover:bg-primary-700/10 hover:text-primary-700 group-hover:opacity-100 dark:hover:text-primary-300",
+                      isDownloading && "cursor-wait"
+                    )}
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download
+                        className={cn(
+                          "h-4 w-4",
+                          isDownloaded && "fill-current"
+                        )}
+                      />
+                    )}
+                  </button>
+                );
+              })()}
               <button
                 type="button"
                 onClick={() => addToQueue(toPlayerSong(song))}
@@ -284,6 +382,29 @@ export function SongList({
                       {isLiked ? "取消喜欢" : "喜欢"}
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem
+                    disabled={
+                      downloadingIds.has(song.id) || downloadedIds.has(song.id)
+                    }
+                    onClick={() => void handleDownload(song)}
+                  >
+                    {downloadingIds.has(song.id) ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          downloadedIds.has(song.id) &&
+                            "fill-current text-primary-700 dark:text-primary-300"
+                        )}
+                      />
+                    )}
+                    {downloadingIds.has(song.id)
+                      ? "下载中…"
+                      : downloadedIds.has(song.id)
+                        ? "已下载"
+                        : "下载"}
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => addToQueue(toPlayerSong(song))}
                   >
