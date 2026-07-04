@@ -106,7 +106,7 @@ const teamMembers: TeamMember[] = [
       "项目发起、需求统筹与版本管理",
       "前端页面、后端接口整体开发",
       "TWA安卓打包、部署运维全流程",
-      "歌切资源库、曲库架构设计"
+      "歌切资源库、曲库架构设计",
     ],
   },
   {
@@ -117,7 +117,7 @@ const teamMembers: TeamMember[] = [
       "品牌主色调（星瞳专属紫 #8B00FF）规范搭建",
       "仿Apple Music流畅播放器视觉体系",
       "全站图标、界面设计",
-      "移动端/桌面端响应式视觉适配方案"
+      "移动端/桌面端响应式视觉适配方案",
     ],
   },
   {
@@ -127,7 +127,7 @@ const teamMembers: TeamMember[] = [
     contributions: [
       "星瞳直播录播歌切素材筛选截取",
       "歌曲歌词、字幕文本校对整理",
-      "曲库标签、分类元数据标准化录入"
+      "曲库标签、分类元数据标准化录入",
     ],
   },
   {
@@ -137,7 +137,7 @@ const teamMembers: TeamMember[] = [
     contributions: [
       "原创单曲、合作曲音频源收集归档",
       "歌曲封面、舞台配图素材收集修图",
-      "音频文件统一格式转码与存储管理"
+      "音频文件统一格式转码与存储管理",
     ],
   },
   {
@@ -147,14 +147,14 @@ const teamMembers: TeamMember[] = [
     contributions: [
       "曲库数据校验、重复资源清理去重",
       "缺失歌曲信息查漏补充完善",
-      "资源库定期维护更新与备份"
+      "资源库定期维护更新与备份",
     ],
   },
 ];
 
 export default function AboutPage() {
   return (
-    <section className="animate-fade-in space-y-16 md:space-y-24">
+    <section className="animate-fade-in space-y-12 sm:space-y-16 md:space-y-24">
       {/* 返回按钮 */}
       <Link
         href="/"
@@ -165,39 +165,39 @@ export default function AboutPage() {
       </Link>
 
       {/* ==================== Hero ==================== */}
-      <div className="relative overflow-hidden rounded-3xl border border-primary-500/10 bg-gradient-to-br from-primary-700 via-primary-800 to-gray-950 px-6 py-16 text-center shadow-card md:px-12 md:py-24">
-        {/* 装饰光晕 */}
-        <div className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary-400/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 right-10 h-48 w-48 rounded-full bg-primary-300/20 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-primary-500/10 bg-gradient-to-br from-primary-700 via-primary-800 to-gray-950 px-5 py-10 text-center shadow-card sm:rounded-3xl sm:px-8 sm:py-14 md:px-12 md:py-20">
+        {/* 装饰光晕（移动端缩小避免溢出） */}
+        <div className="pointer-events-none absolute -top-16 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-primary-400/30 blur-3xl sm:-top-20 sm:h-64 sm:w-64" />
+        <div className="pointer-events-none absolute -bottom-16 right-6 h-32 w-32 rounded-full bg-primary-300/20 blur-3xl sm:-bottom-20 sm:right-10 sm:h-48 sm:w-48" />
 
-        <div className="relative flex flex-col items-center gap-6">
+        <div className="relative flex flex-col items-center gap-4 sm:gap-6">
           {/* Logo */}
           <div className="relative">
-            <div className="absolute inset-0 animate-pulse rounded-3xl bg-white/20 blur-xl" />
+            <div className="absolute inset-0 animate-pulse rounded-2xl bg-white/20 blur-xl sm:rounded-3xl" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/icons/logo.png"
               alt="XingTone"
-              className="relative h-24 w-24 rounded-3xl shadow-2xl md:h-32 md:w-32"
+              className="relative h-16 w-16 rounded-2xl shadow-2xl sm:h-24 sm:w-24 sm:rounded-3xl md:h-32 md:w-32"
             />
           </div>
 
-          <div className="space-y-3">
-            <h1 className="text-3xl font-bold tracking-tight text-white md:text-5xl">
+          <div className="space-y-2 sm:space-y-3">
+            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-5xl">
               XingTone
             </h1>
-            <p className="mx-auto max-w-2xl text-base text-white/70 md:text-lg">
-              XingTone是一个基于Next.js + TypeScript + TailwindCSS的全栈音乐流媒体项目，
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base md:text-lg">
+              基于 Next.js + TypeScript + TailwindCSS 的全栈音乐流媒体项目，
               Apple Music 风格的跨端音乐播放器 —— 沉浸式全屏歌词、
               跨平台兼容（Android / iOS / Web 三端）、PWA 覆盖
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1 sm:gap-2 sm:pt-2">
             {["Next.js 15", "NestJS", "PostgreSQL", "PWA"].map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur-sm"
+                className="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[11px] font-medium text-white/90 backdrop-blur-sm sm:px-3 sm:py-1 sm:text-xs"
               >
                 {tag}
               </span>
@@ -207,40 +207,47 @@ export default function AboutPage() {
       </div>
 
       {/* ==================== 项目概述 ==================== */}
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-900/30">
-            <Sparkles className="h-5 w-5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 sm:h-10 sm:w-10 sm:rounded-xl">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
           </span>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">
               项目概述
             </h2>
-            <p className="text-sm text-foreground/50">Project Overview</p>
+            <p className="text-xs text-foreground/50 sm:text-sm">Project Overview</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-card">
-            <Music className="mb-3 h-6 w-6 text-primary-700" />
-            <h3 className="mb-2 font-semibold">沉浸式播放体验</h3>
-            <p className="text-sm leading-relaxed text-foreground/60">
+        {/* 移动端单列，sm 双列，md 三列（避免 sm 即 3 列导致挤压） */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-border/60 bg-card p-4 shadow-card sm:rounded-2xl sm:p-6">
+            <Music className="mb-2 h-5 w-5 text-primary-700 sm:mb-3 sm:h-6 sm:w-6" />
+            <h3 className="mb-1.5 text-sm font-semibold sm:mb-2 sm:text-base">
+              沉浸式播放体验
+            </h3>
+            <p className="text-xs leading-relaxed text-foreground/60 sm:text-sm">
               全屏歌词播放页支持拖拽关闭、逐行高亮、双语歌词与锁屏控制，
               媒体会话 API 深度集成，带来原生 App 级别的听歌感受。
             </p>
           </div>
-          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-card">
-            <Smartphone className="mb-3 h-6 w-6 text-primary-700" />
-            <h3 className="mb-2 font-semibold">PWA 跨端覆盖</h3>
-            <p className="text-sm leading-relaxed text-foreground/60">
+          <div className="rounded-xl border border-border/60 bg-card p-4 shadow-card sm:rounded-2xl sm:p-6">
+            <Smartphone className="mb-2 h-5 w-5 text-primary-700 sm:mb-3 sm:h-6 sm:w-6" />
+            <h3 className="mb-1.5 text-sm font-semibold sm:mb-2 sm:text-base">
+              PWA 跨端覆盖
+            </h3>
+            <p className="text-xs leading-relaxed text-foreground/60 sm:text-sm">
               一套代码同时运行于 Web、Android、iOS 三端。添加到主屏幕后以
               standalone 模式全屏启动，隐藏浏览器 UI，体验等同原生应用。
             </p>
           </div>
-          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-card">
-            <Palette className="mb-3 h-6 w-6 text-primary-700" />
-            <h3 className="mb-2 font-semibold">星瞳紫视觉体系</h3>
-            <p className="text-sm leading-relaxed text-foreground/60">
+          <div className="rounded-xl border border-border/60 bg-card p-4 shadow-card sm:rounded-2xl sm:p-6">
+            <Palette className="mb-2 h-5 w-5 text-primary-700 sm:mb-3 sm:h-6 sm:w-6" />
+            <h3 className="mb-1.5 text-sm font-semibold sm:mb-2 sm:text-base">
+              星瞳紫视觉体系
+            </h3>
+            <p className="text-xs leading-relaxed text-foreground/60 sm:text-sm">
               以星瞳紫（#8B00FF）为核心品牌色，参照 Apple Music
               的排版、色彩与间距规范，亮暗双模式无缝切换，打造高级感界面。
             </p>
@@ -249,43 +256,46 @@ export default function AboutPage() {
       </div>
 
       {/* ==================== 技术架构 ==================== */}
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-900/30">
-            <Zap className="h-5 w-5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 sm:h-10 sm:w-10 sm:rounded-xl">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
           </span>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">
               技术架构
             </h2>
-            <p className="text-sm text-foreground/50">Tech Stack</p>
+            <p className="text-xs text-foreground/50 sm:text-sm">Tech Stack</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* 移动端单列，md+ 双列（保持卡片完整可读） */}
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
           {techCategories.map((cat) => {
             const Icon = cat.icon;
             return (
               <div
                 key={cat.title}
-                className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card"
+                className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-card sm:rounded-2xl"
               >
                 {/* 分类标题栏 */}
                 <div
-                  className={`flex items-center gap-3 bg-gradient-to-r ${cat.color} px-6 py-4`}
+                  className={`flex items-center gap-2 bg-gradient-to-r ${cat.color} px-4 py-3 sm:px-6 sm:py-4`}
                 >
-                  <Icon className="h-5 w-5 text-white" />
-                  <h3 className="font-semibold text-white">{cat.title}</h3>
+                  <Icon className="h-4 w-4 text-white sm:h-5 sm:w-5" />
+                  <h3 className="text-sm font-semibold text-white sm:text-base">
+                    {cat.title}
+                  </h3>
                 </div>
-                {/* 技术条目 */}
+                {/* 技术条目：移动端更紧凑 */}
                 <div className="divide-y divide-border/40">
                   {cat.items.map((item) => (
                     <div
                       key={item.name}
-                      className="flex items-center justify-between gap-4 px-6 py-3"
+                      className="flex items-center justify-between gap-3 px-4 py-2.5 sm:gap-4 sm:px-6 sm:py-3"
                     >
-                      <span className="font-medium">{item.name}</span>
-                      <span className="text-right text-sm text-foreground/50">
+                      <span className="text-sm font-medium">{item.name}</span>
+                      <span className="text-right text-xs text-foreground/50 sm:text-sm">
                         {item.desc}
                       </span>
                     </div>
@@ -296,8 +306,8 @@ export default function AboutPage() {
           })}
         </div>
 
-        {/* 数据库与基础设施 */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 基础设施：移动端 2 列紧凑，sm+ 4 列 */}
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
           {[
             { icon: Database, label: "PostgreSQL", desc: "主数据库" },
             { icon: Server, label: "NestJS REST", desc: "40+ API 接口" },
@@ -308,14 +318,16 @@ export default function AboutPage() {
             return (
               <div
                 key={item.label}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4"
+                className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card p-3 sm:gap-3 sm:rounded-xl sm:p-4"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30">
-                  <Icon className="h-5 w-5" />
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700 dark:bg-primary-900/30 sm:h-10 sm:w-10 sm:rounded-lg">
+                  <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate font-medium">{item.label}</p>
-                  <p className="truncate text-xs text-foreground/50">
+                  <p className="truncate text-xs font-medium sm:text-sm">
+                    {item.label}
+                  </p>
+                  <p className="truncate text-[11px] text-foreground/50 sm:text-xs">
                     {item.desc}
                   </p>
                 </div>
@@ -326,53 +338,56 @@ export default function AboutPage() {
       </div>
 
       {/* ==================== 开发团队 ==================== */}
-      <div className="space-y-6">
+      <div className="space-y-5 sm:space-y-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700 dark:bg-primary-900/30">
-            <Users className="h-5 w-5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 sm:h-10 sm:w-10 sm:rounded-xl">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5" />
           </span>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl md:text-3xl">
               开发团队
             </h2>
-            <p className="text-sm text-foreground/50">Development Team</p>
+            <p className="text-xs text-foreground/50 sm:text-sm">Development Team</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* 移动端单列，sm 双列（避免 5 个卡片单列过长） */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
           {teamMembers.map((member) => (
             <div
               key={member.name}
-              className="rounded-2xl border border-border/60 bg-card p-6 shadow-card"
+              className="rounded-xl border border-border/60 bg-card p-4 shadow-card sm:rounded-2xl sm:p-6"
             >
-              <div className="flex items-center gap-4">
-                {/* 头像 */}
+              <div className="flex items-center gap-3 sm:gap-4">
+                {/* 头像：移动端 12x12，sm+ 16x16 */}
                 <div
-                  className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${member.avatarColor} text-2xl font-bold text-white shadow-lg`}
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${member.avatarColor} text-lg font-bold text-white shadow-lg sm:h-16 sm:w-16 sm:text-2xl`}
                 >
                   {member.name.charAt(0)}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-lg font-semibold">{member.name}</h3>
-                  <p className="text-sm text-primary-700 dark:text-primary-300">
+                  <h3 className="truncate text-base font-semibold sm:text-lg">
+                    {member.name}
+                  </h3>
+                  <p className="text-xs text-primary-700 dark:text-primary-300 sm:text-sm">
                     {member.role}
                   </p>
                 </div>
               </div>
 
               {/* 主要贡献 */}
-              <div className="mt-5 space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-foreground/40">
+              <div className="mt-4 space-y-1.5 sm:mt-5 sm:space-y-2">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-foreground/40 sm:text-xs">
                   主要贡献
                 </p>
-                <ul className="space-y-2">
+                <ul className="space-y-1.5 sm:space-y-2">
                   {member.contributions.map((c, i) => (
                     <li
                       key={i}
-                      className="flex items-start gap-2 text-sm text-foreground/70"
+                      className="flex items-start gap-2 text-xs text-foreground/70 sm:text-sm"
                     >
                       <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary-700" />
-                      {c}
+                      <span className="leading-relaxed">{c}</span>
                     </li>
                   ))}
                 </ul>
@@ -383,7 +398,7 @@ export default function AboutPage() {
       </div>
 
       {/* ==================== 页脚 ==================== */}
-      <div className="border-t border-border/60 pt-8 text-center">
+      <div className="border-t border-border/60 pt-6 text-center sm:pt-8">
         <div className="mb-3 flex items-center justify-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -393,7 +408,7 @@ export default function AboutPage() {
           />
           <span className="font-semibold">XingTone</span>
         </div>
-        <p className="text-sm text-foreground/40">
+        <p className="text-xs text-foreground/40 sm:text-sm">
           © {new Date().getFullYear()} XingTone · 基于 Next.js + NestJS 构建
         </p>
       </div>
