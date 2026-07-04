@@ -416,7 +416,7 @@ export function DownloadClient() {
                     className="flex items-start gap-2 text-sm text-foreground/70 sm:text-[15px]"
                   >
                     <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-foreground/30" />
-                    <span className="leading-relaxed">{line}</span>
+                    <span className="leading-relaxed whitespace-pre-wrap">{line}</span>
                   </li>
                 ))}
               </ul>
@@ -739,7 +739,7 @@ function ChangeGroup({
             className="flex items-start gap-2 text-sm text-foreground/70 sm:text-[15px]"
           >
             <span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-foreground/30" />
-            <span className="leading-relaxed">{item.content}</span>
+            <span className="leading-relaxed whitespace-pre-wrap">{item.content}</span>
           </li>
         ))}
       </ul>

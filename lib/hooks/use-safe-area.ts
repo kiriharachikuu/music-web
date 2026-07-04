@@ -28,13 +28,66 @@ function getAndroidStatusBarHeight(): number {
   return height ? parseInt(height, 10) || 0 : 0;
 }
 
+function getAndroidNavigationBarHeight(): number {
+  const height = androidBridge.getNavigationBarHeight();
+  return height ? parseInt(height, 10) || 0 : 0;
+}
+
+function getInitialSafeArea(): { top: number; bottom: number; left: number; right: number } {
+  if (typeof window === "undefined") {
+    return { top: 0, bottom: 0, left: 0, right: 0 };
+  }
+
+  const platform = detectPlatform();
+
+  let top = parsePx(getEnvValue("top"));
+  let bottom = parsePx(getEnvValue("bottom"));
+  let left = parsePx(getEnvValue("left"));
+  let right = parsePx(getEnvValue("right"));
+
+  if (platform.isTWA) {
+    const statusBarHeight = getAndroidStatusBarHeight();
+    const navBarHeight = getAndroidNavigationBarHeight();
+    if (statusBarHeight > 0) {
+      top = statusBarHeight;
+    }
+    if (navBarHeight > 0) {
+      bottom = navBarHeight;
+    }
+  }
+
+  const visualViewport = window.visualViewport;
+  if (platform.isAndroid && !platform.isTWA && visualViewport) {
+    const webViewTop = visualViewport.offsetTop + visualViewport.scale;
+    if (webViewTop > 0 && top === 0) {
+      top = webViewTop;
+    }
+  }
+
+  if (visualViewport) {
+    const viewportTop = visualViewport.offsetTop;
+    if (viewportTop > 0 && top === 0) {
+      top = viewportTop;
+    }
+  }
+
+  if (platform.isIOS && !platform.isStandalone) {
+    const defaultSafariTop = 44;
+    if (top === 0) {
+      top = defaultSafariTop;
+    }
+  }
+
+  return { top, bottom, left, right };
+}
+
 export function useSafeArea() {
   const [safeArea, setSafeArea] = React.useState<{
     top: number;
     bottom: number;
     left: number;
     right: number;
-  }>({ top: 0, bottom: 0, left: 0, right: 0 });
+  }>(getInitialSafeArea());
 
   React.useEffect(() => {
     let rafId: number | null = null;
@@ -49,8 +102,12 @@ export function useSafeArea() {
 
       if (platform.isTWA) {
         const androidStatusBarHeight = getAndroidStatusBarHeight();
+        const androidNavBarHeight = getAndroidNavigationBarHeight();
         if (androidStatusBarHeight > 0) {
           top = androidStatusBarHeight;
+        }
+        if (androidNavBarHeight > 0) {
+          bottom = androidNavBarHeight;
         }
       }
 

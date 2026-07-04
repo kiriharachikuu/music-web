@@ -40,6 +40,8 @@ export interface AndroidJSBridge {
   exitApp(): void;
   /** 获取状态栏高度（像素），用于 WebView safe-area 适配 */
   getStatusBarHeight(): string;
+  /** 获取底部导航栏高度（像素），用于 WebView safe-area 适配 */
+  getNavigationBarHeight(): string;
 }
 
 declare global {
@@ -227,6 +229,17 @@ export const androidBridge = {
     if (!bridge) return "";
     try {
       return bridge.getStatusBarHeight();
+    } catch {
+      return "";
+    }
+  },
+
+  /** 获取底部导航栏高度（像素），用于 WebView safe-area 适配 */
+  getNavigationBarHeight(): string {
+    const bridge = getNativeBridge();
+    if (!bridge) return "";
+    try {
+      return bridge.getNavigationBarHeight();
     } catch {
       return "";
     }
