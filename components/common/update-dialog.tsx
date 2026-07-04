@@ -9,7 +9,9 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
+import { androidBridge } from "@/lib/jsbridge/android-bridge";
+import { getPlatform } from "@/lib/platform";
 import { Download, Sparkles } from "lucide-react";
 
 /**
@@ -25,6 +27,8 @@ interface VersionCheckResult {
     title?: string | null;
     content: string[];
     downloadUrl: string;
+    /** APK 文件 MD5 校验值（TWA 模式安装时校验） */
+    md5?: string | null;
     fileSize: number;
     channel: string;
     platform: string;
@@ -32,10 +36,19 @@ interface VersionCheckResult {
   } | null;
 }
 
-/** 当前应用版本码（通过环境变量注入，默认 1） */
-const CURRENT_VERSION_CODE = Number(
-  process.env.NEXT_PUBLIC_APP_VERSION_CODE ?? 1
-);
+/**
+ * 获取当前应用版本码
+ * - TWA 模式：从原生 BuildConfig.VERSION_CODE 读取（androidBridge.getAppVersionCode）
+ * - 浏览器模式：从 NEXT_PUBLIC_APP_VERSION_CODE 环境变量读取（默认 1）
+ */
+function getCurrentVersionCode(): number {
+  if (getPlatform().isTWA) {
+    const code = androidBridge.getAppVersionCode();
+    const n = Number(code);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return Number(process.env.NEXT_PUBLIC_APP_VERSION_CODE ?? 1);
+}
 
 /** sessionStorage key：记录本次会话已忽略的版本 */
 const IGNORE_KEY = "xt_music_ignored_version";
@@ -75,7 +88,7 @@ export function UpdateDialog() {
     async function checkVersion() {
       try {
         const result = await api.get<VersionCheckResult>(
-          `/app/version/latest?platform=${detectPlatform()}&versionCode=${CURRENT_VERSION_CODE}`
+          `/app/version/latest?platform=${detectPlatform()}&versionCode=${getCurrentVersionCode()}`
         );
         if (cancelled || !result.hasUpdate || !result.latest) return;
 
@@ -107,10 +120,26 @@ export function UpdateDialog() {
     setOpen(false);
   };
 
-  const handleUpdate = () => {
-    if (checkResult?.latest?.downloadUrl) {
-      window.open(checkResult.latest.downloadUrl, "_blank", "noopener");
+  const handleUpdate = async () => {
+    const latest = checkResult?.latest;
+    if (!latest?.downloadUrl) return;
+
+    if (getPlatform().isTWA) {
+      // TWA 模式：调用原生 APK 下载 + 安装流程
+      androidBridge.installApk(latest.downloadUrl, latest.md5 ?? null);
+      // 上报下载次数（HEAD 请求，后端 downloadCount +1）
+      try {
+        await fetch(`${API_BASE}/app/version/download/${latest.id}`, {
+          method: "HEAD",
+        });
+      } catch {
+        // 上报失败静默
+      }
+    } else {
+      // 浏览器模式：新窗口打开下载链接
+      window.open(latest.downloadUrl, "_blank", "noopener");
     }
+
     if (!checkResult?.forceUpdate) {
       setOpen(false);
     }

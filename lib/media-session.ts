@@ -10,6 +10,7 @@
  */
 
 import type { Song } from "@/lib/store/player-store";
+import { getPlatform } from "@/lib/platform";
 
 /** Media Session 操作处理器集合 */
 export interface MediaSessionHandlers {
@@ -24,8 +25,14 @@ export interface MediaSessionHandlers {
   stop?: () => void;
 }
 
-/** 是否支持 Media Session API */
+/**
+ * 是否支持 Media Session API
+ * - TWA 模式下完全跳过：原生 Media3 自带系统通知 + 锁屏控件 + 媒体按钮，
+ *   前端重复设置会与原生冲突
+ */
 export function isMediaSessionSupported(): boolean {
+  // TWA 模式短路：所有 navigator.mediaSession 调用均不应执行
+  if (getPlatform().isTWA) return false;
   return (
     typeof navigator !== "undefined" &&
     "mediaSession" in navigator &&
