@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useScroll, useMotionValueEvent } from "framer-motion";
-import { Info, Menu, Search } from "lucide-react";
+import { Info, Menu, Search, ListMusic } from "lucide-react";
 
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { usePlayerStore } from "@/lib/store/player-store";
 
 /**
  * 顶部毛玻璃导航栏
@@ -29,6 +30,8 @@ export function TopNav() {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = React.useState(false);
   const [sheetOpen, setSheetOpen] = React.useState(false);
+  const toggleQueue = usePlayerStore((s) => s.toggleQueue);
+  const isQueueOpen = usePlayerStore((s) => s.isQueueOpen);
 
   useMotionValueEvent(scrollY, "change", (y) => {
     setScrolled(y > 8);
@@ -127,6 +130,23 @@ export function TopNav() {
 
       {/* 占位伸缩区 */}
       <div className="flex-1" />
+
+      {/* PC 端队列切换按钮（仅 lg+ 显示，展开状态高亮） */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={toggleQueue}
+        aria-label={isQueueOpen ? "收起队列" : "展开队列"}
+        aria-pressed={isQueueOpen}
+        className={cn(
+          "hidden h-9 w-9 lg:inline-flex",
+          isQueueOpen
+            ? "text-primary-700 dark:text-primary-300"
+            : "text-foreground/70 hover:text-foreground"
+        )}
+      >
+        <ListMusic className="h-5 w-5" />
+      </Button>
 
       {/* 搜索入口：搜索 Tab 已合并至顶栏 */}
       <Link href="/search" aria-label="搜索">

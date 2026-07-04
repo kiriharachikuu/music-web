@@ -128,8 +128,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* PC 右侧播放队列面板（lg 及以上） */}
       <QueuePanel />
 
-      {/* 主区域：桌面端左移 w-64，lg 右移 w-80 留给队列面板 */}
-      <div className="md:pl-64 lg:pr-80">
+      {/* 主区域：桌面端左移 w-64 给侧边栏；队列面板改为浮层抽屉，不再占布局 */}
+      <div className="md:pl-64">
         <TopNav />
         <main className="mx-auto max-w-[1400px] px-4 pb-40 pt-6 md:px-6 md:pb-32">
           {children}

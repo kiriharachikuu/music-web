@@ -25,7 +25,7 @@ const SORTS: { key: Sort; label: string }[] = [
  * - Tab 切换：专辑 / 歌单
  * - 排序：最新 / 最热 / 名称
  * - 无限滚动加载更多（IntersectionObserver 监听底部哨兵）
- * - 移动端单列，平板 4 列，PC 6 列
+ * - 移动端 2 列，平板 3-4 列，PC 6 列
  */
 export function LibraryClient({
   initialAlbums,
@@ -197,7 +197,7 @@ export function LibraryClient({
           description="后端服务未就绪或暂无数据。"
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6">
           {items.map((item) =>
             tab === "albums" ? (
               <AlbumCard key={item.id} album={item as Album} />

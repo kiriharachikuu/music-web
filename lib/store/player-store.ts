@@ -37,7 +37,7 @@ async function reportPlayHistory(songId: string) {
  * 2. persist 采用 skipHydration: true，在客户端挂载后由 AppShell 手动 rehydrate，
  *    保证 SSR 与首帧客户端渲染一致（均使用默认空状态），避免 hydration mismatch。
  * 3. 持久化字段：currentSong / queue / currentIndex / volume / playMode
- *    不持久化：currentTime（每次从头）/ isPlaying / duration / isLyricPageOpen
+ *    不持久化：currentTime（每次从头）/ isPlaying / duration / isLyricPageOpen / isQueueOpen
  */
 
 // ===== 类型定义 =====
@@ -69,6 +69,8 @@ interface PlayerState {
   volume: number; // 0~1
   playMode: PlayMode;
   isLyricPageOpen: boolean;
+  /** PC 端播放队列面板展开状态（不持久化，默认收起） */
+  isQueueOpen: boolean;
   /** 播放器错误信息（UI 层监听并显示 Toast），null 表示无错误 */
   error: string | null;
 
@@ -91,6 +93,10 @@ interface PlayerState {
   setPlayMode: (mode: PlayMode) => void;
   openLyricPage: () => void;
   closeLyricPage: () => void;
+  /** 设置 PC 队列面板展开状态 */
+  setQueueOpen: (open: boolean) => void;
+  /** 切换 PC 队列面板展开状态 */
+  toggleQueue: () => void;
   /** 清除错误状态 */
   clearError: () => void;
 }
@@ -230,6 +236,7 @@ export const usePlayerStore = create<PlayerState>()(
       volume: 0.8,
       playMode: "list",
       isLyricPageOpen: false,
+      isQueueOpen: false,
       error: null,
 
       // 播放：可传入新歌曲与队列；不传则播放队列当前位置
@@ -470,6 +477,8 @@ export const usePlayerStore = create<PlayerState>()(
 
       openLyricPage: () => set({ isLyricPageOpen: true }),
       closeLyricPage: () => set({ isLyricPageOpen: false }),
+      setQueueOpen: (open) => set({ isQueueOpen: open }),
+      toggleQueue: () => set((s) => ({ isQueueOpen: !s.isQueueOpen })),
       clearError: () => set({ error: null }),
     }),
     {
@@ -478,7 +487,7 @@ export const usePlayerStore = create<PlayerState>()(
       // SSR 安全：跳过自动 hydration，由 AppShell 在客户端手动 rehydrate
       skipHydration: true,
       // 仅持久化稳定字段：currentSong / queue / currentIndex / volume / playMode
-      // 不持久化 currentTime / isPlaying / duration / isLyricPageOpen
+      // 不持久化 currentTime / isPlaying / duration / isLyricPageOpen / isQueueOpen
       partialize: (state) => ({
         currentSong: state.currentSong,
         queue: state.queue,
