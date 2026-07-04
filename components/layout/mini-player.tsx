@@ -68,9 +68,9 @@ export function MiniPlayer() {
   return (
     <div className="fixed inset-x-0 bottom-16 z-40 md:bottom-0 md:left-64">
       <div className="mx-auto border-t border-primary-500/10 bg-white/80 pb-safe backdrop-blur-xl dark:bg-gray-900/60">
-        <div className="flex items-center gap-3 px-3 py-2.5 md:gap-4 md:px-6 md:py-3">
+        <div className="flex items-center gap-3 px-3 py-2 md:gap-4 md:px-6 md:py-3 landscape:py-1.5">
           {/* 封面 */}
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-primary-700/10 md:h-14 md:w-14">
+          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary-700/10 md:h-14 md:w-14 landscape:h-10 landscape:w-10">
             {currentSong?.cover ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -86,13 +86,13 @@ export function MiniPlayer() {
           </div>
 
           {/* 歌名 / 歌手 + 进度条 */}
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-1 landscape:gap-0.5">
             <div className="flex items-baseline justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
+                <p className="truncate text-sm font-medium landscape:text-[13px]">
                   {currentSong?.title ?? "未在播放"}
                 </p>
-                <p className="truncate text-xs text-foreground/50">
+                <p className="truncate text-xs text-foreground/50 landscape:text-[11px]">
                   {currentSong?.artist ?? "—"}
                 </p>
               </div>
@@ -114,12 +114,12 @@ export function MiniPlayer() {
               onClick={toggle}
               size="icon"
               aria-label={isPlaying ? "暂停" : "播放"}
-              className="h-10 w-10 rounded-full bg-primary-700 text-white shadow-card hover:bg-primary-600 active:bg-primary-800"
+              className="h-9 w-9 rounded-full bg-primary-700 text-white shadow-card hover:bg-primary-600 active:bg-primary-800 md:h-10 md:w-10 landscape:h-8 landscape:w-8"
             >
               {isPlaying ? (
-                <Pause className="h-5 w-5" />
+                <Pause className="h-4 w-4 md:h-5 md:w-5 landscape:h-3.5 landscape:w-3.5" />
               ) : (
-                <Play className="h-5 w-5 translate-x-[1px]" />
+                <Play className="h-4 w-4 translate-x-[1px] md:h-5 md:w-5 landscape:h-3.5 landscape:w-3.5" />
               )}
             </Button>
             <Button

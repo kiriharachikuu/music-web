@@ -13,6 +13,7 @@ import { LoginDialog } from "@/components/auth/login-dialog";
 import { UpdateDialog } from "@/components/common/update-dialog";
 import { Toaster } from "@/components/ui/toaster";
 import { usePlayerStore } from "@/lib/store/player-store";
+import { useSafeArea } from "@/lib/hooks/use-safe-area";
 
 /** 不显示应用外壳的路径（全屏独立页面） */
 const STANDALONE_PATHS = ["/login"];
@@ -43,6 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isStandalone = STANDALONE_PATHS.some((p) => pathname === p);
   const error = usePlayerStore((s) => s.error);
   const clearError = usePlayerStore((s) => s.clearError);
+  useSafeArea();
   // 守卫：自动播放恢复只在首次挂载执行一次（避免 React 严格模式双触发）
   const autoPlayRestoredRef = React.useRef(false);
 
@@ -131,7 +133,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* 主区域：桌面端左移 w-64 给侧边栏；队列面板改为浮层抽屉，不再占布局 */}
       <div className="md:pl-64">
         <TopNav />
-        <main className="mx-auto max-w-[1400px] px-4 pb-40 pt-6 md:px-6 md:pb-32">
+        <main className="mx-auto max-w-[1400px] px-4 pb-44 pt-4 md:px-6 md:pb-32 md:pt-6 landscape:pb-36">
           {children}
         </main>
       </div>

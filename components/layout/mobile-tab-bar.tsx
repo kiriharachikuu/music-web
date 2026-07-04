@@ -19,7 +19,7 @@ export function MobileTabBar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-stretch border-t border-primary-500/10 bg-white/90 pb-safe backdrop-blur-xl dark:bg-gray-900/80 md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-stretch border-t border-primary-500/10 bg-white/90 pb-safe backdrop-blur-xl dark:bg-gray-900/80 md:hidden landscape:h-12">
       {navItems.map((item) => {
         const active = isActive(item.href);
         const Icon = item.icon;
@@ -28,13 +28,15 @@ export function MobileTabBar() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-medium transition-colors",
+              "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors no-select landscape:gap-0 landscape:text-[10px]",
               active
                 ? "text-primary-700 dark:text-primary-300"
                 : "text-foreground/50"
             )}
           >
-            <Icon className="h-5 w-5" />
+            <span className="flex h-7 w-7 items-center justify-center landscape:h-6 landscape:w-6">
+              <Icon className="h-5 w-5 landscape:h-4.5 landscape:w-4.5" />
+            </span>
             {item.label}
           </Link>
         );

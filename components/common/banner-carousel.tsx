@@ -48,7 +48,7 @@ export function BannerCarousel({
 
   return (
     <div
-      className={cn("relative overflow-hidden rounded-2xl", className)}
+      className={cn("relative overflow-hidden rounded-xl md:rounded-2xl", className)}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -59,18 +59,20 @@ export function BannerCarousel({
       >
         {banners.map((b) => {
           const inner = (
-            <div className="relative h-44 w-full shrink-0 md:h-64">
+            <div className="relative h-36 w-full shrink-0 md:h-64">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={b.imageUrl}
                 alt={b.title}
+                loading="lazy"
+                decoding="async"
                 className="h-full w-full object-cover"
               />
               {/* 渐变遮罩，增强文字可读性 */}
               <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />
               {/* 标题文字 */}
-              <div className="absolute bottom-0 left-0 p-5 md:p-8">
-                <h3 className="max-w-md text-lg font-bold text-white drop-shadow-md md:text-2xl">
+              <div className="absolute bottom-0 left-0 p-4 md:p-8">
+                <h3 className="max-w-md text-base font-bold text-white drop-shadow-md md:text-2xl">
                   {b.title}
                 </h3>
               </div>

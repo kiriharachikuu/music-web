@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useScroll, useMotionValueEvent } from "framer-motion";
-import { Info, Menu, Search, ListMusic } from "lucide-react";
+import { Info, Download, Menu, Search, ListMusic } from "lucide-react";
 
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function TopNav() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 pt-safe transition-colors duration-300 md:px-6",
+        "sticky top-safe z-30 flex h-16 items-center gap-3 border-b px-4 transition-colors duration-300 md:px-6",
         scrolled
           ? "border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
           : "border-transparent bg-transparent backdrop-blur-0"
@@ -96,6 +96,23 @@ export function TopNav() {
                 </Link>
               );
             })}
+            {/* 下载 App */}
+            <Link
+              href="/download"
+              onClick={() => setSheetOpen(false)}
+              className={cn(
+                "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                isActive("/download")
+                  ? "bg-primary-50/10 text-primary-700 dark:text-primary-300"
+                  : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+              )}
+            >
+              {isActive("/download") && (
+                <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-primary-700" />
+              )}
+              <Download className="h-5 w-5" />
+              下载 App
+            </Link>
             {/* 关于项目 */}
             <Link
               href="/about"

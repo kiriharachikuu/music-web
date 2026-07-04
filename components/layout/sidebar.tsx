@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-import { Info } from "lucide-react";
+import { Info, Download } from "lucide-react";
 
 /**
  * PC 侧边栏（md 及以上显示）
@@ -66,8 +66,23 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* 底部：关于项目链接 */}
-      <div className="border-t border-primary-500/10 px-3 py-3">
+      {/* 底部：下载 + 关于链接 */}
+      <div className="border-t border-primary-500/10 px-3 py-3 space-y-1">
+        <Link
+          href="/download"
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+            isActive("/download")
+              ? "bg-primary-50/10 text-primary-700 dark:text-primary-300"
+              : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+          )}
+        >
+          {isActive("/download") && (
+            <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-primary-700" />
+          )}
+          <Download className="h-5 w-5 shrink-0" />
+          下载 App
+        </Link>
         <Link
           href="/about"
           className={cn(

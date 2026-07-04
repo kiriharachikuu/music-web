@@ -38,8 +38,8 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <section className="animate-fade-in space-y-10">
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">发现</h1>
+      <section className="animate-fade-in space-y-8 md:space-y-10">
+        <h1 className="text-xl font-bold tracking-tight md:text-3xl">发现</h1>
 
         {/* Banner 轮播 */}
         {banners.length > 0 && <BannerCarousel banners={banners} />}
@@ -48,13 +48,13 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
         {dailyRecommend.length > 0 && (
           <div>
             <SectionTitle title="每日推荐" moreHref="/rankings" />
-            <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2 no-scrollbar">
+            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
               {dailyRecommend.map((song) => (
                 <SongCard
                   key={song.id}
                   song={song}
                   queue={dailyRecommend}
-                  className="w-40 md:w-44"
+                  className="w-36 md:w-44"
                 />
               ))}
             </div>
@@ -65,7 +65,7 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
         {newSongs.length > 0 && (
           <div>
             <SectionTitle title="新歌推送" moreHref="/rankings" />
-            <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2 no-scrollbar">
+            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
               {newSongs.map((song) => (
                 <SongCard key={song.id} song={song} queue={newSongs} />
               ))}

@@ -180,7 +180,7 @@ export function SongList({
           >
           <div
             className={cn(
-              "group flex items-center gap-3 px-2.5 py-2.5 transition-colors md:gap-4 md:px-4 [content-visibility:auto] [contain-intrinsic-size:64px]",
+              "group flex items-center gap-3 px-2 py-2 transition-colors md:gap-4 md:px-4 md:py-2.5 [content-visibility:auto] [contain-intrinsic-size:56px]",
               isActive
                 ? "bg-primary-700/5"
                 : "hover:bg-foreground/[0.03]"
@@ -193,7 +193,7 @@ export function SongList({
                 onClick={() => onToggleSelect?.(song.id)}
                 aria-label={isSelected ? "取消选择" : "选择"}
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition-colors",
+                  "flex h-10 w-6 shrink-0 items-center justify-center rounded-md border transition-colors md:h-8 md:w-6",
                   isSelected
                     ? "border-primary-700 bg-primary-700 text-white"
                     : "border-foreground/20 hover:border-primary-500"
@@ -223,7 +223,7 @@ export function SongList({
                 type="button"
                 onClick={handlePlay}
                 aria-label={isActive && isPlaying ? "暂停" : "播放"}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-foreground/50 hover:bg-primary-700/10 hover:text-primary-700 dark:hover:text-primary-300"
+                className="flex h-10 w-8 shrink-0 items-center justify-center rounded-full text-foreground/50 hover:bg-primary-700/10 hover:text-primary-700 dark:hover:text-primary-300 md:h-8 md:w-8"
               >
                 {isActive && isPlaying ? (
                   <Pause className="h-4 w-4" />
@@ -287,17 +287,17 @@ export function SongList({
             </span>
 
             {/* 操作按钮组 */}
-            <div className="flex shrink-0 items-center gap-0.5">
+            <div className="flex shrink-0 items-center gap-0.5 md:gap-1">
               {onLike && (
                 <button
                   type="button"
                   onClick={() => onLike(song)}
                   aria-label={isLiked ? "取消喜欢" : "喜欢"}
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                    "flex h-10 w-8 items-center justify-center rounded-full transition-colors md:h-8 md:w-8",
                     isLiked
                       ? "text-primary-700 dark:text-primary-300"
-                      : "text-foreground/40 opacity-0 hover:bg-primary-700/10 hover:text-primary-700 group-hover:opacity-100 dark:hover:text-primary-300"
+                      : "text-foreground/40 md:opacity-0 md:hover:bg-primary-700/10 md:hover:text-primary-700 md:group-hover:opacity-100 dark:md:hover:text-primary-300"
                   )}
                 >
                   <Heart
@@ -322,10 +322,10 @@ export function SongList({
                           : "下载"
                     }
                     className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                      "flex h-10 w-8 items-center justify-center rounded-full transition-colors md:h-8 md:w-8",
                       isDownloading || isDownloaded
                         ? "text-primary-700 dark:text-primary-300"
-                        : "text-foreground/40 opacity-0 hover:bg-primary-700/10 hover:text-primary-700 group-hover:opacity-100 dark:hover:text-primary-300",
+                        : "text-foreground/40 md:opacity-0 md:hover:bg-primary-700/10 md:hover:text-primary-700 md:group-hover:opacity-100 dark:md:hover:text-primary-300",
                       isDownloading && "cursor-wait"
                     )}
                   >
@@ -346,7 +346,7 @@ export function SongList({
                 type="button"
                 onClick={() => addToQueue(toPlayerSong(song))}
                 aria-label="添加到队列"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-primary-700/10 hover:text-primary-700 group-hover:opacity-100 dark:hover:text-primary-300"
+                className="hidden h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-primary-700/10 hover:text-primary-700 group-hover:opacity-100 dark:hover:text-primary-300 md:flex"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -355,7 +355,7 @@ export function SongList({
                   type="button"
                   onClick={() => onDelete(song)}
                   aria-label="删除"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                  className="hidden h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 md:flex"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -365,7 +365,7 @@ export function SongList({
                   <button
                     type="button"
                     aria-label="更多操作"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-foreground/5 hover:text-foreground group-hover:opacity-100"
+                    className="flex h-10 w-8 items-center justify-center rounded-full text-foreground/40 transition-all hover:bg-foreground/5 hover:text-foreground md:h-8 md:w-8 md:opacity-0 md:group-hover:opacity-100"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
