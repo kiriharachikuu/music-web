@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { ConfirmProvider } from "@/components/common/confirm-dialog";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -75,6 +76,7 @@ export default function RootLayout({
             <AppShell>{children}</AppShell>
           </ConfirmProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
