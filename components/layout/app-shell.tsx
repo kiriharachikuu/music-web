@@ -134,7 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* 主区域：桌面端左移 w-64 给侧边栏；队列面板改为浮层抽屉，不再占布局 */}
       <div className="md:pl-64">
         <TopNav />
-        <main className="mx-auto max-w-[1400px] px-4 pb-44 pt-4 md:px-6 md:pb-32 md:pt-6 landscape:pb-36">
+        <main className="mx-auto max-w-[1400px] px-4 pb-44 pt-[calc(var(--safe-area-top,0px)+4rem)] md:px-6 md:pb-32 md:pt-[calc(var(--safe-area-top,0px)+4.5rem)] landscape:pb-36">
           {children}
         </main>
       </div>
