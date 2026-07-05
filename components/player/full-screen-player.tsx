@@ -236,7 +236,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         {/* 顶部下拉手柄条（仅此区域可启动拖拽关闭） */}
         <div
           onPointerDown={(e) => dragControls.start(e.nativeEvent)}
-          className="flex shrink-0 cursor-grab justify-center pt-3 active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab justify-center pt-safe active:cursor-grabbing"
           aria-label="下拉关闭"
         >
           <div className="h-1.5 w-12 rounded-full bg-white/30" />
