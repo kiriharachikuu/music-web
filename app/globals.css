@@ -194,6 +194,23 @@
     padding-right: var(--safe-area-right, env(safe-area-inset-right));
   }
 
+  /*
+   * 平台特定样式调整
+   * - Android TWA：减小顶部安全区域，搜索框向上移动，确保完整显示在框架内
+   * - iOS PWA：增大顶部安全区域，整体界面向下移动，避开灵动岛(Dynamic Island)
+   * 通过 --safe-area-top-adjust 变量叠加偏移，不直接修改原始值
+   */
+
+  /* Android TWA：顶部区域向上偏移 -12px，解决搜索框内容超出框架问题 */
+  .platform-twa {
+    --safe-area-top-adjust: -12px;
+  }
+
+  /* iOS PWA：顶部区域向下偏移 +8px，避开灵动岛 */
+  .platform-ios-pwa {
+    --safe-area-top-adjust: 8px;
+  }
+
   /* 移动端触控目标最小尺寸（44x44 Apple HIG） */
   .touch-target {
     min-width: 44px;

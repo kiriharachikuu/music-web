@@ -139,7 +139,25 @@ export function useSafeArea() {
       setSafeArea({ top, bottom, left, right });
 
       const html = document.documentElement;
-      html.style.setProperty(SAFE_AREA_VARS.top, `${top}px`);
+
+      html.classList.remove("platform-twa", "platform-ios-pwa", "platform-android-browser", "platform-ios-browser", "platform-desktop");
+      if (platform.isTWA) {
+        html.classList.add("platform-twa");
+      } else if (platform.isIOS && platform.isStandalone) {
+        html.classList.add("platform-ios-pwa");
+      } else if (platform.isIOS) {
+        html.classList.add("platform-ios-browser");
+      } else if (platform.isAndroid) {
+        html.classList.add("platform-android-browser");
+      } else {
+        html.classList.add("platform-desktop");
+      }
+
+      const adjustRaw = window.getComputedStyle(html).getPropertyValue("--safe-area-top-adjust");
+      const adjustPx = parsePx(adjustRaw.trim());
+      const adjustedTop = top + adjustPx;
+
+      html.style.setProperty(SAFE_AREA_VARS.top, `${Math.max(0, adjustedTop)}px`);
       html.style.setProperty(SAFE_AREA_VARS.bottom, `${bottom}px`);
       html.style.setProperty(SAFE_AREA_VARS.left, `${left}px`);
       html.style.setProperty(SAFE_AREA_VARS.right, `${right}px`);
