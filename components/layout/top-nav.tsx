@@ -40,6 +40,17 @@ export function TopNav() {
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const toggleQueue = usePlayerStore((s) => s.toggleQueue);
   const isQueueOpen = usePlayerStore((s) => s.isQueueOpen);
+
+  // 移动端搜索页：隐藏顶部导航（搜索页有自己的搜索框）
+  const isMobileSearch = pathname === "/search";
+  const [isMobile, setIsMobile] = React.useState(false);
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+  if (isMobileSearch && isMobile) return null;
   const openLogin = useAuthStore((s) => s.openLogin);
 
   useMotionValueEvent(scrollY, "change", (y) => {
@@ -89,13 +100,13 @@ export function TopNav() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-30 flex min-h-16 items-center gap-3 border-b px-4 pt-safe transition-colors duration-300 md:left-64 md:px-6",
+        "fixed inset-x-0 top-0 z-30 flex items-center gap-3 border-b px-4 pt-safe transition-colors duration-300 md:left-64 md:px-6",
         scrolled
           ? "border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
-      <div className="flex h-16 w-full items-center gap-3">
+      <div className="flex h-14 w-full items-center gap-3">
       {/* 移动端：搜索栏 + 用户头像 */}
       <div className="flex flex-1 items-center gap-3 md:hidden">
         <Link href="/search" className="flex-1">

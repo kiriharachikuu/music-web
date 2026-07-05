@@ -236,7 +236,7 @@ export function SearchClient({
   const hot = hotKeywords.length > 0 ? hotKeywords : DEFAULT_HOT;
 
   return (
-    <section className="animate-fade-in space-y-6">
+    <section className="animate-fade-in space-y-6 pt-safe md:pt-0">
       {/* 搜索框：焦点态边框 + 光环 primary-700 */}
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
