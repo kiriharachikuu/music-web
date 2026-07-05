@@ -113,17 +113,17 @@ export function TopNav() {
       {/* 移动端：搜索栏 + 用户头像 */}
       <div className="flex flex-1 items-center gap-3 md:hidden">
         <Link href="/search" className="flex-1">
-          <div className="flex h-10 items-center gap-2 rounded-full border border-border bg-foreground/5 px-4 text-sm text-foreground/50">
+          <div className="flex h-10 items-center gap-2 rounded-full border border-border bg-foreground/5 px-4 text-sm text-foreground/50 platform-twa:h-9 platform-twa:gap-1.5">
             <Search className="h-4 w-4" />
             <span>搜索歌曲、歌单、歌手</span>
           </div>
         </Link>
         <button
           onClick={handleAvatarClick}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground/5 no-select"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground/5 no-select platform-twa:h-9 platform-twa:w-9"
           aria-label={isLoggedIn ? "个人中心" : "登录"}
         >
-          <Avatar className="h-10 w-10 border-2 border-primary-700/30">
+          <Avatar className="h-10 w-10 border-2 border-primary-700/30 platform-twa:h-9 platform-twa:w-9">
             {avatarUrl ? (
               <AvatarImage src={avatarUrl} alt="avatar" />
             ) : (
@@ -135,13 +135,13 @@ export function TopNav() {
         </button>
       </div>
 
-      {/* 桌面端：汉堡菜单（隐藏） */}
+      {/* 移动端：汉堡菜单按钮（桌面端已由侧边栏提供导航） */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="hidden h-11 w-11 md:inline-flex"
+            className="flex h-11 w-11 md:hidden"
             aria-label="打开菜单"
           >
             <Menu className="h-5 w-5" />

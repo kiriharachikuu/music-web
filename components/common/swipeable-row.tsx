@@ -116,7 +116,7 @@ export function SwipeableRow({
           handleClose();
           onDelete();
         }}
-        className="absolute right-0 top-0 hidden h-full w-[80px] items-center justify-center bg-red-500 text-sm font-medium text-white md:hidden"
+        className="absolute right-0 top-0 h-full w-[80px] items-center justify-center bg-red-500 text-sm font-medium text-white md:hidden"
         style={{ opacity: open || offset < -5 ? 1 : 0 }}
         aria-label="删除"
       >

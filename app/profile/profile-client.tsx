@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   User,
@@ -53,7 +54,7 @@ const TABS: { key: Tab; label: string; icon: typeof Heart }[] = [
 /**
  * 个人中心客户端组件
  * - 桌面端：Tab 切换形式
- * - 移动端：二级菜单展开/收起形式
+ * - 移动端：独立页面跳转形式
  * - 未登录显示登录引导
  * - 用户头像外圈 2px primary-700 描边
  * - 管理员显示管理后台入口
@@ -65,9 +66,6 @@ export function ProfileClient() {
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
   const [editOpen, setEditOpen] = React.useState(false);
-  const [expandedSection, setExpandedSection] = React.useState<string | null>(
-    "music"
-  );
   const openLogin = useAuthStore((s) => s.openLogin);
 
   // 首次挂载拉取用户信息
@@ -105,10 +103,6 @@ export function ProfileClient() {
     setLoggedOut(true);
   };
 
-  const toggleSection = (section: string) => {
-    setExpandedSection((prev) => (prev === section ? null : section));
-  };
-
   // 首次加载骨架
   if (!profileLoaded) return <PageSkeleton variant="list" />;
 
@@ -134,7 +128,7 @@ export function ProfileClient() {
     );
   }
 
-  // ========== 移动端：二级菜单模式 ==========
+  // ========== 移动端：独立页面跳转模式 ==========
   const MobileView = (
     <div className="animate-fade-in space-y-4 md:hidden">
       {/* 用户信息卡片 */}
@@ -174,68 +168,23 @@ export function ProfileClient() {
         </div>
       </div>
 
-      {/* 音乐相关：我喜欢的音乐 / 我的歌单 / 历史播放 */}
-      <MenuSection
-        title="我的音乐"
-        expanded={expandedSection === "music"}
-        onToggle={() => toggleSection("music")}
-      >
-        <MenuItem
-          icon={Heart}
-          label="我喜欢的音乐"
-          onClick={() => setActiveTab("favorites")}
-          active={activeTab === "favorites"}
-        />
-        <MenuItem
-          icon={ListMusic}
-          label="我的歌单"
-          onClick={() => setActiveTab("playlists")}
-          active={activeTab === "playlists"}
-        />
-        <MenuItem
-          icon={History}
-          label="历史播放"
-          onClick={() => setActiveTab("history")}
-          active={activeTab === "history"}
-        />
+      {/* 音乐相关 */}
+      <MenuSection title="我的音乐">
+        <MenuLink icon={Heart} label="我喜欢的音乐" href="/profile/favorites" />
+        <MenuLink icon={ListMusic} label="我的歌单" href="/profile/playlists" />
+        <MenuLink icon={History} label="历史播放" href="/profile/history" />
       </MenuSection>
 
       {/* 下载管理 */}
-      <MenuSection
-        title="下载与设置"
-        expanded={expandedSection === "settings"}
-        onToggle={() => toggleSection("settings")}
-      >
-        <MenuItem
-          icon={Download}
-          label="下载管理"
-          onClick={() => setActiveTab("downloads")}
-          active={activeTab === "downloads"}
-        />
-        <MenuItem
-          icon={Settings}
-          label="设置"
-          onClick={() => setActiveTab("settings")}
-          active={activeTab === "settings"}
-        />
+      <MenuSection title="下载与设置">
+        <MenuLink icon={Download} label="下载管理" href="/profile/downloads" />
+        <MenuLink icon={Settings} label="设置" href="/profile/settings" />
       </MenuSection>
 
-      {/* 其他：关于项目 / 下载APP / 管理后台 */}
-      <MenuSection
-        title="其他"
-        expanded={expandedSection === "other"}
-        onToggle={() => toggleSection("other")}
-      >
-        <MenuItem
-          icon={Info}
-          label="关于项目"
-          onClick={() => router.push("/about")}
-        />
-        <MenuItem
-          icon={Smartphone}
-          label="下载 App"
-          onClick={() => router.push("/download")}
-        />
+      {/* 其他 */}
+      <MenuSection title="其他">
+        <MenuLink icon={Info} label="关于项目" href="/about" />
+        <MenuLink icon={Smartphone} label="下载 App" href="/download" />
         {profile.role === "ADMIN" && (
           <MenuItem
             icon={Shield}
@@ -253,25 +202,6 @@ export function ProfileClient() {
         <LogOut className="h-4 w-4" />
         退出登录
       </button>
-
-      {/* 子模块内容（展开时显示） */}
-      <div className="pt-2">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {activeTab === "favorites" && <FavoritesTab />}
-            {activeTab === "playlists" && <PlaylistsTab />}
-            {activeTab === "history" && <HistoryTab />}
-            {activeTab === "downloads" && <DownloadsTab />}
-            {activeTab === "settings" && <SettingsTab onLogout={handleLogout} />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
     </div>
   );
 
@@ -381,78 +311,62 @@ export function ProfileClient() {
   );
 }
 
-/** 菜单分组：可展开/收起 */
+/** 菜单分组 */
 function MenuSection({
   title,
-  expanded,
-  onToggle,
   children,
 }: {
   title: string;
-  expanded: boolean;
-  onToggle: () => void;
   children: React.ReactNode;
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-primary-500/10 bg-card">
-      <button
-        onClick={onToggle}
-        className="flex w-full items-center justify-between px-4 py-3 text-left no-select"
-      >
+      <div className="flex w-full items-center justify-between px-4 py-3">
         <span className="text-sm font-semibold">{title}</span>
-        <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown className="h-4 w-4 text-foreground/40" />
-        </motion.div>
-      </button>
-      <AnimatePresence initial={false}>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="overflow-hidden"
-          >
-            <div className="divide-y divide-border/50">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </div>
+      <div className="divide-y divide-border/50">{children}</div>
     </div>
   );
 }
 
-/** 菜单项 */
+/** 菜单链接项（移动端） */
+function MenuLink({
+  icon: Icon,
+  label,
+  href,
+}: {
+  icon: typeof Heart;
+  label: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground/80 no-select transition-colors active:bg-foreground/5 hover:text-primary-700 hover:dark:text-primary-300"
+    >
+      <Icon className="h-5 w-5 shrink-0 text-foreground/50" />
+      <span className="flex-1">{label}</span>
+    </Link>
+  );
+}
+
+/** 菜单项（非链接，用于管理后台等） */
 function MenuItem({
   icon: Icon,
   label,
   onClick,
-  active,
 }: {
   icon: typeof Heart;
   label: string;
   onClick: () => void;
-  active?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className={cn(
-        "flex w-full items-center gap-3 px-4 py-3 text-left text-sm no-select transition-colors active:bg-foreground/5",
-        active
-          ? "text-primary-700 dark:text-primary-300"
-          : "text-foreground/80"
-      )}
+      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground/80 no-select transition-colors active:bg-foreground/5"
     >
-      <Icon
-        className={cn(
-          "h-5 w-5 shrink-0",
-          active ? "text-primary-700 dark:text-primary-300" : "text-foreground/50"
-        )}
-      />
+      <Icon className="h-5 w-5 shrink-0 text-foreground/50" />
       <span className="flex-1">{label}</span>
-      {active && (
-        <span className="h-1.5 w-1.5 rounded-full bg-primary-700" />
-      )}
     </button>
   );
 }
