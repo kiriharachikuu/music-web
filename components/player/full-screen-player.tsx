@@ -214,8 +214,11 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           <img
             src={cover}
             alt=""
-            className="h-full w-full scale-125 object-cover blur-3xl"
+            className="h-full w-full scale-125 object-cover"
             draggable={false}
+            loading="lazy"
+            decoding="async"
+            style={{ contain: "strict" }}
           />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-primary-700/40 to-black" />

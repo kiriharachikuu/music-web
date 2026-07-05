@@ -53,8 +53,13 @@ export function TopNav() {
   if (isMobileSearch && isMobile) return null;
   const openLogin = useAuthStore((s) => s.openLogin);
 
+  // 滚动状态防抖：避免快速滚动时频繁更新状态导致闪烁
+  const scrollTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   useMotionValueEvent(scrollY, "change", (y) => {
-    setScrolled(y > 8);
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => {
+      setScrolled(y > 8);
+    }, 50);
   });
 
   React.useEffect(() => {
@@ -106,7 +111,7 @@ export function TopNav() {
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
-      <div className="flex h-14 w-full items-center gap-3">
+      <div className="flex h-12 w-full items-center gap-3">
       {/* 移动端：搜索栏 + 用户头像 */}
       <div className="flex flex-1 items-center gap-3 md:hidden">
         <Link href="/search" className="flex-1">

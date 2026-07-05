@@ -92,6 +92,7 @@ export function useSafeArea() {
 
   React.useEffect(() => {
     let rafId: number | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const updateSafeArea = () => {
       const platform = detectPlatform();
@@ -147,11 +148,14 @@ export function useSafeArea() {
     updateSafeArea();
 
     const handleResize = () => {
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        updateSafeArea();
-        rafId = null;
-      });
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        if (rafId) return;
+        rafId = requestAnimationFrame(() => {
+          updateSafeArea();
+          rafId = null;
+        });
+      }, 100);
     };
 
     window.addEventListener("resize", handleResize, { passive: true });
@@ -170,6 +174,9 @@ export function useSafeArea() {
       }
       if (rafId) {
         cancelAnimationFrame(rafId);
+      }
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
       }
     };
   }, []);

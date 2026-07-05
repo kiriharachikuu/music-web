@@ -117,15 +117,29 @@ export function LyricsView({
   // 当前行变化时自动滚动到容器中心
   React.useEffect(() => {
     if (activeIndex < 0) return;
-    if (userScrollingRef.current) return; // 用户滚动期间不跟随
+    if (userScrollingRef.current) return;
     const container = containerRef.current;
     const activeEl = lineRefs.current[activeIndex];
     if (!container || !activeEl) return;
+    
     const target =
       activeEl.offsetTop -
       container.clientHeight / 2 +
       activeEl.clientHeight / 2;
-    container.scrollTo({ top: target, behavior: "smooth" });
+    
+    // 使用 requestAnimationFrame 优化滚动性能，避免过度滚动
+    const animateScroll = () => {
+      const current = container.scrollTop;
+      const diff = target - current;
+      if (Math.abs(diff) < 1) {
+        container.scrollTop = target;
+        return;
+      }
+      container.scrollTop = current + diff * 0.2;
+      requestAnimationFrame(animateScroll);
+    };
+    
+    animateScroll();
   }, [activeIndex]);
 
   // 加载中状态
