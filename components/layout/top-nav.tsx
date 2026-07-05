@@ -105,13 +105,13 @@ export function TopNav() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-30 flex items-center gap-3 border-b px-4 pt-safe transition-colors duration-300 md:left-64 md:px-6",
+        "fixed inset-x-0 top-0 z-30 border-b transition-colors duration-300 md:left-64",
         scrolled
           ? "border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
-      <div className="flex h-12 w-full items-center gap-3">
+      <div className="flex h-12 w-full items-center gap-3 px-4 pt-safe md:px-6">
       {/* 移动端：搜索栏 + 用户头像 */}
       <div className="flex flex-1 items-center gap-3 md:hidden">
         <Link href="/search" className="flex-1">

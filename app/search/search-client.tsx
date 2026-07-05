@@ -70,7 +70,8 @@ export function SearchClient({
   const [likedIds, setLikedIds] = React.useState<Set<string>>(new Set());
   const [hasMore, setHasMore] = React.useState(false);
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const searchInputMobileRef = React.useRef<HTMLInputElement>(null);
+  const searchInputDesktopRef = React.useRef<HTMLInputElement>(null);
   /** 当前分页（ref，不触发重渲染，避免与搜索 effect 形成循环） */
   const pageRef = React.useRef(1);
 
@@ -78,7 +79,11 @@ export function SearchClient({
   React.useEffect(() => {
     if (sessionStorage.getItem("xt-focus-search") === "1") {
       sessionStorage.removeItem("xt-focus-search");
-      searchInputRef.current?.focus();
+      if (window.innerWidth < 768) {
+        searchInputMobileRef.current?.focus();
+      } else {
+        searchInputDesktopRef.current?.focus();
+      }
     }
   }, []);
 
@@ -236,33 +241,66 @@ export function SearchClient({
   const hot = hotKeywords.length > 0 ? hotKeywords : DEFAULT_HOT;
 
   return (
-    <section className="animate-fade-in space-y-6 pt-safe md:pt-0">
-      {/* 搜索框：焦点态边框 + 光环 primary-700 */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
-        <input
-          id="search-input"
-          ref={searchInputRef}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="搜索歌曲、歌手、专辑、歌单"
-          className="h-12 w-full rounded-full border border-input bg-card/60 pl-12 pr-12 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20 dark:bg-card/40"
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => {
-              setQuery("");
-              setDebounced("");
-            }}
-            aria-label="清空"
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
+    <div className="min-h-screen">
+      {/* 移动端：固定顶部搜索栏 */}
+      <div className="fixed inset-x-0 top-0 z-30 border-b border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:hidden pt-safe">
+        <div className="flex h-12 items-center gap-3 px-4">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
+            <input
+              id="search-input-mobile"
+              ref={searchInputMobileRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="搜索歌曲、歌手、专辑、歌单"
+              className="h-10 w-full rounded-full border border-input bg-card/60 pl-12 pr-12 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20 dark:bg-card/40"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setDebounced("");
+                }}
+                aria-label="清空"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* 内容区域 */}
+      <section className="animate-fade-in space-y-6 pt-[calc(var(--safe-area-top,0px)+3rem+1rem)] md:pt-0">
+        {/* 桌面端搜索框 */}
+        <div className="relative hidden md:block">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
+          <input
+            id="search-input-desktop"
+            ref={searchInputDesktopRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="搜索歌曲、歌手、专辑、歌单"
+            className="h-12 w-full rounded-full border border-input bg-card/60 pl-12 pr-12 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20 dark:bg-card/40"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setDebounced("");
+              }}
+              aria-label="清空"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
 
       {/* 未搜索：历史 + 热门 */}
       {!hasQuery && (
@@ -455,5 +493,6 @@ export function SearchClient({
         </>
       )}
     </section>
+    </div>
   );
 }

@@ -66,7 +66,7 @@ export function MiniPlayer() {
   const openLyricPage = usePlayerStore((s) => s.openLyricPage);
 
   return (
-    <div className="fixed inset-x-0 bottom-14 z-40 md:bottom-0 md:left-64 md:z-40">
+    <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--safe-area-bottom,0px))] z-40 md:bottom-0 md:left-64 md:z-40">
       <div className="mx-auto border-t border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60">
         <div className="flex items-center gap-3 px-3 py-2 md:gap-4 md:px-6 md:py-3 landscape:py-1.5">
           {/* 封面 */}

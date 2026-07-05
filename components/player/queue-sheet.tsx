@@ -30,7 +30,7 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
           "flex flex-col gap-0 border-white/10 bg-black/40 p-0 text-white backdrop-blur-xl sm:max-w-md",
           // 让 Sheet 自带的关闭按钮（直接子 button）变白
           "[&>button]:text-white/70 [&>button:hover]:text-white",
-          "pb-safe"
+          "pt-safe pb-safe"
         )}
       >
         <SheetHeader className="border-b border-white/10 px-5 py-4">

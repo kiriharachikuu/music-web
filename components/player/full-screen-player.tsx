@@ -209,27 +209,12 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     >
       {/* ===== 背景层 z-0 ===== */}
       <div className="absolute inset-0 z-0">
-        {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={cover}
-            alt=""
-            className="h-full w-full scale-125 object-cover"
-            draggable={false}
-            loading="lazy"
-            decoding="async"
-            style={{ contain: "strict" }}
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary-700/40 to-black" />
-        )}
-        {/* 径向渐变蒙层：中心紫色 → 边缘黑色 */}
         <div
-          className="absolute inset-0"
+          className="h-full w-full"
           style={{
             background: `radial-gradient(ellipse at center, rgba(139,0,255,${
-              isDark ? 0.35 : 0.2
-            }) 0%, rgba(0,0,0,0.75) 100%)`,
+              isDark ? 0.45 : 0.3
+            }) 0%, rgba(0,0,0,0.85) 100%)`,
           }}
         />
       </div>
@@ -239,7 +224,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         {/* 顶部下拉手柄条（仅此区域可启动拖拽关闭） */}
         <div
           onPointerDown={(e) => dragControls.start(e.nativeEvent)}
-          className="flex shrink-0 cursor-grab justify-center pt-safe active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab justify-center pt-2 active:cursor-grabbing"
           aria-label="下拉关闭"
         >
           <div className="h-1.5 w-12 rounded-full bg-white/30" />

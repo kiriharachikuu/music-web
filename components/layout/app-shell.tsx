@@ -15,6 +15,7 @@ import { InstallPrompt } from "@/components/common/install-prompt";
 import { Toaster } from "@/components/ui/toaster";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
+import { cn } from "@/lib/utils";
 
 /** 不显示应用外壳的路径（全屏独立页面） */
 const STANDALONE_PATHS = ["/login"];
@@ -43,9 +44,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isStandalone = STANDALONE_PATHS.some((p) => pathname === p);
+  const isMobileSearch = pathname === "/search";
+  const [isMobile, setIsMobile] = React.useState(false);
   const error = usePlayerStore((s) => s.error);
   const clearError = usePlayerStore((s) => s.clearError);
   useSafeArea();
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   // 守卫：自动播放恢复只在首次挂载执行一次（避免 React 严格模式双触发）
   const autoPlayRestoredRef = React.useRef(false);
 
@@ -134,7 +144,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* 主区域：桌面端左移 w-64 给侧边栏；队列面板改为浮层抽屉，不再占布局 */}
       <div className="md:pl-64">
         <TopNav />
-        <main className="mx-auto max-w-[1400px] px-4 pb-44 pt-[calc(var(--safe-area-top,0px)+3rem)] md:px-6 md:pb-32 md:pt-[calc(var(--safe-area-top,0px)+3.5rem)] landscape:pb-36">
+        <main
+          className={cn(
+            "mx-auto max-w-[1400px] px-4 pb-44 md:px-6 md:pb-32 landscape:pb-36",
+            isMobileSearch && isMobile
+              ? "pt-0"
+              : "pt-[calc(var(--safe-area-top,0px)+3rem)] md:pt-[calc(var(--safe-area-top,0px)+3.5rem)]"
+          )}
+        >
           {children}
         </main>
       </div>

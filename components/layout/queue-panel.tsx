@@ -50,6 +50,7 @@ export function QueuePanel() {
       <aside
         className={cn(
           "fixed inset-y-0 right-0 z-40 hidden w-80 flex-col border-l border-primary-500/10 bg-white/80 backdrop-blur-xl transition-transform duration-300 ease-out dark:bg-gray-900/60 lg:flex",
+          "pt-safe pb-safe",
           isQueueOpen ? "translate-x-0" : "translate-x-full"
         )}
         aria-hidden={!isQueueOpen}
