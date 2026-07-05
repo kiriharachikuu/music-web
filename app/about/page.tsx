@@ -104,12 +104,12 @@ const techStack = [
 const teamMembers = [
   {
     name: "不啦不啦小星瞳",
-    role: "项目负责人 · 全栈开发",
+    role: "项目负责人 · Flutter客户端开发",
     avatarColor: "from-primary-500 to-primary-700",
   },
   {
     name: "知空",
-    role: "视觉 UI 设计师",
+    role: "视觉设计 · 前端开发",
     avatarColor: "from-pink-500 to-rose-600",
   },
   {
