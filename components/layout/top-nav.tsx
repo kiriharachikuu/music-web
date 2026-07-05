@@ -2,9 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useScroll, useMotionValueEvent } from "framer-motion";
-import { Info, Download, Menu, Search, ListMusic } from "lucide-react";
+import { Info, Download, Menu, Search, ListMusic, User } from "lucide-react";
 
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,11 @@ import {
 } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { usePlayerStore } from "@/lib/store/player-store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { getToken } from "@/lib/auth";
+import type { UserProfile } from "@/lib/types";
+import { API_BASE } from "@/lib/api";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /**
  * 顶部毛玻璃导航栏
@@ -27,18 +32,59 @@ import { usePlayerStore } from "@/lib/store/player-store";
  */
 export function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = React.useState(false);
   const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const toggleQueue = usePlayerStore((s) => s.toggleQueue);
   const isQueueOpen = usePlayerStore((s) => s.isQueueOpen);
+  const openLogin = useAuthStore((s) => s.openLogin);
 
   useMotionValueEvent(scrollY, "change", (y) => {
     setScrolled(y > 8);
   });
 
+  React.useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setIsLoggedIn(false);
+      setAvatarUrl(null);
+      return;
+    }
+    setIsLoggedIn(true);
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/user/profile`, {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const json = await res.json();
+          const profile: UserProfile | null = json.data ?? null;
+          setAvatarUrl(profile?.avatar ?? null);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    void fetchProfile();
+  }, [pathname]);
+
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const handleAvatarClick = () => {
+    if (isLoggedIn) {
+      router.push("/profile");
+    } else {
+      openLogin();
+    }
+  };
 
   return (
     <header
@@ -49,14 +95,38 @@ export function TopNav() {
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
-      {/* 移动端：汉堡菜单 + 品牌 */}
+      {/* 移动端：搜索栏 + 用户头像 */}
+      <div className="flex flex-1 items-center gap-3 md:hidden">
+        <Link href="/search" className="flex-1">
+          <div className="flex h-10 items-center gap-2 rounded-full border border-border bg-foreground/5 px-4 text-sm text-foreground/50">
+            <Search className="h-4 w-4" />
+            <span>搜索歌曲、歌单、歌手</span>
+          </div>
+        </Link>
+        <button
+          onClick={handleAvatarClick}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground/5 no-select"
+          aria-label={isLoggedIn ? "个人中心" : "登录"}
+        >
+          <Avatar className="h-10 w-10 border-2 border-primary-700/30">
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt="avatar" />
+            ) : (
+              <AvatarFallback className="bg-primary-700/10 text-primary-700">
+                <User className="h-5 w-5" />
+              </AvatarFallback>
+            )}
+          </Avatar>
+        </button>
+      </div>
+
+      {/* 桌面端：汉堡菜单（隐藏） */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            // 移动端触控目标 ≥ 44px
-            className="h-11 w-11 md:hidden"
+            className="hidden h-11 w-11 md:inline-flex"
             aria-label="打开菜单"
           >
             <Menu className="h-5 w-5" />
@@ -134,19 +204,10 @@ export function TopNav() {
         </SheetContent>
       </Sheet>
 
-      {/* 桌面端品牌缩写（侧边栏已含完整 Logo，这里仅移动端显示） */}
-      <div className="flex items-center gap-2 md:hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/icons/logo.png"
-          alt="XingTone"
-          className="h-8 w-8 rounded-lg"
-        />
-        <span className="font-semibold">XingTone</span>
-      </div>
+      {/* 桌面端品牌（侧边栏已含完整 Logo，这里不显示） */}
 
-      {/* 占位伸缩区 */}
-      <div className="flex-1" />
+      {/* 占位伸缩区（仅桌面端） */}
+      <div className="hidden flex-1 md:block" />
 
       {/* PC 端队列切换按钮（仅 lg+ 显示，展开状态高亮） */}
       <Button
@@ -165,13 +226,12 @@ export function TopNav() {
         <ListMusic className="h-5 w-5" />
       </Button>
 
-      {/* 搜索入口：搜索 Tab 已合并至顶栏 */}
-      <Link href="/search" aria-label="搜索">
+      {/* 搜索入口：桌面端显示，移动端已在顶栏搜索框 */}
+      <Link href="/search" aria-label="搜索" className="hidden md:inline-flex">
         <Button
           variant="ghost"
           size="icon"
-          // 移动端触控目标 ≥ 44px，桌面端保持 36px
-          className="h-11 w-11 text-foreground/70 hover:text-foreground md:h-9 md:w-9"
+          className="h-9 w-9 text-foreground/70 hover:text-foreground"
         >
           <Search className="h-5 w-5" />
         </Button>

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   User,
   Heart,
@@ -10,7 +11,12 @@ import {
   Settings,
   Pencil,
   Shield,
+  ChevronDown,
+  Info,
+  Smartphone,
+  LogOut,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import type { UserProfile } from "@/lib/types";
 import { API_BASE, ADMIN_URL } from "@/lib/api";
@@ -46,20 +52,25 @@ const TABS: { key: Tab; label: string; icon: typeof Heart }[] = [
 
 /**
  * 个人中心客户端组件
- * - 5 个子模块 Tab：我喜欢的音乐 / 我的歌单 / 历史播放 / 下载管理(移动端) / 设置
+ * - 桌面端：Tab 切换形式
+ * - 移动端：二级菜单展开/收起形式
  * - 未登录显示登录引导
  * - 用户头像外圈 2px primary-700 描边
  * - 管理员显示管理后台入口
  */
 export function ProfileClient() {
+  const router = useRouter();
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
   const [profileLoaded, setProfileLoaded] = React.useState(false);
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
   const [editOpen, setEditOpen] = React.useState(false);
+  const [expandedSection, setExpandedSection] = React.useState<string | null>(
+    "music"
+  );
   const openLogin = useAuthStore((s) => s.openLogin);
 
-  // 首次挂载拉取用户信息（用原生 fetch，401 不跳转，显示登录引导）
+  // 首次挂载拉取用户信息
   React.useEffect(() => {
     void loadProfile();
   }, []);
@@ -88,10 +99,20 @@ export function ProfileClient() {
     }
   };
 
+  const handleLogout = () => {
+    clearAuth();
+    setProfile(null);
+    setLoggedOut(true);
+  };
+
+  const toggleSection = (section: string) => {
+    setExpandedSection((prev) => (prev === section ? null : section));
+  };
+
   // 首次加载骨架
   if (!profileLoaded) return <PageSkeleton variant="list" />;
 
-  // 未登录：登录引导（点击按钮弹出登录弹窗，登录成功后重新拉取 profile）
+  // 未登录：登录引导
   if (loggedOut || !profile) {
     return (
       <section className="animate-fade-in space-y-6">
@@ -113,9 +134,151 @@ export function ProfileClient() {
     );
   }
 
-  return (
-    <section className="animate-fade-in space-y-6">
-      {/* 用户信息头部：头像外圈 2px primary-700 描边 */}
+  // ========== 移动端：二级菜单模式 ==========
+  const MobileView = (
+    <div className="animate-fade-in space-y-4 md:hidden">
+      {/* 用户信息卡片 */}
+      <div className="rounded-2xl border border-primary-500/10 bg-card p-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-full ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
+            <div className="h-14 w-14 overflow-hidden rounded-full bg-primary-700/10">
+              {profile.avatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.avatar}
+                  alt={profile.username}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+                  <User className="h-6 w-6" />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-lg font-bold">{profile.username}</h2>
+            <p className="truncate text-xs text-foreground/50">
+              {profile.email}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setEditOpen(true)}
+            className="shrink-0 rounded-full px-3"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            编辑
+          </Button>
+        </div>
+      </div>
+
+      {/* 音乐相关：我喜欢的音乐 / 我的歌单 / 历史播放 */}
+      <MenuSection
+        title="我的音乐"
+        expanded={expandedSection === "music"}
+        onToggle={() => toggleSection("music")}
+      >
+        <MenuItem
+          icon={Heart}
+          label="我喜欢的音乐"
+          onClick={() => setActiveTab("favorites")}
+          active={activeTab === "favorites"}
+        />
+        <MenuItem
+          icon={ListMusic}
+          label="我的歌单"
+          onClick={() => setActiveTab("playlists")}
+          active={activeTab === "playlists"}
+        />
+        <MenuItem
+          icon={History}
+          label="历史播放"
+          onClick={() => setActiveTab("history")}
+          active={activeTab === "history"}
+        />
+      </MenuSection>
+
+      {/* 下载管理 */}
+      <MenuSection
+        title="下载与设置"
+        expanded={expandedSection === "settings"}
+        onToggle={() => toggleSection("settings")}
+      >
+        <MenuItem
+          icon={Download}
+          label="下载管理"
+          onClick={() => setActiveTab("downloads")}
+          active={activeTab === "downloads"}
+        />
+        <MenuItem
+          icon={Settings}
+          label="设置"
+          onClick={() => setActiveTab("settings")}
+          active={activeTab === "settings"}
+        />
+      </MenuSection>
+
+      {/* 其他：关于项目 / 下载APP / 管理后台 */}
+      <MenuSection
+        title="其他"
+        expanded={expandedSection === "other"}
+        onToggle={() => toggleSection("other")}
+      >
+        <MenuItem
+          icon={Info}
+          label="关于项目"
+          onClick={() => router.push("/about")}
+        />
+        <MenuItem
+          icon={Smartphone}
+          label="下载 App"
+          onClick={() => router.push("/download")}
+        />
+        {profile.role === "ADMIN" && (
+          <MenuItem
+            icon={Shield}
+            label="管理后台"
+            onClick={() => window.open(ADMIN_URL, "_blank")}
+          />
+        )}
+      </MenuSection>
+
+      {/* 退出登录 */}
+      <button
+        onClick={handleLogout}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/5 py-3 text-sm font-medium text-red-500 no-select active:bg-red-500/10"
+      >
+        <LogOut className="h-4 w-4" />
+        退出登录
+      </button>
+
+      {/* 子模块内容（展开时显示） */}
+      <div className="pt-2">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            {activeTab === "favorites" && <FavoritesTab />}
+            {activeTab === "playlists" && <PlaylistsTab />}
+            {activeTab === "history" && <HistoryTab />}
+            {activeTab === "downloads" && <DownloadsTab />}
+            {activeTab === "settings" && <SettingsTab onLogout={handleLogout} />}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+
+  // ========== 桌面端：Tab 切换模式 ==========
+  const DesktopView = (
+    <section className="hidden animate-fade-in space-y-6 md:block">
+      {/* 用户信息头部 */}
       <header className="flex items-center gap-4">
         <div className="rounded-full ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
           <div className="h-16 w-16 overflow-hidden rounded-full bg-primary-700/10 md:h-20 md:w-20">
@@ -195,16 +358,14 @@ export function ProfileClient() {
       {activeTab === "playlists" && <PlaylistsTab />}
       {activeTab === "history" && <HistoryTab />}
       {activeTab === "downloads" && <DownloadsTab />}
-      {activeTab === "settings" && (
-        <SettingsTab
-          onLogout={() => {
-            clearAuth();
-            setProfile(null);
-            setLoggedOut(true);
-            setActiveTab("favorites");
-          }}
-        />
-      )}
+      {activeTab === "settings" && <SettingsTab onLogout={handleLogout} />}
+    </section>
+  );
+
+  return (
+    <>
+      {MobileView}
+      {DesktopView}
 
       {/* 编辑资料弹窗 */}
       <EditProfileDialog
@@ -216,6 +377,82 @@ export function ProfileClient() {
           setEditOpen(false);
         }}
       />
-    </section>
+    </>
+  );
+}
+
+/** 菜单分组：可展开/收起 */
+function MenuSection({
+  title,
+  expanded,
+  onToggle,
+  children,
+}: {
+  title: string;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-primary-500/10 bg-card">
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-4 py-3 text-left no-select"
+      >
+        <span className="text-sm font-semibold">{title}</span>
+        <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown className="h-4 w-4 text-foreground/40" />
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="divide-y divide-border/50">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/** 菜单项 */
+function MenuItem({
+  icon: Icon,
+  label,
+  onClick,
+  active,
+}: {
+  icon: typeof Heart;
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-3 px-4 py-3 text-left text-sm no-select transition-colors active:bg-foreground/5",
+        active
+          ? "text-primary-700 dark:text-primary-300"
+          : "text-foreground/80"
+      )}
+    >
+      <Icon
+        className={cn(
+          "h-5 w-5 shrink-0",
+          active ? "text-primary-700 dark:text-primary-300" : "text-foreground/50"
+        )}
+      />
+      <span className="flex-1">{label}</span>
+      {active && (
+        <span className="h-1.5 w-1.5 rounded-full bg-primary-700" />
+      )}
+    </button>
   );
 }
