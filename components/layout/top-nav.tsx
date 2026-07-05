@@ -46,7 +46,7 @@ export function TopNav() {
         "sticky top-safe z-30 flex h-16 items-center gap-3 border-b px-4 transition-colors duration-300 md:px-6",
         scrolled
           ? "border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
-          : "border-transparent bg-transparent backdrop-blur-0"
+          : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
       {/* 移动端：汉堡菜单 + 品牌 */}

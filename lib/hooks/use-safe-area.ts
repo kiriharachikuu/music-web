@@ -71,10 +71,11 @@ function getInitialSafeArea(): { top: number; bottom: number; left: number; righ
     }
   }
 
-  if (platform.isIOS && !platform.isStandalone) {
+  if (platform.isIOS) {
     const defaultSafariTop = 44;
+    const defaultPwaTop = 47;
     if (top === 0) {
-      top = defaultSafariTop;
+      top = platform.isStandalone ? defaultPwaTop : defaultSafariTop;
     }
   }
 
@@ -126,10 +127,11 @@ export function useSafeArea() {
         }
       }
 
-      if (platform.isIOS && !platform.isStandalone) {
+      if (platform.isIOS) {
         const defaultSafariTop = 44;
+        const defaultPwaTop = 47;
         if (top === 0) {
-          top = defaultSafariTop;
+          top = platform.isStandalone ? defaultPwaTop : defaultSafariTop;
         }
       }
 
