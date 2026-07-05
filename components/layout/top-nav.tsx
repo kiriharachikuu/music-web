@@ -99,20 +99,20 @@ export function TopNav() {
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
-      <div className="flex h-12 w-full items-center justify-between px-4 max-md:landscape:h-11 md:px-6">
-        <div className="flex items-center gap-2">
+      <div className="flex h-12 w-full items-center justify-between px-4 max-md:landscape:h-11 md:px-6 platform-twa:h-10 platform-twa:px-3">
+        <div className="flex items-center gap-2 platform-twa:gap-2">
           <Link href="/search" className="flex-1 md:hidden">
-            <div className="flex h-8 items-center gap-1.5 rounded-full border border-border bg-foreground/5 px-3 text-xs text-foreground/50">
-              <Search className="h-3.5 w-3.5" />
+            <div className="flex h-8 items-center gap-1.5 rounded-full border border-border bg-foreground/5 px-3 text-xs text-foreground/50 platform-twa:h-9 platform-twa:gap-2 platform-twa:px-3.5 platform-twa:text-[13px]">
+              <Search className="h-3.5 w-3.5 platform-twa:h-4 platform-twa:w-4" />
               <span>搜索歌曲、歌单、歌手</span>
             </div>
           </Link>
           <button
             onClick={handleAvatarClick}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground/5 no-select"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground/5 no-select platform-twa:h-8 platform-twa:w-8"
             aria-label={isLoggedIn ? "个人中心" : "登录"}
           >
-            <Avatar className="h-8 w-8 border-2 border-primary-700/30">
+            <Avatar className="h-8 w-8 border-2 border-primary-700/30 platform-twa:h-8 platform-twa:w-8">
               {avatarUrl ? (
                 <AvatarImage src={avatarUrl} alt="avatar" />
               ) : (
