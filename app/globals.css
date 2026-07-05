@@ -203,12 +203,12 @@
 
   /* Android TWA：顶部区域向上偏移 -12px，解决搜索框内容超出框架问题 */
   .platform-twa {
-    --safe-area-top-adjust: -16px;
+    --safe-area-top-adjust: -12px;
   }
 
   /* iOS PWA：顶部区域向下偏移 +8px，避开灵动岛 */
   .platform-ios-pwa {
-    --safe-area-top-adjust: 6px;
+    --safe-area-top-adjust: 8px;
   }
 
   /* 移动端触控目标最小尺寸（44x44 Apple HIG） */

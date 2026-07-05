@@ -99,7 +99,7 @@ export function TopNav() {
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
-      <div className="flex h-14 w-full items-center gap-3 px-4 pt-safe max-md:landscape:h-14 md:px-6 platform-twa:h-14 platform-twa:px-3">
+      <div className="flex h-12 w-full items-center gap-3 px-4 pt-safe max-md:landscape:h-11 md:px-6 platform-twa:h-11 platform-twa:px-3">
         <div className="flex items-center gap-3 platform-twa:gap-2">
           <Link href="/search" className="flex-1 md:hidden">
             <div className="flex h-10 items-center gap-2 rounded-full border border-border bg-foreground/5 px-4 text-sm text-foreground/50 platform-twa:h-9 platform-twa:gap-2 platform-twa:px-3.5 platform-twa:text-[13px]">
