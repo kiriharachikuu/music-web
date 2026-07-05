@@ -48,7 +48,7 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
           {dailyRecommend.length > 0 && (
             <div>
               <SectionTitle title="每日推荐" moreHref="/rankings" />
-              <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
+              <div className="flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
                 {dailyRecommend.map((song) => (
                   <SongCard
                     key={song.id}
@@ -65,7 +65,7 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
           {newSongs.length > 0 && (
             <div>
               <SectionTitle title="新歌推送" moreHref="/rankings" />
-              <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
+              <div className="flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
                 {newSongs.map((song) => (
                   <SongCard key={song.id} song={song} queue={newSongs} />
                 ))}
@@ -93,9 +93,11 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
               />
             )}
 
-          {/* 刷新中提示（桌面端无下拉手势时可见） */}
+          {/* 刷新中提示：sticky 顶部，避免被底部固定栏遮挡 */}
           {refreshing && (
-            <p className="text-center text-xs text-foreground/40">刷新中…</p>
+            <div className="sticky top-2 z-20 mx-auto w-fit rounded-full bg-primary-700/90 px-4 py-1.5 text-xs text-white shadow-lg backdrop-blur-sm">
+              刷新中…
+            </div>
           )}
         </div>
       </PullToRefresh>

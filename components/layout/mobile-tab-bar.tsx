@@ -35,7 +35,7 @@ export function MobileTabBar() {
             )}
           >
             <span className="flex h-7 w-7 items-center justify-center landscape:h-6 landscape:w-6">
-              <Icon className="h-5 w-5 landscape:h-4.5 landscape:w-4.5" />
+              <Icon className="h-5 w-5 landscape:h-[18px] landscape:w-[18px]" />
             </span>
             {item.label}
           </Link>

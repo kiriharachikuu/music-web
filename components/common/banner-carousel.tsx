@@ -30,6 +30,11 @@ export function BannerCarousel({
   const count = banners.length;
   const play = usePlayerStore((s) => s.play);
 
+  // 触摸滑动状态
+  const touchStartX = React.useRef(0);
+  const touchDeltaX = React.useRef(0);
+  const [dragOffset, setDragOffset] = React.useState(0);
+
   // 自动轮播
   React.useEffect(() => {
     if (count <= 1 || paused) return;
@@ -46,16 +51,49 @@ export function BannerCarousel({
     setActive(((idx % count) + count) % count);
   };
 
+  // 触摸事件处理
+  const SWIPE_THRESHOLD = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+    setPaused(true);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+    setDragOffset(touchDeltaX.current);
+  };
+
+  const onTouchEnd = () => {
+    setDragOffset(0);
+    if (Math.abs(touchDeltaX.current) > SWIPE_THRESHOLD) {
+      if (touchDeltaX.current > 0) {
+        go(active - 1);
+      } else {
+        go(active + 1);
+      }
+    }
+    // 延迟恢复自动轮播
+    setTimeout(() => setPaused(false), 2000);
+  };
+
   return (
     <div
       className={cn("relative overflow-hidden rounded-xl md:rounded-2xl", className)}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
     >
-      {/* 轨道：横向滑动 */}
+      {/* 轨道：横向滑动（触摸拖拽时跟随手指） */}
       <div
         className="flex transition-transform duration-500 ease-out"
-        style={{ transform: `translateX(-${active * 100}%)` }}
+        style={{
+          transform: `translateX(calc(-${active * 100}% + ${dragOffset}px))`,
+          transition: dragOffset !== 0 ? "none" : undefined,
+        }}
       >
         {banners.map((b) => {
           const inner = (

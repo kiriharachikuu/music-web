@@ -61,7 +61,15 @@ export function PullToRefresh({
     };
 
     const onMove = (e: TouchEvent) => {
-      if (!pullingRef.current || refreshingRef.current) return;
+      if (refreshingRef.current) return;
+      // 惯性滚动到顶部后，同一手势中重新初始化下拉
+      if (!pullingRef.current) {
+        if (window.scrollY === 0) {
+          startYRef.current = e.touches[0].clientY;
+          pullingRef.current = true;
+        }
+        return;
+      }
       const delta = e.touches[0].clientY - startYRef.current;
       if (delta <= 0) {
         if (pullRef.current !== 0) setPullBoth(0);

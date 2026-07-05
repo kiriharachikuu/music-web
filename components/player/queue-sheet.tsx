@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Music2 } from "lucide-react";
 
 import { usePlayerStore } from "@/lib/store/player-store";
@@ -21,13 +22,23 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
   const queue = usePlayerStore((s) => s.queue);
   const currentIndex = usePlayerStore((s) => s.currentIndex);
   const play = usePlayerStore((s) => s.play);
+  const listRef = React.useRef<HTMLUListElement>(null);
+  const itemRefs = React.useRef<Array<HTMLLIElement | null>>([]);
+
+  // 打开时滚动到当前播放歌曲
+  React.useEffect(() => {
+    if (open && currentIndex >= 0 && itemRefs.current[currentIndex]) {
+      const el = itemRefs.current[currentIndex];
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [open, currentIndex]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
         className={cn(
-          "flex flex-col gap-0 border-white/10 bg-black/40 p-0 text-white backdrop-blur-xl sm:max-w-md",
+          "flex w-full flex-col gap-0 border-white/10 bg-black/40 p-0 text-white backdrop-blur-xl sm:max-w-md",
           // 让 Sheet 自带的关闭按钮（直接子 button）变白，并下移避开状态栏
           "[&>button]:text-white/70 [&>button:hover]:text-white [&>button]:top-[calc(var(--safe-area-top,0px)+1rem)]",
           "pt-safe pb-safe"
@@ -40,16 +51,16 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
 
         {/* 列表：原生 overflow + no-scrollbar，与歌词区视觉一致 */}
         <div className="no-scrollbar flex-1 overflow-y-auto py-2">
-          <ul className="flex flex-col">
+          <ul ref={listRef} className="flex flex-col">
             {queue.map((song, i) => {
               const isCurrent = i === currentIndex;
               return (
-                <li key={`${song.id}-${i}`}>
+                <li key={`${song.id}-${i}`} ref={(el) => { itemRefs.current[i] = el; }}>
                   <button
                     type="button"
                     onClick={() => play(song, queue)}
                     className={cn(
-                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-white/5",
+                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-white/5 active:bg-white/10",
                       isCurrent && "bg-white/5"
                     )}
                   >

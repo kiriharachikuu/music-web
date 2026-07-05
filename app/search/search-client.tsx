@@ -264,7 +264,7 @@ export function SearchClient({
                   setDebounced("");
                 }}
                 aria-label="清空"
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground active:text-foreground"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -274,7 +274,7 @@ export function SearchClient({
       </div>
 
       {/* 内容区域 */}
-      <section className="animate-fade-in space-y-6 pt-[calc(var(--safe-area-top,0px)+3rem+1rem)] md:pt-0">
+      <section className="animate-fade-in space-y-6 pt-[calc(var(--safe-area-top,0px)+5rem)] md:pt-0">
         {/* 桌面端搜索框 */}
         <div className="relative hidden md:block">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
@@ -316,7 +316,7 @@ export function SearchClient({
                 <button
                   type="button"
                   onClick={clearHistory}
-                  className="text-xs text-foreground/40 hover:text-foreground"
+                  className="text-xs text-foreground/40 hover:text-foreground active:text-foreground"
                 >
                   清空
                 </button>
@@ -327,7 +327,7 @@ export function SearchClient({
                     key={kw}
                     type="button"
                     onClick={() => pickKeyword(kw)}
-                    className="rounded-full bg-foreground/5 px-3 py-1.5 text-xs text-foreground/60 transition-colors hover:bg-primary-700/10 hover:text-primary-700 dark:hover:text-primary-300"
+                    className="rounded-full bg-foreground/5 px-3 py-1.5 text-xs text-foreground/60 transition-colors hover:bg-primary-700/10 hover:text-primary-700 active:bg-primary-700/15 dark:hover:text-primary-300"
                   >
                     {kw}
                   </button>
@@ -348,7 +348,7 @@ export function SearchClient({
                   key={kw}
                   type="button"
                   onClick={() => pickKeyword(kw)}
-                  className="flex items-center gap-1.5 rounded-full bg-foreground/5 px-3 py-1.5 text-xs text-foreground/60 transition-colors hover:bg-primary-700/10 hover:text-primary-700 dark:hover:text-primary-300"
+                  className="flex items-center gap-1.5 rounded-full bg-foreground/5 px-3 py-1.5 text-xs text-foreground/60 transition-colors hover:bg-primary-700/10 hover:text-primary-700 active:bg-primary-700/15 dark:hover:text-primary-300"
                 >
                   {i < 3 && (
                     <span className="font-mono text-primary-700 dark:text-primary-300">
@@ -369,7 +369,7 @@ export function SearchClient({
           {/* 分类 Tab + 排序 + Tag 筛选 */}
           <div className="space-y-3">
             {/* 分类 Tab：下划线式 */}
-            <div className="flex items-center gap-5 overflow-x-auto border-b border-border no-scrollbar">
+            <div className="flex items-center gap-5 overflow-x-auto border-b border-border px-1 no-scrollbar">
               {CATEGORIES.map((c) => {
                 const isActive = category === c.key;
                 return (
@@ -381,7 +381,7 @@ export function SearchClient({
                       "relative shrink-0 pb-2.5 text-sm font-medium transition-colors",
                       isActive
                         ? "text-primary-700 dark:text-primary-300"
-                        : "text-foreground/50 hover:text-foreground"
+                        : "text-foreground/50 hover:text-foreground active:text-foreground"
                     )}
                   >
                     {c.label}
@@ -410,7 +410,7 @@ export function SearchClient({
                           "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                           isActive
                             ? "bg-primary-700 text-white"
-                            : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
+                            : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
                         )}
                       >
                         {s.label}
@@ -428,7 +428,7 @@ export function SearchClient({
                       "rounded-full px-2.5 py-1 text-xs transition-colors",
                       !tag
                         ? "bg-primary-700 text-white"
-                        : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
+                        : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
                     )}
                   >
                     全部
@@ -444,7 +444,7 @@ export function SearchClient({
                           "rounded-full px-2.5 py-1 text-xs transition-colors",
                           isActive
                             ? "bg-primary-700 text-white"
-                            : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
+                            : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
                         )}
                       >
                         {t}

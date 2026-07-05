@@ -97,17 +97,27 @@ export function LyricsView({
     }, 3000);
   }, []);
 
-  // 监听 wheel / touchstart 标记用户主动滚动
+  // 监听 wheel / touchmove 标记用户主动滚动（touchstart 不标记，避免点击跳转误判）
   React.useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const onWheel = () => markUserScroll();
-    const onTouchStart = () => markUserScroll();
+    let touchStartY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      const delta = Math.abs(e.touches[0].clientY - touchStartY);
+      // 仅在有实质位移（>5px）时才标记为用户滚动
+      if (delta > 5) markUserScroll();
+    };
     el.addEventListener("wheel", onWheel, { passive: true });
     el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
     return () => {
       el.removeEventListener("wheel", onWheel);
       el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
       if (userScrollTimerRef.current) {
         clearTimeout(userScrollTimerRef.current);
       }
