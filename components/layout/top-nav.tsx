@@ -89,12 +89,13 @@ export function TopNav() {
   return (
     <header
       className={cn(
-        "sticky top-safe z-30 flex h-16 items-center gap-3 border-b px-4 transition-colors duration-300 md:px-6",
+        "sticky top-0 z-30 flex min-h-16 items-center gap-3 border-b px-4 pt-safe transition-colors duration-300 md:px-6",
         scrolled
           ? "border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
+      <div className="flex h-16 w-full items-center gap-3">
       {/* 移动端：搜索栏 + 用户头像 */}
       <div className="flex flex-1 items-center gap-3 md:hidden">
         <Link href="/search" className="flex-1">
@@ -239,6 +240,7 @@ export function TopNav() {
 
       {/* 主题切换 */}
       <ThemeToggle />
+      </div>
     </header>
   );
 }
