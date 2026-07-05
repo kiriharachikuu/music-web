@@ -19,7 +19,7 @@ export function MobileTabBar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-14 items-stretch border-t border-primary-500/10 bg-white/90 pb-safe backdrop-blur-xl dark:bg-gray-900/80 md:hidden landscape:h-12">
+    <nav className="fixed inset-x-0 bottom-0 z-30 flex h-14 items-stretch border-t border-primary-500/10 bg-white/90 pb-safe backdrop-blur-xl dark:bg-gray-900/80 md:hidden landscape:h-12">
       {navItems.map((item) => {
         const active = isActive(item.href);
         const Icon = item.icon;

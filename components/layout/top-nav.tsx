@@ -62,7 +62,7 @@ export function TopNav() {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0">
+        <SheetContent side="left" className="w-72 p-0 pt-safe">
           <SheetHeader className="flex h-16 flex-row items-center gap-2 border-b px-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

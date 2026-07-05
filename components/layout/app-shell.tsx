@@ -11,6 +11,7 @@ import { QueuePanel } from "@/components/layout/queue-panel";
 import { FullScreenPlayer } from "@/components/player/full-screen-player";
 import { LoginDialog } from "@/components/auth/login-dialog";
 import { UpdateDialog } from "@/components/common/update-dialog";
+import { InstallPrompt } from "@/components/common/install-prompt";
 import { Toaster } from "@/components/ui/toaster";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
@@ -152,6 +153,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* 版本检查弹窗：挂载 2 秒后检查更新 */}
       <UpdateDialog />
+
+      {/* PWA 安装提示（仅移动端浏览器显示） */}
+      <InstallPrompt />
 
       {/* 全局 Toast 容器：下载/收藏等操作反馈 */}
       <Toaster />
