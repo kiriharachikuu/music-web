@@ -112,7 +112,16 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ addVariant }: { addVariant: (name: string, definition: string | string[]) => void }) {
+      addVariant("platform-twa", ".platform-twa &");
+      addVariant("platform-ios-pwa", ".platform-ios-pwa &");
+      addVariant("platform-android-browser", ".platform-android-browser &");
+      addVariant("platform-ios-browser", ".platform-ios-browser &");
+      addVariant("platform-desktop", ".platform-desktop &");
+    },
+  ],
 };
 
 export default config;
