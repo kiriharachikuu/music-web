@@ -176,7 +176,6 @@ export function SongList({
           <SwipeableRow
             key={song.id}
             onDelete={onDelete ? () => onDelete(song) : undefined}
-            className={onDelete ? "md:hidden" : undefined}
           >
           <div
             className={cn(

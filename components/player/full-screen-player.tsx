@@ -224,7 +224,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         {/* 顶部下拉手柄条（仅此区域可启动拖拽关闭） */}
         <div
           onPointerDown={(e) => dragControls.start(e.nativeEvent)}
-          className="flex shrink-0 cursor-grab justify-center pt-2 active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab justify-center py-4 active:cursor-grabbing"
           aria-label="下拉关闭"
         >
           <div className="h-1.5 w-12 rounded-full bg-white/30" />
@@ -241,7 +241,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
             <ChevronDown className="h-6 w-6" />
           </button>
           {/* 移动端：歌名 + 歌手 */}
-          <div className="flex flex-1 flex-col items-center justify-center px-4 text-center lg:hidden">
+          <div className="flex flex-1 flex-col items-center justify-center px-4 text-center md:hidden">
             <p className="truncate text-sm font-semibold">
               {currentSong.title}
             </p>
@@ -250,7 +250,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
             </p>
           </div>
           {/* PC 端占位让两侧按钮对称 */}
-          <div className="hidden flex-1 lg:block" />
+          <div className="hidden flex-1 md:block" />
           <button
             type="button"
             onClick={() => setQueueOpen(true)}
@@ -262,9 +262,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端单列 ===== */}
-        <main className="flex min-h-0 flex-1 flex-col px-4 md:px-8 lg:grid lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-10">
+        <main className="flex min-h-0 flex-1 flex-col px-4 md:grid md:grid-cols-[0.9fr_1.1fr] md:items-center md:gap-10">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
-          <div className="hidden flex-col items-center justify-center gap-6 lg:flex">
+          <div className="hidden flex-col items-center justify-center gap-6 md:flex">
             <div className="aspect-square w-[min(420px,80%)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
               {cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -291,7 +291,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </div>
 
           {/* 右：歌词 */}
-          <div className="min-h-0 flex-1 lg:h-[60vh] lg:flex-none">
+          <div className="min-h-0 flex-1 md:h-[60vh] md:flex-none">
             <LyricsView
               lrc={lrc}
               currentTime={currentTime}

@@ -99,7 +99,7 @@ export function InstallPrompt() {
   const isIOS = platform.isIOS;
 
   return (
-    <div className="fixed inset-x-4 bottom-24 z-50 rounded-2xl border border-primary-500/20 bg-card p-4 shadow-xl backdrop-blur-xl md:inset-x-auto md:left-1/2 md:w-96 md:-translate-x-1/2 md:bottom-8">
+    <div className="fixed inset-x-4 bottom-[calc(7rem+var(--safe-area-bottom,0px))] z-50 rounded-2xl border border-primary-500/20 bg-card p-4 shadow-xl backdrop-blur-xl md:inset-x-auto md:left-1/2 md:w-96 md:-translate-x-1/2 md:bottom-8">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-700/10 text-primary-700">
           <Download className="h-5 w-5" />

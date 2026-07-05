@@ -39,7 +39,7 @@ export function Toaster() {
   const dismiss = useToastStore((s) => s.dismiss);
 
   return (
-    <div className="pointer-events-none fixed bottom-24 left-1/2 z-[70] flex w-full max-w-sm -translate-x-1/2 flex-col items-center gap-2 px-4 md:bottom-32">
+    <div className="pointer-events-none fixed bottom-[calc(7rem+var(--safe-area-bottom,0px))] left-1/2 z-[70] flex w-full max-w-sm -translate-x-1/2 flex-col items-center gap-2 px-4 md:bottom-32">
       {toasts.map((t) => {
         const style = VARIANT_STYLE[t.variant];
         const Icon = style.icon;

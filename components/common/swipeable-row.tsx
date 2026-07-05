@@ -109,14 +109,14 @@ export function SwipeableRow({
         {children}
       </div>
 
-      {/* 删除按钮（固定在右侧） */}
+      {/* 删除按钮（固定在右侧，桌面端隐藏） */}
       <button
         type="button"
         onClick={() => {
           handleClose();
           onDelete();
         }}
-        className="absolute right-0 top-0 flex h-full w-[80px] items-center justify-center bg-red-500 text-sm font-medium text-white"
+        className="absolute right-0 top-0 hidden h-full w-[80px] items-center justify-center bg-red-500 text-sm font-medium text-white md:hidden"
         style={{ opacity: open || offset < -5 ? 1 : 0 }}
         aria-label="删除"
       >

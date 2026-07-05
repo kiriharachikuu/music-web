@@ -35,6 +35,9 @@ export function PullToRefresh({
   const pullingRef = React.useRef(false);
   const refreshingRef = React.useRef(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
+  // 用 ref 持有最新 onRefresh，避免 effect deps 变化导致 touch 监听器重挂
+  const onRefreshRef = React.useRef(onRefresh);
+  onRefreshRef.current = onRefresh;
 
   const setPullBoth = React.useCallback((v: number) => {
     pullRef.current = v;
@@ -78,7 +81,7 @@ export function PullToRefresh({
       if (pullRef.current >= THRESHOLD) {
         setRefreshing(true);
         setPullBoth(THRESHOLD);
-        onRefresh().finally(() => {
+        onRefreshRef.current().finally(() => {
           setRefreshing(false);
           setPullBoth(0);
         });
@@ -97,7 +100,7 @@ export function PullToRefresh({
       el.removeEventListener("touchend", onEnd);
       el.removeEventListener("touchcancel", onEnd);
     };
-  }, [onRefresh, setPullBoth]);
+  }, [setPullBoth]);
 
   const progress = Math.min(pull / THRESHOLD, 1);
 

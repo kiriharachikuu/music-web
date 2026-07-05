@@ -38,9 +38,9 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
 
   return (
     <div className="animate-fade-in space-y-8 md:space-y-10">
-      <h1 className="text-xl font-bold tracking-tight md:text-3xl">发现</h1>
       <PullToRefresh onRefresh={handleRefresh}>
         <div className="space-y-8 md:space-y-10">
+          <h1 className="text-xl font-bold tracking-tight md:text-3xl">发现</h1>
           {/* Banner 轮播 */}
           {banners.length > 0 && <BannerCarousel banners={banners} />}
 

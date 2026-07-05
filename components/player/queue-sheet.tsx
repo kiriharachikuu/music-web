@@ -28,8 +28,8 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
         side="right"
         className={cn(
           "flex flex-col gap-0 border-white/10 bg-black/40 p-0 text-white backdrop-blur-xl sm:max-w-md",
-          // 让 Sheet 自带的关闭按钮（直接子 button）变白
-          "[&>button]:text-white/70 [&>button:hover]:text-white",
+          // 让 Sheet 自带的关闭按钮（直接子 button）变白，并下移避开状态栏
+          "[&>button]:text-white/70 [&>button:hover]:text-white [&>button]:top-[calc(var(--safe-area-top,0px)+1rem)]",
           "pt-safe pb-safe"
         )}
       >

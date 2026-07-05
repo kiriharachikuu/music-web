@@ -241,7 +241,7 @@ export function SearchClient({
   const hot = hotKeywords.length > 0 ? hotKeywords : DEFAULT_HOT;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-dvh">
       {/* 移动端：固定顶部搜索栏 */}
       <div className="fixed inset-x-0 top-0 z-30 border-b border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:hidden pt-safe">
         <div className="flex h-12 items-center gap-3 px-4">

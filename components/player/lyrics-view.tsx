@@ -127,8 +127,11 @@ export function LyricsView({
       container.clientHeight / 2 +
       activeEl.clientHeight / 2;
     
-    // 使用 requestAnimationFrame 优化滚动性能，避免过度滚动
+    // 使用 requestAnimationFrame 优化滚动性能
+    let rafId: number;
     const animateScroll = () => {
+      // 用户滚动时中止自动跟随
+      if (userScrollingRef.current) return;
       const current = container.scrollTop;
       const diff = target - current;
       if (Math.abs(diff) < 1) {
@@ -136,10 +139,13 @@ export function LyricsView({
         return;
       }
       container.scrollTop = current + diff * 0.2;
-      requestAnimationFrame(animateScroll);
+      rafId = requestAnimationFrame(animateScroll);
     };
     
     animateScroll();
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [activeIndex]);
 
   // 加载中状态

@@ -19,6 +19,7 @@ import {
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { getToken } from "@/lib/auth";
 import type { UserProfile } from "@/lib/types";
 import { API_BASE } from "@/lib/api";
@@ -43,14 +44,8 @@ export function TopNav() {
 
   // 移动端搜索页：隐藏顶部导航（搜索页有自己的搜索框）
   const isMobileSearch = pathname === "/search";
-  const [isMobile, setIsMobile] = React.useState(false);
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-  if (isMobileSearch && isMobile) return null;
+  const isMobile = useIsMobile();
+
   const openLogin = useAuthStore((s) => s.openLogin);
 
   // 滚动状态防抖：避免快速滚动时频繁更新状态导致闪烁
@@ -90,6 +85,9 @@ export function TopNav() {
     };
     void fetchProfile();
   }, [pathname]);
+
+  // 移动端搜索页：隐藏顶部导航（搜索页有自己的搜索框）
+  if (isMobileSearch && isMobile) return null;
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);

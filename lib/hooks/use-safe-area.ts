@@ -12,10 +12,29 @@ const SAFE_AREA_VARS = {
   right: "--safe-area-right",
 } as const;
 
-function getEnvValue(key: keyof typeof SAFE_AREA_VARS): string {
-  if (typeof window === "undefined") return "0px";
-  const envKey = `safe-area-inset-${key}`;
-  return window.getComputedStyle(document.documentElement).getPropertyValue(`env(${envKey})`) || "0px";
+/**
+ * 通过 probe 元素读取 env(safe-area-inset-*) 的真实计算值
+ * getPropertyValue('env(...)') 不会解析 env()，必须用实际 DOM 元素
+ */
+function getEnvSafeAreaValues(): { top: number; bottom: number; left: number; right: number } {
+  if (typeof window === "undefined") return { top: 0, bottom: 0, left: 0, right: 0 };
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:absolute;visibility:hidden;width:0;height:0;" +
+    "padding-top:env(safe-area-inset-top,0px);" +
+    "padding-bottom:env(safe-area-inset-bottom,0px);" +
+    "padding-left:env(safe-area-inset-left,0px);" +
+    "padding-right:env(safe-area-inset-right,0px)";
+  document.documentElement.appendChild(probe);
+  const style = window.getComputedStyle(probe);
+  const result = {
+    top: parsePx(style.paddingTop),
+    bottom: parsePx(style.paddingBottom),
+    left: parsePx(style.paddingLeft),
+    right: parsePx(style.paddingRight),
+  };
+  document.documentElement.removeChild(probe);
+  return result;
 }
 
 function parsePx(str: string): number {
@@ -39,11 +58,12 @@ function getInitialSafeArea(): { top: number; bottom: number; left: number; righ
   }
 
   const platform = detectPlatform();
+  const envValues = getEnvSafeAreaValues();
 
-  let top = parsePx(getEnvValue("top"));
-  let bottom = parsePx(getEnvValue("bottom"));
-  let left = parsePx(getEnvValue("left"));
-  let right = parsePx(getEnvValue("right"));
+  let top = envValues.top;
+  let bottom = envValues.bottom;
+  let left = envValues.left;
+  let right = envValues.right;
 
   if (platform.isTWA) {
     const statusBarHeight = getAndroidStatusBarHeight();
@@ -56,27 +76,18 @@ function getInitialSafeArea(): { top: number; bottom: number; left: number; righ
     }
   }
 
+  // Android 浏览器：visualViewport.offsetTop 反映地址栏高度
   const visualViewport = window.visualViewport;
-  if (platform.isAndroid && !platform.isTWA && visualViewport) {
-    const webViewTop = visualViewport.offsetTop + visualViewport.scale;
-    if (webViewTop > 0 && top === 0) {
+  if (platform.isAndroid && !platform.isTWA && visualViewport && top === 0) {
+    const webViewTop = visualViewport.offsetTop;
+    if (webViewTop > 0) {
       top = webViewTop;
     }
   }
 
-  if (visualViewport) {
-    const viewportTop = visualViewport.offsetTop;
-    if (viewportTop > 0 && top === 0) {
-      top = viewportTop;
-    }
-  }
-
-  if (platform.isIOS) {
-    const defaultSafariTop = 44;
-    const defaultPwaTop = 47;
-    if (top === 0) {
-      top = platform.isStandalone ? defaultPwaTop : defaultSafariTop;
-    }
+  // iOS PWA：env() 未返回值时使用回退值（灵动岛机型 env() 正常返回）
+  if (platform.isIOS && platform.isStandalone && top === 0) {
+    top = 47;
   }
 
   return { top, bottom, left, right };
@@ -96,11 +107,12 @@ export function useSafeArea() {
 
     const updateSafeArea = () => {
       const platform = detectPlatform();
+      const envValues = getEnvSafeAreaValues();
 
-      let top = parsePx(getEnvValue("top"));
-      let bottom = parsePx(getEnvValue("bottom"));
-      let left = parsePx(getEnvValue("left"));
-      let right = parsePx(getEnvValue("right"));
+      let top = envValues.top;
+      let bottom = envValues.bottom;
+      let left = envValues.left;
+      let right = envValues.right;
 
       if (platform.isTWA) {
         const androidStatusBarHeight = getAndroidStatusBarHeight();
@@ -113,27 +125,18 @@ export function useSafeArea() {
         }
       }
 
+      // Android 浏览器：visualViewport.offsetTop 反映地址栏高度
       const visualViewport = window.visualViewport;
-      if (platform.isAndroid && !platform.isTWA && visualViewport) {
-        const webViewTop = visualViewport.offsetTop + visualViewport.scale;
-        if (webViewTop > 0 && top === 0) {
+      if (platform.isAndroid && !platform.isTWA && visualViewport && top === 0) {
+        const webViewTop = visualViewport.offsetTop;
+        if (webViewTop > 0) {
           top = webViewTop;
         }
       }
 
-      if (visualViewport) {
-        const viewportTop = visualViewport.offsetTop;
-        if (viewportTop > 0 && top === 0) {
-          top = viewportTop;
-        }
-      }
-
-      if (platform.isIOS) {
-        const defaultSafariTop = 44;
-        const defaultPwaTop = 47;
-        if (top === 0) {
-          top = platform.isStandalone ? defaultPwaTop : defaultSafariTop;
-        }
+      // iOS PWA：env() 未返回值时使用回退值
+      if (platform.isIOS && platform.isStandalone && top === 0) {
+        top = 47;
       }
 
       setSafeArea({ top, bottom, left, right });

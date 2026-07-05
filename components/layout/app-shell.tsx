@@ -15,6 +15,7 @@ import { InstallPrompt } from "@/components/common/install-prompt";
 import { Toaster } from "@/components/ui/toaster";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 
 /** 不显示应用外壳的路径（全屏独立页面） */
@@ -45,17 +46,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isStandalone = STANDALONE_PATHS.some((p) => pathname === p);
   const isMobileSearch = pathname === "/search";
-  const [isMobile, setIsMobile] = React.useState(false);
+  const isMobile = useIsMobile();
   const error = usePlayerStore((s) => s.error);
   const clearError = usePlayerStore((s) => s.clearError);
   useSafeArea();
 
-  React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
   // 守卫：自动播放恢复只在首次挂载执行一次（避免 React 严格模式双触发）
   const autoPlayRestoredRef = React.useRef(false);
 
@@ -179,7 +174,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* 播放器错误提示：fixed 底部居中，3 秒自动消失 */}
       {error && (
-        <div className="fixed bottom-24 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg md:bottom-32">
+        <div className="fixed bottom-[calc(7rem+var(--safe-area-bottom,0px))] left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg md:bottom-32">
           {error}
         </div>
       )}
