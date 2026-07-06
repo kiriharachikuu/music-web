@@ -44,12 +44,18 @@ function parsePx(str: string): number {
 
 function getAndroidStatusBarHeight(): number {
   const height = androidBridge.getStatusBarHeight();
-  return height ? parseInt(height, 10) || 0 : 0;
+  if (!height) return 0;
+  const px = parseInt(height, 10) || 0;
+  const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+  return Math.round(px / dpr);
 }
 
 function getAndroidNavigationBarHeight(): number {
   const height = androidBridge.getNavigationBarHeight();
-  return height ? parseInt(height, 10) || 0 : 0;
+  if (!height) return 0;
+  const px = parseInt(height, 10) || 0;
+  const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+  return Math.round(px / dpr);
 }
 
 function getInitialSafeArea(): { top: number; bottom: number; left: number; right: number } {
