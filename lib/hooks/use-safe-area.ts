@@ -156,11 +156,7 @@ export function useSafeArea() {
         html.classList.add("platform-desktop");
       }
 
-      const adjustRaw = window.getComputedStyle(html).getPropertyValue("--safe-area-top-adjust");
-      const adjustPx = parsePx(adjustRaw.trim());
-      const adjustedTop = top + adjustPx;
-
-      html.style.setProperty(SAFE_AREA_VARS.top, `${Math.max(0, adjustedTop)}px`);
+      html.style.setProperty(SAFE_AREA_VARS.top, `${top}px`);
       html.style.setProperty(SAFE_AREA_VARS.bottom, `${bottom}px`);
       html.style.setProperty(SAFE_AREA_VARS.left, `${left}px`);
       html.style.setProperty(SAFE_AREA_VARS.right, `${right}px`);
