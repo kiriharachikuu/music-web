@@ -100,10 +100,10 @@ export function TopNav() {
       )}
     >
       <div className="h-[var(--safe-area-top,0px)]" />
-      <div className="flex h-12 w-full items-center gap-3 px-4 max-md:landscape:h-11 md:px-6">
-        <div className="flex items-center gap-3">
+      <div className="flex h-14 w-full items-center gap-3 px-4 max-md:landscape:h-11 md:px-6">
+        <div className="flex flex-1 items-center gap-3">
           <Link href="/search" className="flex-1 md:hidden">
-            <div className="flex h-10 items-center gap-2 rounded-full border border-border bg-foreground/5 px-4 text-sm text-foreground/50">
+            <div className="flex h-10 w-full items-center gap-2 rounded-full border border-border bg-foreground/5 px-4 text-sm text-foreground/50">
               <Search className="h-4 w-4" />
               <span>搜索歌曲、歌单、歌手</span>
             </div>
