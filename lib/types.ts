@@ -141,16 +141,6 @@ export interface ApiResponse<T> {
   message: string;
 }
 
-/** 分页结果 */
-export interface Paginated<T> {
-  list: T[];
-  total: number;
-  page: number;
-  limit: number;
-  /** 是否还有更多 */
-  hasMore?: boolean;
-}
-
 /** 发现页聚合数据（GET /api/discover） */
 export interface DiscoverData {
   banners: Banner[];
@@ -182,6 +172,8 @@ export interface Paginated<T> {
   page: number;
   limit: number;
   totalPages: number;
+  /** 是否还有更多 */
+  hasMore?: boolean;
 }
 
 /** 搜索结果聚合（GET /api/search） */
