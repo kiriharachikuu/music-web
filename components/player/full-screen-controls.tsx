@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ListMusic,
+  Heart,
   Pause,
   Play,
   Repeat,
@@ -18,7 +18,7 @@ import { ProgressBar } from "./progress-bar";
 /**
  * 全屏播放页底部控制区：进度条 + 控制按钮
  * - 进度条 + 当前时间 / 总时长
- * - 循环模式 / 上一首 / 播放-暂停 / 下一首 / 队列
+ * - 循环模式 / 上一首 / 播放-暂停 / 下一首 / 喜欢音乐
  */
 export interface FullScreenControlsProps {
   isPlaying: boolean;
@@ -30,7 +30,8 @@ export interface FullScreenControlsProps {
   onNext: () => void;
   onSeek: (t: number) => void;
   onCyclePlayMode: () => void;
-  onOpenQueue: () => void;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 }
 
 export function FullScreenControls({
@@ -43,7 +44,8 @@ export function FullScreenControls({
   onNext,
   onSeek,
   onCyclePlayMode,
-  onOpenQueue,
+  isFavorite,
+  onToggleFavorite,
 }: FullScreenControlsProps) {
   const playModeLabel =
     playMode === "single"
@@ -129,14 +131,19 @@ export function FullScreenControls({
           <SkipForward className="h-7 w-7" fill="currentColor" />
         </button>
 
-        {/* 队列 */}
+        {/* 喜欢音乐 */}
         <button
           type="button"
-          onClick={onOpenQueue}
-          className="rounded-full p-2 text-white/70 transition-colors hover:text-white"
-          aria-label="播放队列"
+          onClick={onToggleFavorite}
+          className={cn(
+            "rounded-full p-2 transition-colors",
+            isFavorite
+              ? "text-primary-500"
+              : "text-white/70 hover:text-white"
+          )}
+          aria-label={isFavorite ? "取消喜欢" : "喜欢"}
         >
-          <ListMusic className="h-5 w-5" />
+          <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
         </button>
       </div>
     </footer>

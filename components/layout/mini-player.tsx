@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Play, Pause, SkipForward, ChevronUp, Music2 } from "lucide-react";
+import { Play, Pause, SkipForward, ChevronUp, Music2, Volume2, VolumeX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { usePlayerStore, formatTime as fmt } from "@/lib/store/player-store";
@@ -60,9 +60,11 @@ export function MiniPlayer() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
+  const volume = usePlayerStore((s) => s.volume);
   const toggle = usePlayerStore((s) => s.toggle);
   const next = usePlayerStore((s) => s.next);
   const seek = usePlayerStore((s) => s.seek);
+  const setVolume = usePlayerStore((s) => s.setVolume);
   const openLyricPage = usePlayerStore((s) => s.openLyricPage);
 
   return (
@@ -134,6 +136,31 @@ export function MiniPlayer() {
             >
               <SkipForward className="h-5 w-5" />
             </Button>
+            {/* PC端音量控制 */}
+            <div className="hidden items-center gap-2 md:flex">
+              <button
+                type="button"
+                onClick={() => setVolume(volume === 0 ? 0.8 : 0)}
+                aria-label={volume === 0 ? "取消静音" : "静音"}
+                className="text-foreground/70 hover:text-foreground"
+              >
+                {volume === 0 ? (
+                  <VolumeX className="h-4 w-4" />
+                ) : (
+                  <Volume2 className="h-4 w-4" />
+                )}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="w-20 h-1 appearance-none cursor-pointer rounded-full bg-foreground/20 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-700 [&::-webkit-slider-thumb]:shadow-sm"
+                aria-label="音量"
+              />
+            </div>
             <Button
               onClick={openLyricPage}
               variant="ghost"

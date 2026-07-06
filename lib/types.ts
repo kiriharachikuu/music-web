@@ -170,12 +170,10 @@ export interface RankingsData {
   new: ApiSong[];
   /** 热歌榜 */
   hot: ApiSong[];
-  /** 原创榜 */
-  original: ApiSong[];
 }
 
 /** 排行榜分类 key */
-export type RankingType = "soar" | "new" | "hot" | "original";
+export type RankingType = "soar" | "new" | "hot";
 
 /** 分页结果通用结构 */
 export interface Paginated<T> {

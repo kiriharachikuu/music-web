@@ -24,7 +24,6 @@ export default async function RankingsPage() {
     soar: raw.soaring ?? data.soar ?? [],
     new: raw.newSongs ?? data.new ?? [],
     hot: data.hot ?? [],
-    original: data.original ?? [],
   };
 
   return <RankingsClient data={safeData} />;

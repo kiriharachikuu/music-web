@@ -1,13 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
-import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { ConfirmProvider } from "@/components/common/confirm-dialog";
+import { BaiduTongji } from "@/components/common/baidu-tongji";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -63,19 +62,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const handleRouteChange = () => {
-      if ((window as any)._hmt) {
-        (window as any)._hmt.push(['_trackPageview', pathname + searchParams.toString()]);
-      }
-    };
-
-    handleRouteChange();
-  }, [pathname, searchParams]);
-
   return (
     <html
       lang="zh-CN"
@@ -85,21 +71,6 @@ export default function RootLayout({
       <head>
         {/* 首屏注入 safe-area CSS 变量，避免 useSafeArea useEffect 前的内容闪烁 */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){var r=document.documentElement;r.style.setProperty('--safe-area-top','env(safe-area-inset-top,0px)');r.style.setProperty('--safe-area-bottom','env(safe-area-inset-bottom,0px)');r.style.setProperty('--safe-area-left','env(safe-area-inset-left,0px)');r.style.setProperty('--safe-area-right','env(safe-area-inset-right,0px)');})();` }} />
-        <Script
-          id="baidu-tongji"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              var _hmt = _hmt || [];
-              (function() {
-                var hm = document.createElement("script");
-                hm.src = "https://hm.baidu.com/hm.js?df915bf8e74365f954cd86475ceee6f8";
-                var s = document.getElementsByTagName("script")[0]; 
-                s.parentNode.insertBefore(hm, s);
-              })();
-            `,
-          }}
-        />
       </head>
       <body className="min-h-full bg-background text-foreground">
         {/* next-themes：attribute=class 切换 .dark，suppressHydrationWarning 已在 <html> 声明 */}
@@ -113,6 +84,9 @@ export default function RootLayout({
             <AppShell>{children}</AppShell>
           </ConfirmProvider>
         </ThemeProvider>
+        <Suspense fallback={null}>
+          <BaiduTongji />
+        </Suspense>
       </body>
     </html>
   );

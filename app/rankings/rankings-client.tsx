@@ -18,7 +18,6 @@ const TABS: { key: RankingType; label: string; desc: string }[] = [
   { key: "soar", label: "飙升榜", desc: "上升最快的好歌" },
   { key: "new", label: "新歌榜", desc: "最新上架单曲" },
   { key: "hot", label: "热歌榜", desc: "本周播放冠军" },
-  { key: "original", label: "原创榜", desc: "独立音乐人之选" },
 ];
 
 /** 维度切换配置 */
@@ -37,7 +36,6 @@ function normalizeRankings(res: RankingsData): RankingsData {
     soar: raw.soaring ?? res.soar ?? [],
     new: raw.newSongs ?? res.new ?? [],
     hot: res.hot ?? [],
-    original: res.original ?? [],
   };
 }
 

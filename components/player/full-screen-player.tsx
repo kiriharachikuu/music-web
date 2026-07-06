@@ -7,7 +7,7 @@ import {
   useDragControls,
   type PanInfo,
 } from "framer-motion";
-import { ChevronDown, ListMusic, Music2 } from "lucide-react";
+import { ChevronDown, Heart, ListMusic, Music2 } from "lucide-react";
 
 import {
   usePlayerStore,
@@ -168,6 +168,19 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   // ----- 队列抽屉状态 -----
   const [queueOpen, setQueueOpen] = React.useState(false);
 
+  // ----- 喜欢状态 -----
+  const [isFavorite, setIsFavorite] = React.useState(false);
+
+  const toggleFavorite = async () => {
+    if (!currentSong) return;
+    try {
+      await api.post("/user/favorites", { songId: currentSong.id });
+      setIsFavorite((prev) => !prev);
+    } catch {
+      // 静默失败
+    }
+  };
+
   // ----- 拖拽关闭判断 -----
   const handleDragEnd = (
     _e: MouseEvent | TouchEvent | PointerEvent,
@@ -312,7 +325,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           onNext={next}
           onSeek={seek}
           onCyclePlayMode={cyclePlayMode}
-          onOpenQueue={() => setQueueOpen(true)}
+          isFavorite={isFavorite}
+          onToggleFavorite={toggleFavorite}
         />
       </div>
 
