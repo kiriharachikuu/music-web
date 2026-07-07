@@ -47,10 +47,10 @@ export function SongCard({
         aria-label={`播放 ${song.title}`}
         className="relative block aspect-square w-full overflow-hidden rounded-xl bg-primary-700/5 text-left shadow-card transition-transform duration-300 active:scale-95 md:hover:-translate-y-1"
       >
-        {song.coverUrl ? (
+        {song.coverUrl || (song.album?.cover && song.album.cover) ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={song.coverUrl}
+            src={song.coverUrl || song.album?.cover || undefined}
             alt={song.title}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 md:group-hover:scale-105"

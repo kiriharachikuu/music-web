@@ -17,6 +17,7 @@ import {
   Smartphone,
   LogOut,
 } from "lucide-react";
+import { isDownloadAvailable } from "@/lib/download";
 import { AnimatePresence, motion } from "framer-motion";
 
 import type { UserProfile } from "@/lib/types";
@@ -43,11 +44,15 @@ type Tab =
   | "downloads"
   | "settings";
 
+const downloadsTab = isDownloadAvailable()
+  ? [{ key: "downloads" as Tab, label: "下载管理", icon: Download }]
+  : [];
+
 const TABS: { key: Tab; label: string; icon: typeof Heart }[] = [
   { key: "favorites", label: "我喜欢的音乐", icon: Heart },
   { key: "playlists", label: "我的歌单", icon: ListMusic },
   { key: "history", label: "历史播放", icon: History },
-  { key: "downloads", label: "下载管理", icon: Download },
+  ...downloadsTab,
   { key: "settings", label: "设置", icon: Settings },
 ];
 
@@ -177,7 +182,9 @@ export function ProfileClient() {
 
       {/* 下载管理 */}
       <MenuSection title="下载与设置">
-        <MenuLink icon={Download} label="下载管理" href="/profile/downloads" />
+        {isDownloadAvailable() && (
+          <MenuLink icon={Download} label="下载管理" href="/profile/downloads" />
+        )}
         <MenuLink icon={Settings} label="设置" href="/profile/settings" />
       </MenuSection>
 

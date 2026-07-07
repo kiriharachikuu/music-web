@@ -28,10 +28,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, formatPlays } from "@/lib/utils";
 import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
 import { SwipeableRow } from "@/components/common/swipeable-row";
-import { downloadSong, listDownloads } from "@/lib/download";
+import { downloadSong, listDownloads, isDownloadAvailable } from "@/lib/download";
 import { useToast } from "@/components/ui/toaster";
 
 /**
@@ -95,7 +95,9 @@ export function SongList({
   const toast = useToast();
 
   // 初始化：加载本地已缓存歌曲 id（listDownloads 一次性查回，避免逐条查 IndexedDB）
+  // 仅在 TWA 环境下查询（非 TWA 环境下载功能已隐藏）
   React.useEffect(() => {
+    if (!isDownloadAvailable()) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -238,10 +240,10 @@ export function SongList({
               onClick={handlePlay}
               className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary-700/5 md:h-12 md:w-12"
             >
-              {song.coverUrl ? (
+              {song.coverUrl || (song.album?.cover && song.album.cover) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={song.coverUrl}
+                  src={song.coverUrl || song.album?.cover || undefined}
                   alt={song.title}
                   loading="lazy"
                   className="h-full w-full object-cover"
@@ -305,7 +307,7 @@ export function SongList({
                 </button>
               )}
               {/* 下载按钮：未下载(空心 hover 显示) / 已下载(实心 primary 常显) / 下载中(旋转) */}
-              {(() => {
+              {isDownloadAvailable() && (() => {
                 const isDownloading = downloadingIds.has(song.id);
                 const isDownloaded = downloadedIds.has(song.id);
                 return (
@@ -381,29 +383,31 @@ export function SongList({
                       {isLiked ? "取消喜欢" : "喜欢"}
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem
-                    disabled={
-                      downloadingIds.has(song.id) || downloadedIds.has(song.id)
-                    }
-                    onClick={() => void handleDownload(song)}
-                  >
-                    {downloadingIds.has(song.id) ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Download
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          downloadedIds.has(song.id) &&
-                            "fill-current text-primary-700 dark:text-primary-300"
-                        )}
-                      />
-                    )}
-                    {downloadingIds.has(song.id)
-                      ? "下载中…"
-                      : downloadedIds.has(song.id)
-                        ? "已下载"
-                        : "下载"}
-                  </DropdownMenuItem>
+                  {isDownloadAvailable() && (
+                    <DropdownMenuItem
+                      disabled={
+                        downloadingIds.has(song.id) || downloadedIds.has(song.id)
+                      }
+                      onClick={() => void handleDownload(song)}
+                    >
+                      {downloadingIds.has(song.id) ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            downloadedIds.has(song.id) &&
+                              "fill-current text-primary-700 dark:text-primary-300"
+                          )}
+                        />
+                      )}
+                      {downloadingIds.has(song.id)
+                        ? "下载中…"
+                        : downloadedIds.has(song.id)
+                          ? "已下载"
+                          : "下载"}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onClick={() => addToQueue(toPlayerSong(song))}
                   >
@@ -454,10 +458,4 @@ export function SongList({
       />
     </div>
   );
-}
-
-/** 格式化播放次数（万为单位） */
-function formatPlays(n: number): string {
-  if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
-  return String(n);
 }

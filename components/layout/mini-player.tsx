@@ -150,16 +150,23 @@ export function MiniPlayer() {
                   <Volume2 className="h-4 w-4" />
                 )}
               </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-20 h-1 appearance-none cursor-pointer rounded-full bg-foreground/20 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-700 [&::-webkit-slider-thumb]:shadow-sm"
-                aria-label="音量"
-              />
+              <div className="relative w-20 h-1.5">
+                <div className="absolute inset-0 rounded-full bg-foreground/20" />
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-primary-700"
+                  style={{ width: `${volume * 100}%` }}
+                />
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  className="absolute inset-0 w-full h-full appearance-none cursor-pointer bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-700 [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10"
+                  aria-label="音量"
+                />
+              </div>
             </div>
             <Button
               onClick={openLyricPage}

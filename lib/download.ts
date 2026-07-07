@@ -2,6 +2,7 @@ import type { ApiSong } from "@/lib/types";
 import { resolveMediaUrl } from "@/lib/utils";
 import { getToken } from "@/lib/auth";
 import { cacheAudio, getCachedAudio, isCached } from "@/lib/db/audio-cache";
+import { getPlatform } from "@/lib/platform/detect";
 
 /**
  * XingTone —— 下载触发器
@@ -104,6 +105,11 @@ export async function downloadSongs(
 /** 便捷判断：歌曲是否已下载（仅查询，不更新 cachedAt） */
 export async function isDownloaded(songId: string): Promise<boolean> {
   return isCached(songId);
+}
+
+/** 判断下载功能是否可用（仅 Android TWA 支持） */
+export function isDownloadAvailable(): boolean {
+  return getPlatform().platform === "twa";
 }
 
 // re-export 缓存层方法，调用方无需关心 db 模块路径

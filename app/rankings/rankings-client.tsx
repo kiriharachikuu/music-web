@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Play, Shuffle, TrendingUp } from "lucide-react";
 
-import type { RankingsData, RankingType, ApiSong } from "@/lib/types";
+import type { RankingsData, RankingType } from "@/lib/types";
 import { toPlayerSong, toPlayerSongs } from "@/lib/types";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { SongList } from "@/components/common/song-list";
@@ -26,18 +26,7 @@ const DIMENSIONS: { key: "play" | "favorite"; label: string }[] = [
   { key: "favorite", label: "收藏量" },
 ];
 
-/**
- * 将后端返回的原始榜单数据（soaring/newSongs）映射为前端 RankingsData
- * 后端字段 soaring/newSongs，前端类型 soar/new
- */
-function normalizeRankings(res: RankingsData): RankingsData {
-  const raw = res as unknown as Record<string, ApiSong[] | undefined>;
-  return {
-    soar: raw.soaring ?? res.soar ?? [],
-    new: raw.newSongs ?? res.new ?? [],
-    hot: res.hot ?? [],
-  };
-}
+
 
 /**
  * 排行榜客户端组件
@@ -69,7 +58,7 @@ export function RankingsClient({ data }: { data: RankingsData }) {
       try {
         const res = await api.get<RankingsData>(`/rankings?by=${dimension}`);
         if (!cancelled) {
-          setRankings(normalizeRankings(res));
+          setRankings(res);
         }
       } catch {
         // 失败时静默保留旧数据，避免清空榜单

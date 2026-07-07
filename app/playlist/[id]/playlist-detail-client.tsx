@@ -402,10 +402,10 @@ function SortableSongRow({
       </span>
       {/* 封面 */}
       <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-primary-700/5">
-        {song.coverUrl ? (
+        {song.coverUrl || (song.album?.cover && song.album.cover) ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={song.coverUrl}
+            src={song.coverUrl || song.album?.cover || undefined}
             alt={song.title}
             className="h-full w-full object-cover"
           />

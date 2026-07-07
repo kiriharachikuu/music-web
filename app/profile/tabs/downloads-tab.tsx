@@ -127,7 +127,7 @@ export function DownloadsTab() {
       {downloads.length > 0 ? (
         <div className="overflow-hidden rounded-2xl border border-primary-500/10 bg-card/40 p-2 shadow-sm md:p-3">
           {downloads.map((item) => {
-            const cover = resolveMediaUrl(item.song.coverUrl);
+            const cover = resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
             const isLoadingPlay = loadingPlayId === item.songId;
             return (
               <div

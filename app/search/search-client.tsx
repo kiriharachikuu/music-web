@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, Clock, Flame } from "lucide-react";
+import { Search, X, Clock, Flame, Calendar } from "lucide-react";
 
 import type {
   SearchResult,
   SearchCategory,
   SearchSort,
   ApiSong,
+  DateRange,
 } from "@/lib/types";
 import { api } from "@/lib/api";
 import { EmptyState } from "@/components/common/empty-state";
@@ -64,6 +65,8 @@ export function SearchClient({
   const [category, setCategory] = React.useState<SearchCategory>("all");
   const [sort, setSort] = React.useState<SearchSort>("latest");
   const [tag, setTag] = React.useState<string | null>(null);
+  const [dateRange, setDateRange] = React.useState<DateRange>({});
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [results, setResults] = React.useState<SearchResult | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState<string[]>([]);
@@ -133,7 +136,7 @@ export function SearchClient({
     return () => clearTimeout(t);
   }, [query]);
 
-  // 执行搜索（debounced / sort / tag 变化触发，每次重置到第 1 页）
+  // 执行搜索（debounced / sort / tag / dateRange 变化触发，每次重置到第 1 页）
   React.useEffect(() => {
     // 搜索条件变化时重置分页
     pageRef.current = 1;
@@ -154,6 +157,8 @@ export function SearchClient({
           limit: "30",
         });
         if (tag) params.set("tag", tag);
+        if (dateRange.startDate) params.set("startDate", dateRange.startDate);
+        if (dateRange.endDate) params.set("endDate", dateRange.endDate);
         const res = await api.get<SearchResult>(`/search?${params}`);
         if (!cancelled) {
           setResults(res);
@@ -172,7 +177,7 @@ export function SearchClient({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced, sort, tag]);
+  }, [debounced, sort, tag, dateRange]);
 
   /** 记录搜索历史 */
   const addHistory = (q: string) => {
@@ -216,6 +221,8 @@ export function SearchClient({
         limit: "30",
       });
       if (tag) params.set("tag", tag);
+      if (dateRange.startDate) params.set("startDate", dateRange.startDate);
+      if (dateRange.endDate) params.set("endDate", dateRange.endDate);
       const res = await api.get<SearchResult>(`/search?${params}`);
       setResults((prev) =>
         prev
@@ -235,6 +242,12 @@ export function SearchClient({
     } finally {
       setLoadingMore(false);
     }
+  };
+
+  /** 清空日期筛选 */
+  const clearDateRange = () => {
+    setDateRange({});
+    setShowDatePicker(false);
   };
 
   const hasQuery = debounced.length > 0;
@@ -393,30 +406,110 @@ export function SearchClient({
               })}
             </div>
 
-            {/* 排序 + Tag（仅歌曲相关时展示） */}
+            {/* 排序 + Tag + 日期筛选（仅歌曲相关时展示） */}
             {(category === "all" || category === "songs") && (
-              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-                {/* 排序 */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-foreground/40">排序</span>
-                  {SORTS.map((s) => {
-                    const isActive = sort === s.key;
-                    return (
-                      <button
-                        key={s.key}
-                        type="button"
-                        onClick={() => setSort(s.key)}
-                        className={cn(
-                          "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                          isActive
-                            ? "bg-primary-700 text-white"
-                            : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
-                        )}
-                      >
-                        {s.label}
-                      </button>
-                    );
-                  })}
+              <div className="space-y-2.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* 排序 */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-foreground/40">排序</span>
+                    {SORTS.map((s) => {
+                      const isActive = sort === s.key;
+                      return (
+                        <button
+                          key={s.key}
+                          type="button"
+                          onClick={() => setSort(s.key)}
+                          className={cn(
+                            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                            isActive
+                              ? "bg-primary-700 text-white"
+                              : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
+                          )}
+                        >
+                          {s.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* 日期筛选按钮 */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowDatePicker(!showDatePicker)}
+                      className={cn(
+                        "flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                        dateRange.startDate || dateRange.endDate
+                          ? "bg-primary-700 text-white"
+                          : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
+                      )}
+                    >
+                      <Calendar className="h-3 w-3" />
+                      {dateRange.startDate || dateRange.endDate ? (
+                        <span>
+                          {dateRange.startDate}
+                          {dateRange.endDate && ` - ${dateRange.endDate}`}
+                        </span>
+                      ) : (
+                        <span>日期</span>
+                      )}
+                    </button>
+                    {/* 日期选择器弹窗 */}
+                    {showDatePicker && (
+                      <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-white p-4 shadow-lg dark:bg-gray-900">
+                        <div className="space-y-3">
+                          <div>
+                            <label className="mb-1.5 block text-xs font-medium text-foreground/70">
+                              开始日期
+                            </label>
+                            <input
+                              type="date"
+                              value={dateRange.startDate || ""}
+                              onChange={(e) =>
+                                setDateRange((prev) => ({
+                                  ...prev,
+                                  startDate: e.target.value || undefined,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs outline-none transition-colors focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1.5 block text-xs font-medium text-foreground/70">
+                              结束日期
+                            </label>
+                            <input
+                              type="date"
+                              value={dateRange.endDate || ""}
+                              onChange={(e) =>
+                                setDateRange((prev) => ({
+                                  ...prev,
+                                  endDate: e.target.value || undefined,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs outline-none transition-colors focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20"
+                            />
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={clearDateRange}
+                              className="flex-1 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/5 active:bg-foreground/10"
+                            >
+                              清空
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowDatePicker(false)}
+                              className="flex-1 rounded-lg bg-primary-700 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-600 active:bg-primary-800"
+                            >
+                              确定
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {/* Tag 筛选 */}
                 <div className="flex flex-wrap items-center gap-1.5">

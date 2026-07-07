@@ -25,6 +25,8 @@ export interface ApiSong {
   plays: number;
   status: "PUBLISHED" | "DRAFT";
   tags?: Tag[];
+  /** 关联专辑数据（后端 include 返回） */
+  album?: Album | null;
 }
 
 /** 专辑 */
@@ -173,7 +175,7 @@ export interface Paginated<T> {
   limit: number;
   totalPages: number;
   /** 是否还有更多 */
-  hasMore?: boolean;
+  hasMore: boolean;
 }
 
 /** 搜索结果聚合（GET /api/search） */
@@ -202,6 +204,12 @@ export type SearchCategory = "all" | "songs" | "albums" | "playlists" | "artists
  */
 export type SearchSort = "latest" | "oldest" | "relevance";
 
+/** 日期范围过滤 */
+export interface DateRange {
+  startDate?: string;
+  endDate?: string;
+}
+
 // ===== 播放器适配 =====
 
 /** 播放器使用的 Song（复用 player-store 定义） */
@@ -218,8 +226,8 @@ export function toPlayerSong(s: ApiSong): PlayerSong {
     id: s.id,
     title: s.title,
     artist: s.artist,
-    album: s.albumName,
-    cover: s.coverUrl ?? undefined,
+    album: s.albumName ?? s.album?.name,
+    cover: s.coverUrl ?? s.album?.cover ?? undefined,
     url: s.fileUrl,
     duration: s.duration,
   };
