@@ -277,7 +277,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         {/* ===== 主区：PC 左右分栏，移动端单列 ===== */}
         <main className="flex min-h-0 flex-1 flex-col px-4 md:grid md:grid-cols-[0.9fr_1.1fr] md:items-center md:gap-10">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
-          <div className="hidden flex-col items-center justify-center gap-6 md:flex">
+          <div className="hidden flex-col items-center justify-center gap-6 pb-24 md:flex">
             <div className="aspect-square w-[min(420px,80%)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
               {cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -304,7 +304,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </div>
 
           {/* 右：歌词 */}
-          <div className="min-h-0 flex-1 md:h-[60vh] md:flex-none">
+          <div className="min-h-0 flex-1 md:h-[55vh] md:flex-none">
             <LyricsView
               lrc={lrc}
               currentTime={currentTime}
@@ -315,19 +315,21 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </main>
 
         {/* ===== 底部控制区 ===== */}
-        <FullScreenControls
-          isPlaying={isPlaying}
-          currentTime={currentTime}
-          duration={duration}
-          playMode={playMode}
-          onToggle={toggle}
-          onPrev={prev}
-          onNext={next}
-          onSeek={seek}
-          onCyclePlayMode={cyclePlayMode}
-          isFavorite={isFavorite}
-          onToggleFavorite={toggleFavorite}
-        />
+        <div className="shrink-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent pt-8">
+          <FullScreenControls
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            playMode={playMode}
+            onToggle={toggle}
+            onPrev={prev}
+            onNext={next}
+            onSeek={seek}
+            onCyclePlayMode={cyclePlayMode}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+          />
+        </div>
       </div>
 
       {/* ===== 播放队列抽屉 ===== */}
