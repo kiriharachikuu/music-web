@@ -44,23 +44,6 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
           {/* Banner 轮播 */}
           {banners.length > 0 && <BannerCarousel banners={banners} />}
 
-          {/* 每日推荐：30 首歌曲随机推荐 */}
-          {dailyRecommend.length > 0 && (
-            <div>
-              <SectionTitle title="每日推荐" moreHref="/rankings" />
-              <div className="flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
-                {dailyRecommend.map((song) => (
-                  <SongCard
-                    key={song.id}
-                    song={song}
-                    queue={dailyRecommend}
-                    className="w-36 md:w-44"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* 新歌推送 */}
           {newSongs.length > 0 && (
             <div>
