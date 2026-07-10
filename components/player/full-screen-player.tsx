@@ -304,7 +304,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </div>
 
           {/* 右：歌词 */}
-          <div className="min-h-0 flex-1 md:h-[50vh] md:flex-none">
+          <div className="min-h-0 flex-1 md:h-[60vh] md:flex-none">
             <LyricsView
               lrc={lrc}
               currentTime={currentTime}

@@ -193,7 +193,7 @@ export function LyricsView({
       )}
     >
       {/* 上下留白让首尾行能滚到容器中心 */}
-      <div className="flex min-h-full flex-col items-center justify-center gap-6 py-[35vh] text-center">
+      <div className="flex min-h-full flex-col items-center justify-center gap-6 py-24 md:py-32 text-center">
         {lines.map((line, i) => {
           const isActive = i === activeIndex;
           const isClicked = i === clickedIndex;
