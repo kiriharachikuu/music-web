@@ -43,6 +43,24 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "0.2.0",
+    versionCode: 2,
+    releaseDate: "2026-07-11",
+    title: "界面优化与问题修复",
+    changes: [
+      { type: "feature", content: "侧边栏新增星瞳立绘装饰，品牌视觉更丰富" },
+      { type: "feature", content: "管理后台支持 APK 文件上传，版本更新可直接上传安装包" },
+      { type: "improvement", content: "全屏歌词页面布局重构，歌词、歌曲信息与进度条不再重叠" },
+      { type: "improvement", content: "高亮歌词显示优化，避免内容被容器裁剪" },
+      { type: "improvement", content: "后端 /uploads 静态资源添加 CORS 支持，跨域访问更稳定" },
+      { type: "fix", content: "修复 PC 端全屏歌词页面进度条遮挡歌曲信息的问题" },
+      { type: "fix", content: "修复自动播放开关滑块滑出容器边界的视觉异常" },
+      { type: "fix", content: "修复飙升榜在数据不足时无法显示的问题，添加数据回退逻辑" },
+      { type: "fix", content: "修复 TWA 歌曲下载因 CORS 缺失导致失败的问题" },
+      { type: "fix", content: "修复 TWA 应用更新下载链接 404 的问题" },
+    ],
+  },
+  {
     version: "0.1.0",
     versionCode: 1,
     releaseDate: "2025-07-01",
@@ -67,8 +85,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "0.1.0";
-export const APP_VERSION_CODE = 1;
+export const APP_VERSION = "0.2.0";
+export const APP_VERSION_CODE = 2;
 
 /**
  * 获取更新类型对应的显示标签

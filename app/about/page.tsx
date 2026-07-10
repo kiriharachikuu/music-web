@@ -86,7 +86,7 @@ const techStack = [
   },
   {
     title: "后端",
-    items: ["NestJS", "Prisma ORM", "PostgreSQL", "JWT 认证", "FFmpeg 转码", "S3 存储"],
+    items: ["NestJS", "Prisma ORM", "SQLite", "JWT 认证", "FFmpeg 转码", "S3 存储"],
   },
   {
     title: "跨端",
