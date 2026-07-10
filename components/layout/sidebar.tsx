@@ -35,7 +35,7 @@ export function Sidebar() {
       </div>
 
       {/* 导航 */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="space-y-1 px-3 py-4">
         {navItems.map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
@@ -65,6 +65,18 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* 立绘装饰 */}
+      <div className="flex-1 relative overflow-hidden">
+        <img
+          src="/character.png"
+          alt="Character"
+          className="absolute bottom-0 right-0 h-full w-auto max-w-full object-contain object-bottom opacity-80 drop-shadow-2xl animate-fade-in"
+          style={{
+            filter: "drop-shadow(0 8px 20px rgba(139, 0, 255, 0.25))",
+          }}
+        />
+      </div>
 
       {/* 底部：下载 + 关于链接 */}
       <div className="border-t border-primary-500/10 px-3 py-3 space-y-1">
