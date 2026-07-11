@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Search, User2, Loader2 } from "lucide-react";
 
 import type {
@@ -145,13 +146,17 @@ export interface ArtistCardProps {
 
 /** 歌手卡片：圆形头像 + 名字 + 歌曲数 */
 export function ArtistCard({ artist }: ArtistCardProps) {
+  const cover = artist.cover ?? artist.avatar;
   return (
-    <div className="flex flex-col items-center gap-2 text-center">
+    <Link
+      href={artist.id ? `/artist/${artist.id}` : "#"}
+      className="flex flex-col items-center gap-2 text-center transition-transform hover:scale-105 active:scale-95"
+    >
       <div className="h-24 w-24 overflow-hidden rounded-full bg-primary-700/5 shadow-card md:h-28 md:w-28">
-        {artist.cover ? (
+        {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={artist.cover}
+            src={cover}
             alt={artist.name}
             className="h-full w-full object-cover"
           />
@@ -163,7 +168,7 @@ export function ArtistCard({ artist }: ArtistCardProps) {
       </div>
       <p className="text-sm font-medium">{artist.name}</p>
       <p className="text-xs text-foreground/40">{artist.songCount} 首</p>
-    </div>
+    </Link>
   );
 }
 

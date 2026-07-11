@@ -188,9 +188,24 @@ export interface SearchResult {
 
 /** 歌手概要（搜索结果中） */
 export interface ArtistBrief {
+  id?: string;
   name: string;
   cover?: string | null;
+  avatar?: string | null;
   songCount: number;
+}
+
+/** 歌手详情（GET /api/artists/:id） */
+export interface ArtistDetail {
+  id: string;
+  name: string;
+  avatar?: string | null;
+  bio?: string | null;
+  representativeWorks?: string[];
+  songs: ApiSong[];
+  albums: Album[];
+  songCount: number;
+  albumCount: number;
 }
 
 /** 搜索结果分类 Tab */
