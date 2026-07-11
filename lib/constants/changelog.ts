@@ -43,6 +43,21 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "0.3.0",
+    versionCode: 3,
+    releaseDate: "2026-07-12",
+    title: "歌手管理功能上线",
+    changes: [
+      { type: "feature", content: "新增歌手详情页，展示歌手信息、歌曲列表与专辑" },
+      { type: "feature", content: "搜索结果歌手卡片支持点击跳转至歌手详情页" },
+      { type: "feature", content: "管理后台新增歌手管理模块，支持歌手信息增删改查" },
+      { type: "feature", content: "歌曲/专辑创建编辑支持多歌手选择，可搜索、多选、移除" },
+      { type: "improvement", content: "歌手详情页支持播放全部、随机播放与收藏操作" },
+      { type: "improvement", content: "操作日志支持歌手管理操作记录" },
+      { type: "fix", content: "修复管理后台表单中按钮缺少 type 属性导致误触发表单提交的问题" },
+    ],
+  },
+  {
     version: "0.2.0",
     versionCode: 2,
     releaseDate: "2026-07-11",
@@ -85,8 +100,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "0.2.0";
-export const APP_VERSION_CODE = 2;
+export const APP_VERSION = "0.3.0";
+export const APP_VERSION_CODE = 3;
 
 /**
  * 获取更新类型对应的显示标签

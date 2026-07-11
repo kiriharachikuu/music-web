@@ -81,9 +81,9 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
             className="absolute inset-0 -z-10 h-full w-full scale-150 object-cover opacity-50 blur-3xl"
           />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/75 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
 
-        <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:gap-8 md:p-8">
+        <div className="relative flex flex-col gap-6 p-6 md:flex-row md:items-center md:gap-8 md:p-8">
           <div className="h-44 w-44 shrink-0 overflow-hidden rounded-full bg-primary-700/5 shadow-card-dark md:h-56 md:w-56">
             {artist.avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -100,13 +100,13 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
           </div>
 
           <div className="min-w-0 flex-1 space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-foreground/50">
+            <p className="text-xs font-medium uppercase tracking-wider text-foreground/70">
               歌手
             </p>
             <h1 className="text-3xl font-bold tracking-tight md:text-5xl">
               {artist.name}
             </h1>
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-foreground/40">
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-foreground/70">
               <span>{artist.songCount} 首歌曲</span>
               <span>·</span>
               <span>{artist.albumCount} 张专辑</span>
@@ -118,13 +118,13 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
               )}
             </div>
             {artist.bio && (
-              <p className="mt-2 max-w-2xl line-clamp-3 text-sm text-foreground/60">
+              <p className="mt-2 max-w-2xl line-clamp-3 text-sm text-foreground/80">
                 {artist.bio}
               </p>
             )}
             {artist.representativeWorks && artist.representativeWorks.length > 0 && (
               <div className="mt-2">
-                <span className="text-xs text-foreground/40">代表作品：</span>
+                <span className="text-sm text-foreground/70">代表作品：</span>
                 <div className="flex flex-wrap gap-1.5">
                   {artist.representativeWorks.map((work) => (
                     <span
