@@ -201,7 +201,7 @@ export interface ArtistDetail {
   name: string;
   avatar?: string | null;
   bio?: string | null;
-  representativeWorks?: string[];
+  representativeWorks?: string | null;
   songs: ApiSong[];
   albums: Album[];
   songCount: number;

@@ -122,19 +122,12 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
                 {artist.bio}
               </p>
             )}
-            {artist.representativeWorks && artist.representativeWorks.length > 0 && (
+            {artist.representativeWorks && (
               <div className="mt-2">
                 <span className="text-sm text-foreground/70">代表作品：</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {artist.representativeWorks.map((work) => (
-                    <span
-                      key={work}
-                      className="rounded-full bg-primary-700/10 px-2.5 py-0.5 text-xs text-primary-700 dark:text-primary-300"
-                    >
-                      {work}
-                    </span>
-                  ))}
-                </div>
+                <span className="text-sm text-foreground/80">
+                  {artist.representativeWorks}
+                </span>
               </div>
             )}
           </div>
