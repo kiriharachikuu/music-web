@@ -211,7 +211,7 @@ export function PlaylistsTab() {
               {dialog.mode === "create" ? "新建歌单" : "重命名歌单"}
             </DialogTitle>
             <DialogDescription>
-              设置歌单名称与封面地址（可选）
+              设置歌单名称与封面（可选）
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -247,44 +247,35 @@ export function PlaylistsTab() {
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0 space-y-2">
-                  <Input
-                    value={dialog.cover}
-                    onChange={(e) =>
-                      setDialog((d) => ({ ...d, cover: e.target.value }))
-                    }
-                    placeholder="https://... 或点击上传"
-                    className="rounded-lg"
+                <div className="flex-1 min-w-0">
+                  <input
+                    ref={coverFileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleCoverUpload}
+                    className="hidden"
                   />
-                  <div className="flex gap-2">
-                    <input
-                      ref={coverFileRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      onChange={handleCoverUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => coverFileRef.current?.click()}
-                      disabled={uploading || dialog.mode === "create"}
-                      className="rounded-full"
-                    >
-                      {uploading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Upload className="h-3.5 w-3.5" />
-                      )}
-                      {uploading ? "上传中..." : "上传图片"}
-                    </Button>
-                  </div>
-                  {dialog.mode === "create" && (
-                    <p className="text-[11px] text-foreground/40">
-                      新建歌单后可上传封面
-                    </p>
-                  )}
+                  <p className="text-sm font-medium text-foreground/80">歌单封面</p>
+                  <p className="mt-1 text-xs text-foreground/50">
+                    {dialog.mode === "create"
+                      ? "新建歌单后可上传封面"
+                      : "点击上传按钮更换封面"}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => coverFileRef.current?.click()}
+                    disabled={uploading || dialog.mode === "create"}
+                    className="mt-2 rounded-full"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="h-3.5 w-3.5" />
+                    )}
+                    {uploading ? "上传中..." : "上传图片"}
+                  </Button>
                 </div>
               </div>
             </div>
