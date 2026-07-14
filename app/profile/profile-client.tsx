@@ -34,7 +34,7 @@ import { PlaylistsTab } from "./tabs/playlists-tab";
 import { HistoryTab } from "./tabs/history-tab";
 import { DownloadsTab } from "./tabs/downloads-tab";
 import { SettingsTab } from "./tabs/settings-tab";
-import { EditProfileDialog } from "./tabs/edit-profile-dialog";
+import { EditProfileSheet } from "./tabs/edit-profile-sheet";
 
 /** Tab 类型 */
 type Tab =
@@ -304,8 +304,8 @@ export function ProfileClient() {
       {MobileView}
       {DesktopView}
 
-      {/* 编辑资料弹窗 */}
-      <EditProfileDialog
+      {/* 编辑资料底部抽屉 */}
+      <EditProfileSheet
         open={editOpen}
         onOpenChange={setEditOpen}
         profile={profile}

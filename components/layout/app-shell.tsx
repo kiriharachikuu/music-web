@@ -9,7 +9,7 @@ import { MiniPlayer } from "@/components/layout/mini-player";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { QueuePanel } from "@/components/layout/queue-panel";
 import { FullScreenPlayer } from "@/components/player/full-screen-player";
-import { LoginDialog } from "@/components/auth/login-dialog";
+import { LoginSheet } from "@/components/auth/login-sheet";
 import { UpdateDialog } from "@/components/common/update-dialog";
 import { InstallPrompt } from "@/components/common/install-prompt";
 import { Toaster } from "@/components/ui/toaster";
@@ -116,7 +116,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-dvh">
         {children}
-        <LoginDialog />
+        <LoginSheet />
         <UpdateDialog />
         <Toaster />
         {error && (
@@ -160,8 +160,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* 全屏歌词播放页：由 isLyricPageOpen 控制，z-50 覆盖所有内容 */}
       <FullScreenPlayer />
 
-      {/* 全局登录弹窗：401 或主动触发时弹出，z-50 */}
-      <LoginDialog />
+      {/* 全局登录底部抽屉：401 或主动触发时从底部滑出，z-50 */}
+      <LoginSheet />
 
       {/* 版本检查弹窗：挂载 2 秒后检查更新 */}
       <UpdateDialog />
