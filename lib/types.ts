@@ -152,6 +152,8 @@ export interface DiscoverData {
   newSongs: ApiSong[];
   /** 精选歌单 */
   featuredPlaylists: Playlist[];
+  /** 热门歌手 */
+  hotArtists: ArtistBrief[];
 }
 
 /** 排行榜聚合数据（GET /api/rankings） */

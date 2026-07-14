@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { User, Pencil, X, Loader2 } from "lucide-react";
+import { User, Pencil, X, Loader2, Upload, Camera } from "lucide-react";
 
 import type { UserProfile } from "@/lib/types";
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import { useToast } from "@/components/ui/toaster";
 import {
   Sheet,
@@ -39,7 +40,9 @@ export function EditProfileSheet({
   const [username, setUsername] = React.useState("");
   const [avatar, setAvatar] = React.useState("");
   const [saving, setSaving] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
   const toast = useToast();
+  const avatarFileRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (open) {
@@ -47,6 +50,35 @@ export function EditProfileSheet({
       setAvatar(profile.avatar || "");
     }
   }, [open, profile]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/user/upload/avatar`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+        credentials: "include",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || "上传失败");
+      const url = json.data?.url || json.url || "";
+      setAvatar(url);
+      toast.success("头像上传成功");
+    } catch (err) {
+      toast.error("上传失败", {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setUploading(false);
+      if (avatarFileRef.current) avatarFileRef.current.value = "";
+    }
+  };
 
   const handleSave = async () => {
     if (!username.trim()) return;
@@ -89,31 +121,53 @@ export function EditProfileSheet({
           </SheetHeader>
 
           <div className="mt-6 space-y-5">
-            {/* 头像预览 + URL 输入 */}
+            {/* 头像预览 + 上传 + URL 输入 */}
             <div className="flex items-start gap-4">
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-primary-700/10 ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
-                {avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={avatar}
-                    alt="头像预览"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-primary-700/60">
-                    <User className="h-8 w-8" />
-                  </div>
-                )}
+              <div className="relative shrink-0">
+                <div className="h-20 w-20 overflow-hidden rounded-full bg-primary-700/10 ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
+                  {avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatar}
+                      alt="头像预览"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+                      <User className="h-10 w-10" />
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => avatarFileRef.current?.click()}
+                  disabled={uploading || saving}
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 text-white shadow-lg transition-all hover:bg-primary-600 disabled:opacity-50"
+                  aria-label="上传头像"
+                >
+                  {uploading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Camera className="h-3.5 w-3.5" />
+                  )}
+                </button>
+                <input
+                  ref={avatarFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 space-y-2">
                 <label className="text-sm font-medium text-foreground/80">
                   头像 URL
                 </label>
                 <Input
                   value={avatar}
                   onChange={(e) => setAvatar(e.target.value)}
-                  placeholder="粘贴图片链接"
-                  className="mt-1"
+                  placeholder="粘贴图片链接 或 点击左侧相机按钮上传"
+                  className="mt-0"
                   disabled={saving}
                 />
               </div>

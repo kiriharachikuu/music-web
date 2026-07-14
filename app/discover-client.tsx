@@ -11,6 +11,7 @@ import { SongCard } from "@/components/common/song-card";
 import { PlaylistGrid } from "@/components/common/playlist-grid";
 import { EmptyState } from "@/components/common/empty-state";
 import { PullToRefresh } from "@/components/common/pull-to-refresh";
+import { ArtistCard } from "@/app/search/search-results";
 
 /**
  * 发现页客户端组件
@@ -34,6 +35,7 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
     dailyRecommend = [],
     newSongs = [],
     featuredPlaylists = [],
+    hotArtists = [],
   } = data;
 
   return (
@@ -56,6 +58,18 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
             </div>
           )}
 
+          {/* 热门歌手 */}
+          {hotArtists.length > 0 && (
+            <div>
+              <SectionTitle title="热门歌手" />
+              <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+                {hotArtists.map((artist) => (
+                  <ArtistCard key={artist.id} artist={artist} />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 精选歌单 */}
           {featuredPlaylists.length > 0 && (
             <div>
@@ -68,7 +82,8 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
           {banners.length === 0 &&
             dailyRecommend.length === 0 &&
             newSongs.length === 0 &&
-            featuredPlaylists.length === 0 && (
+            featuredPlaylists.length === 0 &&
+            hotArtists.length === 0 && (
               <EmptyState
                 icon={Music2}
                 title="还没有推荐内容"
