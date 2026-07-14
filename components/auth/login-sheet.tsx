@@ -8,6 +8,7 @@ import { API_BASE } from "@/lib/api";
 import { setToken, setUser } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import type { UserProfile } from "@/lib/types";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import {
   Sheet,
   SheetContent,
@@ -15,6 +16,13 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 /** 登录/注册响应体 */
@@ -27,17 +35,18 @@ interface AuthResult {
 type Mode = "login" | "register";
 
 /**
- * 全局登录底部抽屉
+ * 全局登录组件
+ * - 移动端：底部抽屉（Sheet）
+ * - PC 端：居中弹窗（Dialog）
  * - 由 useAuthStore.openLogin() 触发
- * - 从屏幕底部滑出，非模态弹窗形式
- * - 登录成功后：存储 token + user → 关闭抽屉 → router.refresh() → 调用 onSuccess
- * - 适配 TWA/iOS 安全区域
+ * - 登录成功后：存储 token + user → 关闭 → router.refresh() → 调用 onSuccess
  */
 export function LoginSheet() {
   const isOpen = useAuthStore((s) => s.isOpen);
   const closeLogin = useAuthStore((s) => s.closeLogin);
   const onSuccess = useAuthStore((s) => s.onSuccess);
   const router = useRouter();
+  const isMobile = useIsMobile();
 
   const handleSuccess = React.useCallback(() => {
     closeLogin();
@@ -51,47 +60,90 @@ export function LoginSheet() {
     }
   }, [closeLogin, onSuccess, router]);
 
+  const content = (
+    <LoginContent onSuccess={handleSuccess} onClose={closeLogin} />
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={(v) => !v && closeLogin()}>
+        <SheetContent
+          side="bottom"
+          className="border-t-0 rounded-t-[28px] bg-gradient-to-br from-primary-800 via-primary-900 to-gray-950 p-0 text-white shadow-2xl sm:rounded-t-[32px]"
+        >
+          <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary-400/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-primary-300/10 blur-3xl" />
+
+          <div
+            className="relative flex h-1.5 w-12 shrink-0 rounded-full bg-white/20 mx-auto mt-3 mb-1"
+            aria-hidden="true"
+          />
+
+          <div className="relative px-6 pb-6 pt-2 md:px-8 md:pb-8 max-h-[85vh] overflow-y-auto">
+            <SheetHeader className="space-y-3 text-center">
+              <div className="mx-auto flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icons/logo.png"
+                  alt="XingTone"
+                  className="h-14 w-14 rounded-2xl shadow-2xl"
+                />
+              </div>
+              <SheetTitle className="text-xl font-bold tracking-tight text-white">
+                XingTone
+              </SheetTitle>
+              <SheetDescription className="text-sm text-white/50">
+                登录后即可收藏歌曲、管理歌单、同步播放历史
+              </SheetDescription>
+            </SheetHeader>
+            {content}
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
-    <Sheet open={isOpen} onOpenChange={(v) => !v && closeLogin()}>
-      <SheetContent
-        side="bottom"
-        className="border-t-0 rounded-t-[28px] bg-gradient-to-br from-primary-800 via-primary-900 to-gray-950 p-0 text-white shadow-2xl sm:rounded-t-[32px]"
-      >
+    <Dialog open={isOpen} onOpenChange={(v) => !v && closeLogin()}>
+      <DialogContent className="overflow-hidden p-0 border-0 shadow-2xl max-w-md bg-gradient-to-br from-primary-800 via-primary-900 to-gray-950 text-white">
         <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary-400/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-primary-300/10 blur-3xl" />
 
-        <div
-          className="relative flex h-1.5 w-12 shrink-0 rounded-full bg-white/20 mx-auto mt-3 mb-1"
-          aria-hidden="true"
-        />
+        <button
+          type="button"
+          onClick={closeLogin}
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
+        >
+          <X className="h-4 w-4 text-white" />
+          <span className="sr-only">关闭</span>
+        </button>
 
-        <div className="relative px-6 pb-6 pt-2 md:px-8 md:pb-8 max-h-[85vh] overflow-y-auto">
-          <SheetHeader className="space-y-3 text-center">
+        <div className="relative px-8 pb-8 pt-8">
+          <DialogHeader className="space-y-3 text-center">
             <div className="mx-auto flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/icons/logo.png"
                 alt="XingTone"
-                className="h-14 w-14 rounded-2xl shadow-2xl"
+                className="h-16 w-16 rounded-2xl shadow-2xl"
               />
             </div>
-            <SheetTitle className="text-xl font-bold tracking-tight text-white">
+            <DialogTitle className="text-2xl font-bold tracking-tight text-white">
               XingTone
-            </SheetTitle>
-            <SheetDescription className="text-sm text-white/50">
+            </DialogTitle>
+            <DialogDescription className="text-sm text-white/50">
               登录后即可收藏歌曲、管理歌单、同步播放历史
-            </SheetDescription>
-          </SheetHeader>
-
-          <LoginForm onSuccess={handleSuccess} onClose={closeLogin} />
+            </DialogDescription>
+          </DialogHeader>
+          {content}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-/** 登录表单（登录 + 注册） */
-function LoginForm({
+/** 登录表单容器（不含外壳） */
+function LoginContent({
   onSuccess,
   onClose,
 }: {
