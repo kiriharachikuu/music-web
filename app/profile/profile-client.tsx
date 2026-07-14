@@ -29,12 +29,14 @@ import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { FavoritesTab } from "./tabs/favorites-tab";
 import { PlaylistsTab } from "./tabs/playlists-tab";
 import { HistoryTab } from "./tabs/history-tab";
 import { DownloadsTab } from "./tabs/downloads-tab";
 import { SettingsTab } from "./tabs/settings-tab";
 import { EditProfileSheet } from "./tabs/edit-profile-sheet";
+import { EditProfileDialog } from "./tabs/edit-profile-dialog";
 
 /** Tab 类型 */
 type Tab =
@@ -66,6 +68,7 @@ const TABS: { key: Tab; label: string; icon: typeof Heart }[] = [
  */
 export function ProfileClient() {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
   const [profileLoaded, setProfileLoaded] = React.useState(false);
   const [loggedOut, setLoggedOut] = React.useState(false);
@@ -299,21 +302,35 @@ export function ProfileClient() {
     </section>
   );
 
+  const handleProfileUpdated = (updated: UserProfile) => {
+    setProfile(updated);
+    setEditOpen(false);
+  };
+
   return (
     <>
       {MobileView}
       {DesktopView}
 
-      {/* 编辑资料底部抽屉 */}
-      <EditProfileSheet
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        profile={profile}
-        onUpdated={(updated) => {
-          setProfile(updated);
-          setEditOpen(false);
-        }}
-      />
+      {/* 移动端：底部抽屉 */}
+      {isMobile && (
+        <EditProfileSheet
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          profile={profile}
+          onUpdated={handleProfileUpdated}
+        />
+      )}
+
+      {/* PC端：Dialog弹窗 */}
+      {!isMobile && (
+        <EditProfileDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          profile={profile}
+          onUpdated={handleProfileUpdated}
+        />
+      )}
     </>
   );
 }

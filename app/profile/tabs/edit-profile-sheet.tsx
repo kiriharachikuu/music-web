@@ -159,17 +159,11 @@ export function EditProfileSheet({
                   className="hidden"
                 />
               </div>
-              <div className="flex-1 min-w-0 space-y-2">
-                <label className="text-sm font-medium text-foreground/80">
-                  头像 URL
-                </label>
-                <Input
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  placeholder="粘贴图片链接 或 点击左侧相机按钮上传"
-                  className="mt-0"
-                  disabled={saving}
-                />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground/80">头像</p>
+                <p className="mt-1 text-xs text-foreground/50">
+                  点击相机按钮上传新头像
+                </p>
               </div>
             </div>
 

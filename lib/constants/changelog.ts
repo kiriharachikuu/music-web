@@ -43,6 +43,24 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "0.3.1",
+    versionCode: 4,
+    releaseDate: "2026-07-15",
+    title: "界面优化与安全性增强",
+    changes: [
+      { type: "feature", content: "发现页新增「热门歌手」板块，展示平台热门歌手" },
+      { type: "feature", content: "歌手详情页支持批量选择作品进行操作" },
+      { type: "feature", content: "登录与资料编辑改为非弹窗式页面，体验更流畅" },
+      { type: "feature", content: "新增腾讯云 COS 原生存储支持，存储配置可服务端热更新，无需重启" },
+      { type: "improvement", content: "编辑资料移除头像 URL 输入框，仅保留上传方式，避免图片链接被滥用" },
+      { type: "improvement", content: "PC 端编辑资料改用 Dialog 弹窗，移动端继续使用底部抽屉，体验更统一" },
+      { type: "fix", content: "修复七日播放趋势在无数据时无法正常展示的问题" },
+      { type: "fix", content: "修复排行榜在无数据时无法正常显示的问题，添加数据回退逻辑" },
+      { type: "fix", content: "修复专辑信息中歌手重复显示的问题" },
+      { type: "fix", content: "修复自动播放开关关闭时小球位置偏右的问题，关闭状态小球默认在左侧" },
+    ],
+  },
+  {
     version: "0.3.0",
     versionCode: 3,
     releaseDate: "2026-07-12",
@@ -100,8 +118,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "0.3.0";
-export const APP_VERSION_CODE = 3;
+export const APP_VERSION = "0.3.1";
+export const APP_VERSION_CODE = 4;
 
 /**
  * 获取更新类型对应的显示标签
