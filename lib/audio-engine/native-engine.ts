@@ -50,16 +50,17 @@ export function createNativeEngine(): AudioEngine {
       currentPosition = opts?.startTime ?? 0;
       currentDuration = 0;
 
-      // 推送媒体元数据（用于原生通知 + 锁屏显示）
-      if (opts?.metadata) {
-        const { title, artist, coverUrl } = opts.metadata;
-        androidBridge.setMetadata(title, artist, coverUrl ?? "");
-      }
-
       // 调用原生加载并播放
       // startTime 单位：秒 → 转换为毫秒传给原生
       const startTimeMs = Math.max(0, Math.floor((opts?.startTime ?? 0) * 1000));
       androidBridge.loadAndPlay(url, opts?.headers, startTimeMs);
+
+      // 推送媒体元数据（用于原生通知 + 锁屏显示）
+      // 注意：必须在 loadAndPlay 之后调用，否则 Service 处理顺序可能导致 metadata 被新 MediaItem 覆盖
+      if (opts?.metadata) {
+        const { title, artist, coverUrl } = opts.metadata;
+        androidBridge.setMetadata(title, artist, coverUrl ?? "");
+      }
     },
 
     play(): void {
