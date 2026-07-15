@@ -1,50 +1,35 @@
 "use client";
 
 import * as React from "react";
-import { ListMusic, Plus, Pencil, Trash2, Upload, ImageIcon, Loader2 } from "lucide-react";
+import { ListMusic, Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import type { Playlist } from "@/lib/types";
-import { api, API_BASE } from "@/lib/api";
+import { api } from "@/lib/api";
 import { PlaylistCard } from "@/components/common/playlist-card";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useConfirm } from "@/components/common/confirm-dialog";
 import { useToast } from "@/components/ui/toaster";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import { getToken } from "@/lib/auth";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { EditPlaylistSheet } from "./edit-playlist-sheet";
+import { EditPlaylistDialog } from "./edit-playlist-dialog";
 
 /** 子模块 2：我的歌单 */
 export function PlaylistsTab() {
   const isMobile = useIsMobile();
   const [playlists, setPlaylists] = React.useState<Playlist[] | null>(null);
-  const [dialog, setDialog] = React.useState<{
-    open: boolean;
-    mode: "create" | "rename";
-    playlist?: Playlist;
-    name: string;
-    cover: string;
-  }>({ open: false, mode: "create", name: "", cover: "" });
-  const [uploading, setUploading] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [editMode, setEditMode] = React.useState<"create" | "edit">("create");
+  const [editingPlaylist, setEditingPlaylist] = React.useState<Playlist | undefined>();
   const confirm = useConfirm();
   const toast = useToast();
-  const coverFileRef = React.useRef<HTMLInputElement>(null);
 
   const load = async () => {
     try {
@@ -59,69 +44,16 @@ export function PlaylistsTab() {
     void load();
   }, []);
 
-  const openCreate = () =>
-    setDialog({ open: true, mode: "create", name: "", cover: "" });
-
-  const openRename = (pl: Playlist) =>
-    setDialog({
-      open: true,
-      mode: "rename",
-      playlist: pl,
-      name: pl.name,
-      cover: pl.cover ?? "",
-    });
-
-  const submit = async () => {
-    const { mode, playlist, name, cover } = dialog;
-    if (!name.trim()) return;
-    try {
-      if (mode === "create") {
-        await api.post("/user/playlists", { name: name.trim(), cover: cover.trim() || undefined });
-      } else if (playlist) {
-        await api.put(`/user/playlists/${playlist.id}`, {
-          name: name.trim(),
-          cover: cover.trim() || undefined,
-        });
-      }
-      setDialog((d) => ({ ...d, open: false }));
-      void load();
-    } catch {
-      /* 忽略 */
-    }
+  const openCreate = () => {
+    setEditingPlaylist(undefined);
+    setEditMode("create");
+    setEditOpen(true);
   };
 
-  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const { mode, playlist } = dialog;
-    if (mode === "create") {
-      toast.error("请先创建歌单后再上传封面");
-      return;
-    }
-    if (!playlist) return;
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/user/playlists/${playlist.id}/cover`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-        credentials: "include",
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "上传失败");
-      setDialog((d) => ({ ...d, cover: json.data?.url || json.url || "" }));
-      toast.success("封面上传成功");
-    } catch (err) {
-      toast.error("上传失败", {
-        description: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setUploading(false);
-      if (coverFileRef.current) coverFileRef.current.value = "";
-    }
+  const openEdit = (pl: Playlist) => {
+    setEditingPlaylist(pl);
+    setEditMode("edit");
+    setEditOpen(true);
   };
 
   const remove = async (pl: Playlist) => {
@@ -137,12 +69,15 @@ export function PlaylistsTab() {
     try {
       await api.del(`/user/playlists/${pl.id}`);
       void load();
+      toast.success("歌单已删除");
     } catch {
       /* 忽略 */
     }
   };
 
   if (playlists === null) return <PageSkeleton variant="grid" />;
+
+  const EditComponent = isMobile ? EditPlaylistSheet : EditPlaylistDialog;
 
   return (
     <div className="space-y-4">
@@ -164,30 +99,59 @@ export function PlaylistsTab() {
           {playlists.map((pl) => (
             <div key={pl.id} className="group relative">
               <PlaylistCard playlist={pl} />
-              {/* 重命名 / 删除 浮层 */}
-              <div className="absolute right-1.5 top-1.5 z-10 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    openRename(pl);
-                  }}
-                  aria-label="重命名"
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    remove(pl);
-                  }}
-                  aria-label="删除"
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-destructive"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+              {/* 操作按钮：PC 端 hover 显示，移动端始终可见 */}
+              <div className="absolute right-1.5 top-1.5 z-10 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+                {isMobile ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60"
+                        aria-label="更多操作"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-32">
+                      <DropdownMenuItem onClick={() => openEdit(pl)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        编辑歌单
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => remove(pl)}
+                        className="text-red-500 focus:text-red-500"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        删除歌单
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        openEdit(pl);
+                      }}
+                      aria-label="编辑歌单"
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-black/60"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        remove(pl);
+                      }}
+                      aria-label="删除歌单"
+                      className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm hover:bg-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -209,137 +173,13 @@ export function PlaylistsTab() {
         />
       )}
 
-      {/* 表单内容 */}
-      {(() => {
-        const formContent = (
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1.5 block text-xs text-foreground/50">
-                歌单名称
-              </label>
-              <Input
-                value={dialog.name}
-                onChange={(e) =>
-                  setDialog((d) => ({ ...d, name: e.target.value }))
-                }
-                placeholder="给歌单起个名字"
-                className="rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs text-foreground/50">
-                歌单封面
-              </label>
-              <div className="flex items-start gap-3">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-border bg-foreground/5">
-                  {dialog.cover ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={dialog.cover}
-                      alt="封面预览"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-foreground/30">
-                      <ImageIcon className="h-8 w-8" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <input
-                    ref={coverFileRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp"
-                    onChange={handleCoverUpload}
-                    className="hidden"
-                  />
-                  <p className="text-sm font-medium text-foreground/80">歌单封面</p>
-                  <p className="mt-1 text-xs text-foreground/50">
-                    {dialog.mode === "create"
-                      ? "新建歌单后可上传封面"
-                      : "点击上传按钮更换封面"}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => coverFileRef.current?.click()}
-                    disabled={uploading || dialog.mode === "create"}
-                    className="mt-2 rounded-full"
-                  >
-                    {uploading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Upload className="h-3.5 w-3.5" />
-                    )}
-                    {uploading ? "上传中..." : "上传图片"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-        const footerButtons = (
-          <>
-            <Button
-              variant="ghost"
-              onClick={() => setDialog((d) => ({ ...d, open: false }))}
-              className="rounded-full"
-            >
-              取消
-            </Button>
-            <Button
-              onClick={submit}
-              className="rounded-full bg-primary-700 text-white hover:bg-primary-600"
-            >
-              确定
-            </Button>
-          </>
-        );
-
-        if (isMobile) {
-          return (
-            <Sheet
-              open={dialog.open}
-              onOpenChange={(o) => setDialog((d) => ({ ...d, open: o }))}
-            >
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>
-                    {dialog.mode === "create" ? "新建歌单" : "重命名歌单"}
-                  </SheetTitle>
-                  <SheetDescription>
-                    设置歌单名称与封面（可选）
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="mt-4 space-y-4">{formContent}</div>
-                <div className="mt-6 flex gap-2">{footerButtons}</div>
-              </SheetContent>
-            </Sheet>
-          );
-        }
-
-        return (
-          <Dialog
-            open={dialog.open}
-            onOpenChange={(o) => setDialog((d) => ({ ...d, open: o }))}
-          >
-            <DialogContent className="rounded-2xl">
-              <DialogHeader>
-                <DialogTitle>
-                  {dialog.mode === "create" ? "新建歌单" : "重命名歌单"}
-                </DialogTitle>
-                <DialogDescription>
-                  设置歌单名称与封面（可选）
-                </DialogDescription>
-              </DialogHeader>
-              {formContent}
-              <DialogFooter>{footerButtons}</DialogFooter>
-            </DialogContent>
-          </Dialog>
-        );
-      })()}
+      <EditComponent
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        mode={editMode}
+        playlist={editingPlaylist}
+        onSaved={() => void load()}
+      />
     </div>
   );
 }

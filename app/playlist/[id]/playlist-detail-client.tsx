@@ -9,6 +9,7 @@ import {
   Trash2,
   GripVertical,
   Music2,
+  Pencil,
 } from "lucide-react";
 import {
   DndContext,
@@ -38,6 +39,10 @@ import { SongList } from "@/components/common/song-list";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { cn, formatPlays } from "@/lib/utils";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { EditPlaylistSheet } from "@/app/profile/tabs/edit-playlist-sheet";
+import { EditPlaylistDialog } from "@/app/profile/tabs/edit-playlist-dialog";
+import { useToast } from "@/components/ui/toaster";
 
 /**
  * 歌单详情客户端组件
@@ -53,12 +58,16 @@ export function PlaylistDetailClient({
 }) {
   const play = usePlayerStore((s) => s.play);
   const openLogin = useAuthStore((s) => s.openLogin);
+  const isMobile = useIsMobile();
+  const toast = useToast();
   const [favorited, setFavorited] = React.useState(false);
   const [favLoading, setFavLoading] = React.useState(false);
   const [manageMode, setManageMode] = React.useState(false);
   const [songList, setSongList] = React.useState<ApiSong[]>([]);
   const [saving, setSaving] = React.useState(false);
   const [removingId, setRemovingId] = React.useState<string | null>(null);
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [, setRefreshKey] = React.useState(0);
 
   // 是否为歌单创建者（可管理歌曲）
   const isOwner = React.useMemo(() => {
@@ -283,6 +292,16 @@ export function PlaylistDetailClient({
           />
           {favorited ? "已收藏" : "收藏"}
         </Button>
+        {isOwner && (
+          <Button
+            onClick={() => setEditOpen(true)}
+            variant="outline"
+            className="rounded-full px-5"
+          >
+            <Pencil className="h-4 w-4" />
+            编辑歌单
+          </Button>
+        )}
         {isOwner && songList.length > 0 && (
           <Button
             onClick={() => setManageMode((m) => !m)}
@@ -342,6 +361,22 @@ export function PlaylistDetailClient({
           description="该歌单还没有添加任何歌曲。"
         />
       )}
+
+      {(() => {
+        const EditComponent = isMobile ? EditPlaylistSheet : EditPlaylistDialog;
+        return (
+          <EditComponent
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            mode="edit"
+            playlist={playlist}
+            onSaved={() => {
+              setRefreshKey((k) => k + 1);
+              toast.success("歌单已更新");
+            }}
+          />
+        );
+      })()}
     </section>
   );
 }
