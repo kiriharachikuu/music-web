@@ -11,6 +11,8 @@ import {
   Trash2,
   LogOut,
   Check,
+  HardDrive,
+  Lock,
 } from "lucide-react";
 
 import { clearAllDownloads } from "@/lib/download";
@@ -18,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/common/confirm-dialog";
 import { useToast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
+import { androidBridge } from "@/lib/jsbridge/android-bridge";
+import { getPlatform } from "@/lib/platform";
 
 /** localStorage key */
 const DOWNLOADS_KEY = "xt-music-downloads";
@@ -44,11 +48,20 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
   const [settings, setSettings] = React.useState<UserSettings>(DEFAULT_SETTINGS);
+  const [isTWA, setIsTWA] = React.useState(false);
+  const [cacheSizeMB, setCacheSizeMBState] = React.useState(500);
+  const [lockScreenPlayerEnabled, setLockScreenPlayerEnabledState] = React.useState(true);
   const confirm = useConfirm();
   const toast = useToast();
 
   React.useEffect(() => {
     setMounted(true);
+    const platform = getPlatform();
+    setIsTWA(platform.isTWA);
+    if (platform.isTWA) {
+      setCacheSizeMBState(androidBridge.getCacheSizeMB());
+      setLockScreenPlayerEnabledState(androidBridge.isLockScreenPlayerEnabled());
+    }
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
       if (raw) setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(raw) });
@@ -65,6 +78,19 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
     } catch {
       /* ignore */
     }
+  };
+
+  const handleCacheSizeChange = (mb: number) => {
+    const clamped = Math.max(50, Math.min(5000, Math.floor(mb)));
+    setCacheSizeMBState(clamped);
+    androidBridge.setCacheSizeMB(clamped);
+    toast.success(`临时缓存已设置为 ${clamped}MB`);
+  };
+
+  const handleLockScreenPlayerChange = (enabled: boolean) => {
+    setLockScreenPlayerEnabledState(enabled);
+    androidBridge.setLockScreenPlayerEnabled(enabled);
+    toast.success(enabled ? "锁屏/通知栏播放器已开启" : "锁屏/通知栏播放器已关闭");
   };
 
   /** 清除缓存：localStorage 关键 key + Cache API + IndexedDB 音频缓存 */
@@ -244,6 +270,44 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
           ariaLabel="自动播放"
         />
       </SettingsRow>
+
+      {/* TWA 锁屏/通知栏播放器开关（仅 TWA 环境显示） */}
+      {isTWA && (
+        <SettingsRow icon={Lock} title="锁屏与通知栏播放器">
+          <Switch
+            checked={lockScreenPlayerEnabled}
+            onChange={handleLockScreenPlayerChange}
+            ariaLabel="锁屏与通知栏播放器"
+          />
+        </SettingsRow>
+      )}
+
+      {/* TWA 临时缓存大小（仅 TWA 环境显示） */}
+      {isTWA && (
+        <div>
+          <SettingsRow icon={HardDrive} title="临时缓存大小">
+            <span className="text-sm font-medium text-foreground/80">
+              {cacheSizeMB} MB
+            </span>
+          </SettingsRow>
+          <div className="mt-2 space-y-2 px-4">
+            <input
+              type="range"
+              min={50}
+              max={5000}
+              step={50}
+              value={cacheSizeMB}
+              onChange={(e) => handleCacheSizeChange(Number(e.target.value))}
+              className="w-full h-2 rounded-full bg-foreground/10 appearance-none cursor-pointer accent-primary-700"
+            />
+            <div className="flex justify-between text-[11px] text-foreground/40">
+              <span>50MB</span>
+              <span>500MB（默认）</span>
+              <span>5000MB</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 清除缓存 */}
       <SettingsRow icon={Trash2} title="清除缓存">

@@ -42,6 +42,14 @@ export interface AndroidJSBridge {
   getStatusBarHeight(): string;
   /** 获取底部导航栏高度（像素），用于 WebView safe-area 适配 */
   getNavigationBarHeight(): string;
+  /** 获取当前临时缓存大小（MB），默认 500，范围 50~5000 */
+  getCacheSizeMB(): string;
+  /** 设置临时缓存大小（MB），自动限制在 50~5000 范围内 */
+  setCacheSizeMB(mb: string): void;
+  /** 获取锁屏/通知栏播放器开关状态（"true"/"false"），默认开启 */
+  isLockScreenPlayerEnabled(): string;
+  /** 设置锁屏/通知栏播放器开关状态（"true"/"false"） */
+  setLockScreenPlayerEnabled(enabled: string): void;
 }
 
 declare global {
@@ -242,6 +250,67 @@ export const androidBridge = {
       return bridge.getNavigationBarHeight();
     } catch {
       return "";
+    }
+  },
+
+  /**
+   * 获取当前临时缓存大小（MB）
+   * - 默认 500MB，范围 50MB ~ 5000MB
+   * - 非 TWA 环境返回 "500"
+   */
+  getCacheSizeMB(): number {
+    const bridge = getNativeBridge();
+    if (!bridge) return 500;
+    try {
+      const val = bridge.getCacheSizeMB();
+      const num = parseInt(val, 10);
+      return isNaN(num) ? 500 : num;
+    } catch {
+      return 500;
+    }
+  },
+
+  /**
+   * 设置临时缓存大小（MB）
+   * - 自动限制在 50MB ~ 5000MB 范围内
+   * - 非 TWA 环境静默忽略
+   */
+  setCacheSizeMB(mb: number): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      bridge.setCacheSizeMB(String(Math.max(50, Math.min(5000, Math.floor(mb)))));
+    } catch {
+      // 静默
+    }
+  },
+
+  /**
+   * 获取锁屏/通知栏播放器开关状态
+   * - 默认 true（开启）
+   * - 非 TWA 环境返回 true
+   */
+  isLockScreenPlayerEnabled(): boolean {
+    const bridge = getNativeBridge();
+    if (!bridge) return true;
+    try {
+      return bridge.isLockScreenPlayerEnabled() === "true";
+    } catch {
+      return true;
+    }
+  },
+
+  /**
+   * 设置锁屏/通知栏播放器开关状态
+   * - 非 TWA 环境静默忽略
+   */
+  setLockScreenPlayerEnabled(enabled: boolean): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      bridge.setLockScreenPlayerEnabled(enabled ? "true" : "false");
+    } catch {
+      // 静默
     }
   },
 };
