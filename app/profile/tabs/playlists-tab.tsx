@@ -20,10 +20,19 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { getToken } from "@/lib/auth";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 
 /** 子模块 2：我的歌单 */
 export function PlaylistsTab() {
+  const isMobile = useIsMobile();
   const [playlists, setPlaylists] = React.useState<Playlist[] | null>(null);
   const [dialog, setDialog] = React.useState<{
     open: boolean;
@@ -200,20 +209,9 @@ export function PlaylistsTab() {
         />
       )}
 
-      {/* 新建 / 重命名弹窗 */}
-      <Dialog
-        open={dialog.open}
-        onOpenChange={(o) => setDialog((d) => ({ ...d, open: o }))}
-      >
-        <DialogContent className="rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {dialog.mode === "create" ? "新建歌单" : "重命名歌单"}
-            </DialogTitle>
-            <DialogDescription>
-              设置歌单名称与封面（可选）
-            </DialogDescription>
-          </DialogHeader>
+      {/* 表单内容 */}
+      {(() => {
+        const formContent = (
           <div className="space-y-3">
             <div>
               <label className="mb-1.5 block text-xs text-foreground/50">
@@ -280,7 +278,10 @@ export function PlaylistsTab() {
               </div>
             </div>
           </div>
-          <DialogFooter>
+        );
+
+        const footerButtons = (
+          <>
             <Button
               variant="ghost"
               onClick={() => setDialog((d) => ({ ...d, open: false }))}
@@ -294,9 +295,51 @@ export function PlaylistsTab() {
             >
               确定
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        );
+
+        if (isMobile) {
+          return (
+            <Sheet
+              open={dialog.open}
+              onOpenChange={(o) => setDialog((d) => ({ ...d, open: o }))}
+            >
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>
+                    {dialog.mode === "create" ? "新建歌单" : "重命名歌单"}
+                  </SheetTitle>
+                  <SheetDescription>
+                    设置歌单名称与封面（可选）
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-4 space-y-4">{formContent}</div>
+                <div className="mt-6 flex gap-2">{footerButtons}</div>
+              </SheetContent>
+            </Sheet>
+          );
+        }
+
+        return (
+          <Dialog
+            open={dialog.open}
+            onOpenChange={(o) => setDialog((d) => ({ ...d, open: o }))}
+          >
+            <DialogContent className="rounded-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {dialog.mode === "create" ? "新建歌单" : "重命名歌单"}
+                </DialogTitle>
+                <DialogDescription>
+                  设置歌单名称与封面（可选）
+                </DialogDescription>
+              </DialogHeader>
+              {formContent}
+              <DialogFooter>{footerButtons}</DialogFooter>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
     </div>
   );
 }
