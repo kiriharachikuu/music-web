@@ -23,7 +23,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import type { UserProfile } from "@/lib/types";
 import { API_BASE, ADMIN_URL } from "@/lib/api";
-import { clearAuth, getToken } from "@/lib/auth";
+import { clearAuth, getToken, getUser, isAuthenticated, setUser } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
@@ -85,24 +85,46 @@ export function ProfileClient() {
   }, []);
 
   const loadProfile = async () => {
+    const cachedUser = getUser<UserProfile>();
+    const hasLocalAuth = isAuthenticated();
+
+    if (cachedUser && hasLocalAuth) {
+      setProfile(cachedUser);
+      setLoggedOut(false);
+      setProfileLoaded(true);
+    }
+
     try {
       const token = getToken();
+      if (!token) {
+        setLoggedOut(true);
+        setProfileLoaded(true);
+        return;
+      }
       const res = await fetch(`${API_BASE}/user/profile`, {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
       });
-      if (res.status === 401 || !res.ok) {
+      if (res.status === 401) {
+        clearAuth();
+        setProfile(null);
         setLoggedOut(true);
-      } else {
+      } else if (res.ok) {
         const json = await res.json();
-        setProfile(json.data ?? null);
-        setLoggedOut(!json.data);
+        const userData = json.data ?? null;
+        setProfile(userData);
+        setLoggedOut(!userData);
+        if (userData) {
+          setUser(userData);
+        }
       }
     } catch {
-      setLoggedOut(true);
+      if (!cachedUser || !hasLocalAuth) {
+        setLoggedOut(true);
+      }
     } finally {
       setProfileLoaded(true);
     }

@@ -14,6 +14,7 @@ import {
   type PlayMode,
 } from "@/lib/store/player-store";
 import { api } from "@/lib/api";
+import { getCachedLyric, fetchAndCacheLyric } from "@/lib/db/lyric-cache";
 import { LyricsView } from "./lyrics-view";
 import { QueueSheet } from "./queue-sheet";
 import { FullScreenControls } from "./full-screen-controls";
@@ -101,35 +102,21 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     }
     setLrcLoading(true);
     setLrc(null);
-    api
-      .get<unknown>(`/songs/${currentSong.id}/lyric`)
-      .then((data) => {
-        if (cancelled) return;
-        // 兼容后端返回 string 或 { content: string } / { lyric: string } 结构
-        if (typeof data === "string") {
-          setLrc(data);
-        } else if (
-          data &&
-          typeof data === "object" &&
-          "content" in data
-        ) {
-          setLrc(String((data as { content?: unknown }).content ?? ""));
-        } else if (
-          data &&
-          typeof data === "object" &&
-          "lyric" in data
-        ) {
-          setLrc(String((data as { lyric?: unknown }).lyric ?? ""));
-        } else {
-          setLrc(null);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setLrc(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLrcLoading(false);
-      });
+
+    (async () => {
+      const cached = await getCachedLyric(currentSong.id);
+      if (cancelled) return;
+      if (cached) {
+        setLrc(cached);
+        setLrcLoading(false);
+        return;
+      }
+      const fresh = await fetchAndCacheLyric(currentSong.id);
+      if (cancelled) return;
+      setLrc(fresh);
+      setLrcLoading(false);
+    })();
+
     return () => {
       cancelled = true;
     };

@@ -11,6 +11,7 @@ import {
   getCacheSize as getCacheSizeWeb,
   getCachedUrl as getCachedUrlWeb,
 } from "@/lib/db/audio-cache";
+import { fetchAndCacheLyric, isLyricCached } from "@/lib/db/lyric-cache";
 import { getPlatform } from "@/lib/platform/detect";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { setupDownloadListeners } from "@/lib/jsbridge/native-events";
@@ -44,8 +45,10 @@ function isTWA(): boolean {
  */
 export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
   if (isTWA()) {
-    // TWA 模式：原生下载
     if (androidBridge.isSongDownloaded(song.id)) {
+      if (!(await isLyricCached(song.id))) {
+        fetchAndCacheLyric(song.id).catch(() => {});
+      }
       return { cached: true, newlyDownloaded: false, size: 0 };
     }
     const url = resolveMediaUrl(song.fileUrl);
@@ -54,6 +57,8 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     }
     const token = getToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+    fetchAndCacheLyric(song.id).catch(() => {});
 
     return new Promise<DownloadResult>((resolve, reject) => {
       setupDownloadListeners({
@@ -78,9 +83,11 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     });
   }
 
-  // 浏览器模式：原来的 IndexedDB 逻辑
   const cached = await getCachedAudio(song.id);
   if (cached) {
+    if (!(await isLyricCached(song.id))) {
+      fetchAndCacheLyric(song.id).catch(() => {});
+    }
     return { cached: true, newlyDownloaded: false, size: 0 };
   }
 
@@ -94,6 +101,8 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
+
+  fetchAndCacheLyric(song.id).catch(() => {});
 
   let res: Response;
   try {

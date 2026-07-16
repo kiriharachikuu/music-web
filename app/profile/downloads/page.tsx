@@ -19,7 +19,7 @@ export default function DownloadsPage() {
           <h1 className="text-xl font-bold">下载管理</h1>
         </div>
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50 text-primary-700 dark:bg-primary-900/30">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-primary/20">
             <Smartphone className="h-8 w-8" />
           </div>
           <h2 className="mt-4 text-lg font-semibold">下载功能仅支持 Android 客户端</h2>
@@ -30,7 +30,7 @@ export default function DownloadsPage() {
           </p>
           <Link
             href="/download"
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary-700 px-5 py-2 text-sm font-medium text-white hover:bg-primary-600"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90"
           >
             <AlertCircle className="h-4 w-4" />
             下载 Android 客户端
