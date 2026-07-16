@@ -183,7 +183,7 @@ export function SongList({
             className={cn(
               "group flex items-center gap-3 px-2 py-2 transition-colors md:gap-4 md:px-4 md:py-2.5 [content-visibility:auto] [contain-intrinsic-size:56px]",
               isActive
-                ? "bg-primary-700/5"
+                ? "bg-primary/5"
                 : "hover:bg-foreground/[0.03]"
             )}
           >
@@ -196,8 +196,8 @@ export function SongList({
                 className={cn(
                   "flex h-10 w-6 shrink-0 items-center justify-center rounded-md border transition-colors md:h-8 md:w-6",
                   isSelected
-                    ? "border-primary-700 bg-primary-700 text-white"
-                    : "border-foreground/20 hover:border-primary-500"
+                    ? "border-primary bg-primary text-white"
+                    : "border-foreground/20 hover:border-primary"
                 )}
               >
                 {isSelected && <Check className="h-4 w-4" />}
@@ -224,7 +224,7 @@ export function SongList({
                 type="button"
                 onClick={handlePlay}
                 aria-label={isActive && isPlaying ? "暂停" : "播放"}
-                className="flex h-10 w-8 shrink-0 items-center justify-center rounded-full text-foreground/50 hover:bg-primary-700/10 hover:text-primary-700 dark:hover:text-primary-300 md:h-8 md:w-8"
+                className="flex h-10 w-8 shrink-0 items-center justify-center rounded-full text-foreground/50 hover:bg-primary/10 hover:text-primary dark:hover:text-primary/60 md:h-8 md:w-8"
               >
                 {isActive && isPlaying ? (
                   <Pause className="h-4 w-4" />
@@ -238,7 +238,7 @@ export function SongList({
             <button
               type="button"
               onClick={handlePlay}
-              className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary-700/5 md:h-12 md:w-12"
+              className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/5 md:h-12 md:w-12"
             >
               {song.coverUrl || (song.album?.cover && song.album.cover) ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -249,7 +249,7 @@ export function SongList({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="flex h-full w-full items-center justify-center text-primary-700/40">
+                <span className="flex h-full w-full items-center justify-center text-primary/40">
                   <Music2 className="h-5 w-5" />
                 </span>
               )}
@@ -264,7 +264,7 @@ export function SongList({
               <p
                 className={cn(
                   "truncate text-sm font-medium",
-                  isActive && "text-primary-700 dark:text-primary-300"
+                  isActive && "text-primary dark:text-primary/60"
                 )}
               >
                 {song.title}
@@ -297,8 +297,8 @@ export function SongList({
                   className={cn(
                     "flex h-10 w-8 items-center justify-center rounded-full transition-colors md:h-8 md:w-8",
                     isLiked
-                      ? "text-primary-700 dark:text-primary-300"
-                      : "text-foreground/40 md:opacity-0 md:hover:bg-primary-700/10 md:hover:text-primary-700 md:group-hover:opacity-100 dark:md:hover:text-primary-300"
+                      ? "text-primary dark:text-primary/60"
+                      : "text-foreground/40 md:opacity-0 md:hover:bg-primary/10 md:hover:text-primary md:group-hover:opacity-100 dark:md:hover:text-primary/60"
                   )}
                 >
                   <Heart
@@ -325,8 +325,8 @@ export function SongList({
                     className={cn(
                       "flex h-10 w-8 items-center justify-center rounded-full transition-colors md:h-8 md:w-8",
                       isDownloading || isDownloaded
-                        ? "text-primary-700 dark:text-primary-300"
-                        : "text-foreground/40 md:opacity-0 md:hover:bg-primary-700/10 md:hover:text-primary-700 md:group-hover:opacity-100 dark:md:hover:text-primary-300",
+                        ? "text-primary dark:text-primary/60"
+                        : "text-foreground/40 md:opacity-0 md:hover:bg-primary/10 md:hover:text-primary md:group-hover:opacity-100 dark:md:hover:text-primary/60",
                       isDownloading && "cursor-wait"
                     )}
                   >
@@ -347,7 +347,7 @@ export function SongList({
                 type="button"
                 onClick={() => addToQueue(toPlayerSong(song))}
                 aria-label="添加到队列"
-                className="hidden h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-primary-700/10 hover:text-primary-700 group-hover:opacity-100 dark:hover:text-primary-300 md:flex"
+                className="hidden h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-primary/10 hover:text-primary group-hover:opacity-100 dark:hover:text-primary/60 md:flex"
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -377,7 +377,7 @@ export function SongList({
                       <Heart
                         className={cn(
                           "mr-2 h-4 w-4",
-                          isLiked && "fill-current text-primary-700 dark:text-primary-300"
+                          isLiked && "fill-current text-primary dark:text-primary/60"
                         )}
                       />
                       {isLiked ? "取消喜欢" : "喜欢"}
@@ -397,7 +397,7 @@ export function SongList({
                           className={cn(
                             "mr-2 h-4 w-4",
                             downloadedIds.has(song.id) &&
-                              "fill-current text-primary-700 dark:text-primary-300"
+                              "fill-current text-primary dark:text-primary/60"
                           )}
                         />
                       )}

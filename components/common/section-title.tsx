@@ -24,13 +24,13 @@ export function SectionTitle({
     <div className={cn("mb-3 flex items-center justify-between md:mb-4", className)}>
       <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight md:text-xl">
         {/* 左侧 2px 主色竖线 */}
-        <span className="h-5 w-[2px] rounded-full bg-primary-700 dark:bg-primary-500" />
+        <span className="h-5 w-[2px] rounded-full bg-primary dark:bg-primary/80" />
         {title}
       </h2>
       {moreHref && (
         <Link
           href={moreHref}
-          className="group flex items-center gap-0.5 text-xs font-medium text-foreground/50 transition-colors hover:text-primary-700 dark:hover:text-primary-300 md:text-sm"
+          className="group flex items-center gap-0.5 text-xs font-medium text-foreground/50 transition-colors hover:text-primary dark:hover:text-primary/60 md:text-sm"
         >
           {moreText}
           <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 md:h-4 md:w-4" />

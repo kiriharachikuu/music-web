@@ -113,7 +113,7 @@ export function TopNav() {
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground/5 no-select"
             aria-label={isLoggedIn ? "个人中心" : "登录"}
           >
-            <Avatar className="h-10 w-10 border-2 border-primary-700/30">
+            <Avatar className="h-10 w-10 border-2 border-primary/30">
               {avatarUrl ? (
                 <AvatarImage src={avatarUrl} alt="avatar" />
               ) : (

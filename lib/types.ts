@@ -54,6 +54,8 @@ export interface Playlist {
   userId: string;
   username?: string;
   isPublic: boolean;
+  /** 官方歌单标记（系统运营歌单），展示优先级永远高于用户歌单 */
+  isSystem?: boolean;
   playCount: number;
   /** 歌单内歌曲数（后端可附带） */
   songCount?: number;

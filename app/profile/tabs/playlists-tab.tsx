@@ -87,7 +87,7 @@ export function PlaylistsTab() {
         </span>
         <Button
           onClick={openCreate}
-          className="rounded-full bg-primary-700 px-4 text-white hover:bg-primary-600"
+          className="rounded-full bg-primary px-4 text-white hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           新建歌单
@@ -164,7 +164,7 @@ export function PlaylistsTab() {
           action={
             <Button
               onClick={openCreate}
-              className="rounded-full bg-primary-700 px-5 text-white hover:bg-primary-600"
+              className="rounded-full bg-primary px-5 text-white hover:bg-primary/90"
             >
               <Plus className="h-4 w-4" />
               新建歌单

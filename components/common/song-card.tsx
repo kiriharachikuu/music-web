@@ -45,7 +45,7 @@ export function SongCard({
         type="button"
         onClick={handlePlay}
         aria-label={`播放 ${song.title}`}
-        className="relative block aspect-square w-full overflow-hidden rounded-xl bg-primary-700/5 text-left shadow-card transition-transform duration-300 active:scale-95 md:hover:-translate-y-1"
+        className="relative block aspect-square w-full overflow-hidden rounded-xl bg-primary/5 text-left shadow-card transition-transform duration-300 active:scale-95 md:hover:-translate-y-1"
       >
         {song.coverUrl || (song.album?.cover && song.album.cover) ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -56,18 +56,18 @@ export function SongCard({
             className="h-full w-full object-cover transition-transform duration-500 md:group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-primary-700/30">
+          <div className="flex h-full w-full items-center justify-center text-primary/30">
             <Music2 className="h-10 w-10" />
           </div>
         )}
 
         {/* hover 主色蒙层 */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-700/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 md:group-hover:opacity-100" />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 md:group-hover:opacity-100" />
 
         {/* 播放按钮 */}
         <span
           className={cn(
-            "absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary-700 text-white shadow-lg shadow-primary-500/40 transition-all duration-300 md:h-11 md:w-11 md:hover:scale-105 md:hover:bg-primary-600",
+            "absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/40 transition-all duration-300 md:h-11 md:w-11 md:hover:scale-105 md:hover:bg-primary/90",
             isActive
               ? "translate-y-0 opacity-100"
               : "translate-y-2 opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100"
@@ -78,7 +78,7 @@ export function SongCard({
 
         {/* 正在播放标识 */}
         {isActive && isPlaying && (
-          <span className="absolute left-2 top-2 rounded-full bg-primary-700/90 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+          <span className="absolute left-2 top-2 rounded-full bg-primary/90 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
             正在播放
           </span>
         )}
@@ -88,7 +88,7 @@ export function SongCard({
         <p
           className={cn(
             "truncate text-sm font-medium",
-            isActive && "text-primary-700 dark:text-primary-300"
+            isActive && "text-primary dark:text-primary/60"
           )}
         >
           {song.title}

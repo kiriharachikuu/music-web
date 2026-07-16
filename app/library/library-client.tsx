@@ -118,7 +118,7 @@ export function LibraryClient({
     <section className="animate-fade-in space-y-6">
       {/* 页面标题 */}
       <header className="flex items-center gap-4">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-700/10 text-primary-700 dark:text-primary-300">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:text-primary/60">
           <Library className="h-6 w-6" />
         </span>
         <div>
@@ -150,13 +150,13 @@ export function LibraryClient({
                 className={cn(
                   "relative shrink-0 pb-2.5 text-sm font-medium transition-colors sm:pb-0 sm:pt-1.5",
                   isActive
-                    ? "text-primary-700 dark:text-primary-300"
+                    ? "text-primary dark:text-primary/60"
                     : "text-foreground/50 hover:text-foreground"
                 )}
               >
                 {t.label}
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary-700 sm:hidden" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary sm:hidden" />
                 )}
               </button>
             );
@@ -177,7 +177,7 @@ export function LibraryClient({
                   className={cn(
                     "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                     isActive
-                      ? "bg-primary-700 text-white"
+                      ? "bg-primary text-white"
                       : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
                   )}
                 >

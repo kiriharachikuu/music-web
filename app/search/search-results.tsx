@@ -77,7 +77,7 @@ export function SearchResults({
               歌曲
             </h3>
           )}
-          <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
+          <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
             <SongList
               songs={songList}
               onLike={onLike}
@@ -152,7 +152,7 @@ export function ArtistCard({ artist }: ArtistCardProps) {
       href={artist.id ? `/artist/${artist.id}` : "#"}
       className="flex flex-col items-center gap-2 text-center transition-transform hover:scale-105 active:scale-95"
     >
-      <div className="h-24 w-24 overflow-hidden rounded-full bg-primary-700/5 shadow-card md:h-28 md:w-28">
+      <div className="h-24 w-24 overflow-hidden rounded-full bg-primary/5 shadow-card md:h-28 md:w-28">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -161,7 +161,7 @@ export function ArtistCard({ artist }: ArtistCardProps) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-primary-700/30">
+          <div className="flex h-full w-full items-center justify-center text-primary/30">
             <User2 className="h-10 w-10" />
           </div>
         )}

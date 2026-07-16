@@ -121,7 +121,7 @@ export function HistoryTab() {
             <h3 className="text-sm font-semibold text-foreground/70">
               {g.label}
             </h3>
-            <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
+            <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
               <SongList
                 songs={g.items.map((it) => it.song)}
                 onDelete={(song) => void deleteItem(song.id)}

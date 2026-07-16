@@ -51,7 +51,7 @@ export default function Error({
         </Button>
         <Button
           onClick={reset}
-          className="bg-primary-700 text-white hover:bg-primary-600"
+          className="bg-primary text-white hover:bg-primary/90"
         >
           <RotateCcw className="h-4 w-4" />
           重试

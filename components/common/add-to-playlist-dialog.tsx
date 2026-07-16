@@ -134,9 +134,9 @@ export function AddToPlaylistDialog({
                 type="button"
                 onClick={() => handleAdd(pl.id)}
                 disabled={addingId === pl.id || added}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-primary-700/5 disabled:opacity-50"
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-primary/5 disabled:opacity-50"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-700/5 text-primary-700/60">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/5 text-primary/60">
                   {pl.cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -155,7 +155,7 @@ export function AddToPlaylistDialog({
                   </p>
                 </div>
                 {addingId === pl.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-primary-700" />
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 ) : added ? (
                   <Check className="h-4 w-4 text-green-500" />
                 ) : null}
@@ -181,7 +181,7 @@ export function AddToPlaylistDialog({
           <div className="px-6 pb-6 pt-2 md:px-8 md:pb-8">
             <SheetHeader className="space-y-1.5 text-center">
               <SheetTitle className="flex items-center justify-center gap-2 text-xl font-bold tracking-tight">
-                <ListMusic className="h-5 w-5 text-primary-700" />
+                <ListMusic className="h-5 w-5 text-primary" />
                 添加到歌单
               </SheetTitle>
               <SheetDescription className="text-sm text-foreground/50">
@@ -200,7 +200,7 @@ export function AddToPlaylistDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ListMusic className="h-5 w-5 text-primary-700" />
+            <ListMusic className="h-5 w-5 text-primary" />
             添加到歌单
           </DialogTitle>
           <DialogDescription>

@@ -23,7 +23,7 @@ const VARIANT_STYLE: Record<
     iconColor: "text-background/80",
   },
   success: {
-    bg: "bg-primary-700 text-white",
+    bg: "bg-primary text-white",
     icon: CheckCircle2,
     iconColor: "text-white",
   },

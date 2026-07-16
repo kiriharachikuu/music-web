@@ -127,7 +127,7 @@ export const APP_VERSION_CODE = 5;
  */
 export const CHANGE_TYPE_LABEL: Record<ChangeType, { text: string; color: string }> = {
   feature: { text: "新增", color: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10" },
-  improvement: { text: "优化", color: "text-primary-700 bg-primary-50 dark:text-primary-300 dark:bg-primary-500/10" },
+  improvement: { text: "优化", color: "text-primary bg-primary-50 dark:text-primary/60 dark:bg-primary/10" },
   fix: { text: "修复", color: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10" },
   removed: { text: "移除", color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10" },
 };

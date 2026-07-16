@@ -139,7 +139,7 @@ export function EditPlaylistDialog({
             <label className="text-sm font-medium">歌单封面</label>
             <div className="mt-1 flex items-center gap-4">
               <div className="relative shrink-0">
-                <div className="h-20 w-20 overflow-hidden rounded-xl bg-primary-700/10 ring-2 ring-primary-700/30">
+                <div className="h-20 w-20 overflow-hidden rounded-xl bg-primary/10 ring-2 ring-primary/30">
                   {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -148,7 +148,7 @@ export function EditPlaylistDialog({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-primary-700/40">
+                    <div className="flex h-full w-full items-center justify-center text-primary/40">
                       <ListMusic className="h-8 w-8" />
                     </div>
                   )}
@@ -157,7 +157,7 @@ export function EditPlaylistDialog({
                   type="button"
                   onClick={() => coverFileRef.current?.click()}
                   disabled={uploading || saving || mode === "create"}
-                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 text-white shadow-lg transition-all hover:bg-primary-600 disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all hover:bg-primary/90 disabled:opacity-50"
                   aria-label="上传封面"
                 >
                   {uploading ? (
@@ -196,7 +196,7 @@ export function EditPlaylistDialog({
           <Button
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="bg-primary-700 text-white hover:bg-primary-600"
+            className="bg-primary text-white hover:bg-primary/90"
           >
             {saving ? "保存中…" : mode === "create" ? "创建" : "保存"}
           </Button>

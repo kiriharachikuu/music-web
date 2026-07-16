@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 /**
  * 播放队列抽屉：右侧滑出，毛玻璃背景
  * - 列表显示 queue 中所有歌曲（封面 + 歌名 + 歌手）
- * - 当前播放行：text-primary-300 + 左侧 primary-700 圆点标记
+ * - 当前播放行：text-primary/60 + 左侧 primary-700 圆点标记
  * - 点击切换播放
  */
 export interface QueueSheetProps {
@@ -91,7 +91,7 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
                       <p
                         className={cn(
                           "truncate text-sm",
-                          isCurrent ? "text-primary-300" : "text-white"
+                          isCurrent ? "text-primary/60" : "text-white"
                         )}
                       >
                         {song.title}

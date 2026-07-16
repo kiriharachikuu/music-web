@@ -230,7 +230,7 @@ export function LyricsView({
               {/* 点击闪光反馈层 */}
               {isClicked && (
                 <motion.span
-                  className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-primary-500/30"
+                  className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-primary/30"
                   initial={{ opacity: 0.8, scale: 0.9 }}
                   animate={{ opacity: 0, scale: 1.15 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
@@ -245,7 +245,7 @@ export function LyricsView({
                 <span
                   className={cn(
                     "mt-1 block text-sm font-normal md:text-base",
-                    isActive ? "text-primary-300" : "text-white/50"
+                    isActive ? "text-primary/60" : "text-white/50"
                   )}
                 >
                   {line.translation}

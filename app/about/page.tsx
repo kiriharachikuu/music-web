@@ -106,7 +106,7 @@ const devTeamMembers = [
   {
     name: "不啦不啦小星瞳",
     role: "项目负责人 · Flutter客户端开发",
-    avatarColor: "from-primary-500 to-primary-700",
+    avatarColor: "from-primary/80 to-primary",
   },
   {
     name: "知空",
@@ -142,7 +142,7 @@ export default function AboutPage() {
   return (
     <section className="animate-fade-in space-y-10 md:space-y-16">
       {/* ===== Hero 区域 ===== */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-primary-700 via-primary-800 to-gray-950 text-white shadow-card md:rounded-3xl">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-primary via-primary/95 to-gray-950 text-white shadow-card md:rounded-3xl">
         {/* 装饰光晕 */}
         <div className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/30 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 right-8 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />

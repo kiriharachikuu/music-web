@@ -125,7 +125,7 @@ export function DownloadsTab() {
       </div>
 
       {downloads.length > 0 ? (
-        <div className="overflow-hidden rounded-2xl border border-primary-500/10 bg-card/40 p-2 shadow-sm md:p-3">
+        <div className="overflow-hidden rounded-2xl border border-primary/10 bg-card/40 p-2 shadow-sm md:p-3">
           {downloads.map((item) => {
             const cover = resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
             const isLoadingPlay = loadingPlayId === item.songId;
@@ -135,7 +135,7 @@ export function DownloadsTab() {
                 className="group flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition-colors hover:bg-foreground/[0.03] md:gap-4 md:px-4"
               >
                 {/* 封面 */}
-                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary-700/5 md:h-12 md:w-12">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/5 md:h-12 md:w-12">
                   {cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -144,7 +144,7 @@ export function DownloadsTab() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="flex h-full w-full items-center justify-center text-primary-700/40">
+                    <span className="flex h-full w-full items-center justify-center text-primary/40">
                       <Music2 className="h-5 w-5" />
                     </span>
                   )}
@@ -173,7 +173,7 @@ export function DownloadsTab() {
                     onClick={() => void handlePlay(item)}
                     disabled={isLoadingPlay}
                     aria-label="播放"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/50 transition-colors hover:bg-primary-700/10 hover:text-primary-700 dark:hover:text-primary-300"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/50 transition-colors hover:bg-primary/10 hover:text-primary dark:hover:text-primary/60"
                   >
                     {isLoadingPlay ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

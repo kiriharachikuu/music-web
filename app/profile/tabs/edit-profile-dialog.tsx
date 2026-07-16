@@ -103,7 +103,7 @@ export function EditProfileDialog({
         <div className="space-y-5">
           <div className="flex items-center gap-4">
             <div className="relative shrink-0">
-              <div className="h-20 w-20 overflow-hidden rounded-full bg-primary-700/10 ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
+              <div className="h-20 w-20 overflow-hidden rounded-full bg-primary/10 ring-2 ring-primary ring-offset-2 ring-offset-background">
                 {avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -112,7 +112,7 @@ export function EditProfileDialog({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+                  <div className="flex h-full w-full items-center justify-center text-primary/60">
                     <User className="h-10 w-10" />
                   </div>
                 )}
@@ -121,7 +121,7 @@ export function EditProfileDialog({
                 type="button"
                 onClick={() => avatarFileRef.current?.click()}
                 disabled={uploading || saving}
-                className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 text-white shadow-lg transition-all hover:bg-primary-600 disabled:opacity-50"
+                className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all hover:bg-primary/90 disabled:opacity-50"
                 aria-label="上传头像"
               >
                 {uploading ? (
@@ -172,7 +172,7 @@ export function EditProfileDialog({
           <Button
             onClick={handleSave}
             disabled={saving || !username.trim()}
-            className="bg-primary-700 text-white hover:bg-primary-600"
+            className="bg-primary text-white hover:bg-primary/90"
           >
             {saving ? "保存中…" : "保存"}
           </Button>

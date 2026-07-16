@@ -189,7 +189,7 @@
   }
   /* 选中文本主色 */
   ::selection {
-    @apply bg-primary-700/30;
+    @apply bg-primary/30;
   }
   /* 自定义滚动条（细且与主色协调） */
   ::-webkit-scrollbar {

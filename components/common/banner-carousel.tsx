@@ -208,7 +208,7 @@ export function BannerCarousel({
               className={cn(
                 "h-1.5 rounded-full transition-all duration-300",
                 i === active
-                  ? "w-5 bg-primary-700"
+                  ? "w-5 bg-primary"
                   : "w-1.5 bg-white/60 hover:bg-white"
               )}
             />

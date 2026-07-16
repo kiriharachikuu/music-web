@@ -155,10 +155,10 @@ export function DownloadClient() {
       )}
     >
       {/* ===== Hero 下载区 ===== */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary-500/10 bg-gradient-to-br from-primary-700 via-primary-800 to-gray-950 text-white shadow-card md:rounded-3xl">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-primary via-primary/95 to-gray-950 text-white shadow-card md:rounded-3xl">
         {/* 装饰光晕 */}
-        <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary-400/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 right-8 h-48 w-48 rounded-full bg-primary-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 right-8 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
 
         <div className="relative px-5 py-10 sm:px-10 sm:py-14 md:px-16 md:py-16">
           <div className="flex flex-col items-center gap-6 text-center md:gap-8">
@@ -172,7 +172,7 @@ export function DownloadClient() {
                 className="relative h-16 w-16 rounded-2xl shadow-2xl sm:h-20 sm:w-20 sm:rounded-3xl md:h-24 md:w-24"
               />
               {/* 版本徽章 */}
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-white px-3 py-0.5 text-[11px] font-bold text-primary-700 shadow-lg">
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-white px-3 py-0.5 text-[11px] font-bold text-primary shadow-lg">
                 v{displayVersion?.versionName || APP_VERSION}
               </span>
             </div>
@@ -222,7 +222,7 @@ export function DownloadClient() {
                 <Button
                   onClick={handleDownload}
                   size="lg"
-                  className="group relative h-12 w-full overflow-hidden bg-white text-primary-700 shadow-xl transition-all hover:bg-white/90 hover:shadow-2xl active:scale-[0.98] sm:h-14"
+                  className="group relative h-12 w-full overflow-hidden bg-white text-primary shadow-xl transition-all hover:bg-white/90 hover:shadow-2xl active:scale-[0.98] sm:h-14"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2 text-base font-semibold">
                     <Download className="h-5 w-5 transition-transform group-hover:-translate-y-0.5" />
@@ -362,7 +362,7 @@ export function DownloadClient() {
       {/* ===== 更新内容 ===== */}
       <div className="space-y-5 md:space-y-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 sm:h-10 sm:w-10 sm:rounded-xl">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 sm:h-10 sm:w-10 sm:rounded-xl">
             <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
           </span>
           <div>
@@ -375,14 +375,14 @@ export function DownloadClient() {
 
         {/* 后端返回的更新内容 */}
         {hasBackendContent && displayVersion && (
-          <div className="overflow-hidden rounded-xl border border-primary-500/20 bg-card ring-1 ring-primary-500/10 shadow-sm sm:rounded-2xl">
+          <div className="overflow-hidden rounded-xl border border-primary/20 bg-card ring-1 ring-primary/10 shadow-sm sm:rounded-2xl">
             {/* 版本头 */}
             <div className="flex items-center justify-between border-b border-border/40 px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex items-center gap-3">
-                <span className="rounded-md bg-primary-700 px-2.5 py-1 text-sm font-bold text-white sm:text-base">
+                <span className="rounded-md bg-primary px-2.5 py-1 text-sm font-bold text-white sm:text-base">
                   v{displayVersion.versionName}
                 </span>
-                <span className="flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+                <span className="flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary dark:bg-primary/10 dark:text-primary/60">
                   <CheckCircle2 className="h-3 w-3" />
                   最新版本
                 </span>
@@ -465,7 +465,7 @@ export function DownloadClient() {
       {/* ===== 系统要求 ===== */}
       <div className="space-y-5 md:space-y-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 sm:h-10 sm:w-10 sm:rounded-xl">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 sm:h-10 sm:w-10 sm:rounded-xl">
             <Cpu className="h-4 w-4 sm:h-5 sm:w-5" />
           </span>
           <div>
@@ -481,7 +481,7 @@ export function DownloadClient() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
           <div className="rounded-xl border border-border/60 bg-card p-5 sm:rounded-2xl sm:p-6">
             <div className="mb-3 flex items-center gap-2">
-              <Smartphone className="h-5 w-5 text-primary-700 dark:text-primary-300" />
+              <Smartphone className="h-5 w-5 text-primary dark:text-primary/60" />
               <h3 className="text-base font-semibold">Android</h3>
             </div>
             <ul className="space-y-2 text-sm text-foreground/70">
@@ -506,7 +506,7 @@ export function DownloadClient() {
 
           <div className="rounded-xl border border-border/60 bg-card p-5 sm:rounded-2xl sm:p-6">
             <div className="mb-3 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary-700 dark:text-primary-300" />
+              <Sparkles className="h-5 w-5 text-primary dark:text-primary/60" />
               <h3 className="text-base font-semibold">Web / PWA</h3>
             </div>
             <ul className="space-y-2 text-sm text-foreground/70">
@@ -525,7 +525,7 @@ export function DownloadClient() {
               <li className="flex items-center gap-2">
                 <a
                   href="/"
-                  className="text-primary-700 underline-offset-2 hover:underline dark:text-primary-300"
+                  className="text-primary underline-offset-2 hover:underline dark:text-primary/60"
                 >
                   立即体验网页版 →
                 </a>
@@ -536,7 +536,7 @@ export function DownloadClient() {
       </div>
 
       {/* ===== 底部下载按钮 ===== */}
-      <div className="rounded-2xl border border-primary-500/10 bg-primary-50/50 p-6 text-center dark:bg-primary-900/10 sm:p-8">
+      <div className="rounded-2xl border border-primary/10 bg-primary/5 p-6 text-center dark:bg-primary/10 sm:p-8">
         <h3 className="mb-2 text-lg font-bold sm:text-xl">
           还在等什么？立即下载吧！
         </h3>
@@ -646,7 +646,7 @@ function VersionBlock({
       className={cn(
         "overflow-hidden rounded-xl border bg-card shadow-sm sm:rounded-2xl",
         isLatest
-          ? "border-primary-500/20 ring-1 ring-primary-500/10"
+          ? "border-primary/20 ring-1 ring-primary/10"
           : "border-border/60"
       )}
     >
@@ -657,14 +657,14 @@ function VersionBlock({
             className={cn(
               "rounded-md px-2.5 py-1 text-sm font-bold sm:text-base",
               isLatest
-                ? "bg-primary-700 text-white"
+                ? "bg-primary text-white"
                 : "bg-muted text-foreground/70"
             )}
           >
             v{entry.version}
           </span>
           {isLatest && (
-            <span className="flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+            <span className="flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary dark:bg-primary/10 dark:text-primary/60">
               <CheckCircle2 className="h-3 w-3" />
               最新版本
             </span>

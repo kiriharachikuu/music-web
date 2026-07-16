@@ -119,7 +119,7 @@ export function MiniPlayer() {
               onClick={toggle}
               size="icon"
               aria-label={isPlaying ? "暂停" : "播放"}
-              className="h-9 w-9 rounded-full bg-primary text-white shadow-card hover:bg-primary/90 active:bg-primary-800 md:h-10 md:w-10 max-md:landscape:h-8 max-md:landscape:w-8"
+              className="h-9 w-9 rounded-full bg-primary text-white shadow-card hover:bg-primary/90 active:bg-primary/95 md:h-10 md:w-10 max-md:landscape:h-8 max-md:landscape:w-8"
             >
               {isPlaying ? (
                 <Pause className="h-4 w-4 md:h-5 md:w-5 max-md:landscape:h-3.5 max-md:landscape:w-3.5" />

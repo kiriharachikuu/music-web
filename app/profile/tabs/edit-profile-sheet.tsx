@@ -124,7 +124,7 @@ export function EditProfileSheet({
             {/* 头像预览 + 上传 + URL 输入 */}
             <div className="flex items-start gap-4">
               <div className="relative shrink-0">
-                <div className="h-20 w-20 overflow-hidden rounded-full bg-primary-700/10 ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
+                <div className="h-20 w-20 overflow-hidden rounded-full bg-primary/10 ring-2 ring-primary ring-offset-2 ring-offset-background">
                   {avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -133,7 +133,7 @@ export function EditProfileSheet({
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+                    <div className="flex h-full w-full items-center justify-center text-primary/60">
                       <User className="h-10 w-10" />
                     </div>
                   )}
@@ -142,7 +142,7 @@ export function EditProfileSheet({
                   type="button"
                   onClick={() => avatarFileRef.current?.click()}
                   disabled={uploading || saving}
-                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 text-white shadow-lg transition-all hover:bg-primary-600 disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all hover:bg-primary/90 disabled:opacity-50"
                   aria-label="上传头像"
                 >
                   {uploading ? (
@@ -194,7 +194,7 @@ export function EditProfileSheet({
               disabled={saving || !username.trim()}
               className={cn(
                 "flex w-full items-center justify-center gap-2 rounded-full py-3 font-medium shadow-lg transition-all active:scale-[0.98]",
-                "bg-primary-700 text-white shadow-primary-700/30 hover:bg-primary-600",
+                "bg-primary text-white shadow-primary/30 hover:bg-primary/90",
                 "disabled:cursor-not-allowed disabled:opacity-60"
               )}
             >

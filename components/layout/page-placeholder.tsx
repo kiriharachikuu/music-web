@@ -37,7 +37,7 @@ export function PagePlaceholder({
         </div>
       </header>
 
-      <div className="flex min-h-[40vh] items-center justify-center rounded-2xl border border-dashed border-primary-500/20 bg-card/40 p-10 text-center">
+      <div className="flex min-h-[40vh] items-center justify-center rounded-2xl border border-dashed border-primary/20 bg-card/40 p-10 text-center">
         <div>
           <p className="text-sm text-foreground/40">
             该页面为占位骨架，将在后续任务中实现。

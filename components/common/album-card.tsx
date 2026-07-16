@@ -24,7 +24,7 @@ export function AlbumCard({
         className
       )}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-primary-700/5 shadow-card">
+      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-primary/5 shadow-card">
         {album.cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -33,11 +33,11 @@ export function AlbumCard({
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-primary-700/30">
+          <div className="flex h-full w-full items-center justify-center text-primary/30">
             <Disc3 className="h-10 w-10" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-700/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       </div>
 
       <div className="min-w-0">

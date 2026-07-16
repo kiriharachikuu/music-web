@@ -122,11 +122,11 @@ export function PullToRefresh({
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-background/80 shadow-md backdrop-blur-sm">
             {refreshing ? (
-              <Loader2 className="h-5 w-5 animate-spin text-primary-700" />
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
             ) : (
               <ArrowDown
                 className={cn(
-                  "h-5 w-5 text-primary-700 transition-transform duration-200",
+                  "h-5 w-5 text-primary transition-transform duration-200",
                   progress >= 1 && "rotate-180"
                 )}
               />

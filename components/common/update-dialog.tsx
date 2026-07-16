@@ -158,7 +158,7 @@ export function UpdateDialog() {
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-700/10 text-primary-700">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Sparkles className="h-4 w-4" />
             </span>
             发现新版本
@@ -172,7 +172,7 @@ export function UpdateDialog() {
           <div className="space-y-4">
             {/* 版本号 */}
             <div className="flex items-center gap-2">
-              <span className="rounded-md bg-primary-700/10 px-2 py-0.5 text-sm font-medium text-primary-700">
+              <span className="rounded-md bg-primary/10 px-2 py-0.5 text-sm font-medium text-primary">
                 v{latest.versionName}
               </span>
               {isForce && (
@@ -188,7 +188,7 @@ export function UpdateDialog() {
                 <ul className="space-y-1.5 text-sm text-foreground/70">
                   {latest.content.map((line, i) => (
                     <li key={i} className="flex gap-2">
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary-500" />
+                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary/80" />
                       <span className="whitespace-pre-wrap">{line}</span>
                     </li>
                   ))}
@@ -213,7 +213,7 @@ export function UpdateDialog() {
           )}
           <Button
             onClick={handleUpdate}
-            className="bg-primary-700 text-white hover:bg-primary-600"
+            className="bg-primary text-white hover:bg-primary/90"
           >
             <Download className="h-4 w-4" />
             立即更新

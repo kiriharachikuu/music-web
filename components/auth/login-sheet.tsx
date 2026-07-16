@@ -69,10 +69,10 @@ export function LoginSheet() {
       <Sheet open={isOpen} onOpenChange={(v) => !v && closeLogin()}>
         <SheetContent
           side="bottom"
-          className="border-t-0 rounded-t-[28px] bg-gradient-to-br from-primary-800 via-primary-900 to-gray-950 p-0 text-white shadow-2xl sm:rounded-t-[32px]"
+          className="border-t-0 rounded-t-[28px] bg-gradient-to-br from-primary/90 via-primary/95 to-gray-950 p-0 text-white shadow-2xl sm:rounded-t-[32px]"
         >
-          <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary-400/20 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-primary-300/10 blur-3xl" />
+          <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
 
           <div
             className="relative flex h-1.5 w-12 shrink-0 rounded-full bg-white/20 mx-auto mt-3 mb-1"
@@ -105,9 +105,9 @@ export function LoginSheet() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && closeLogin()}>
-      <DialogContent className="overflow-hidden p-0 border-0 shadow-2xl max-w-md bg-gradient-to-br from-primary-800 via-primary-900 to-gray-950 text-white">
-        <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-primary-300/10 blur-3xl" />
+      <DialogContent className="overflow-hidden p-0 border-0 shadow-2xl max-w-md bg-gradient-to-br from-primary/90 via-primary/95 to-gray-950 text-white">
+        <div className="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
 
         <button
           type="button"
@@ -245,7 +245,7 @@ function LoginContent({
           className={cn(
             "flex-1 rounded-full py-2 text-sm font-medium transition-colors",
             mode === "login"
-              ? "bg-primary-700 text-white shadow-lg"
+              ? "bg-primary text-white shadow-lg"
               : "text-white/60 hover:text-white"
           )}
         >
@@ -260,7 +260,7 @@ function LoginContent({
           className={cn(
             "flex-1 rounded-full py-2 text-sm font-medium transition-colors",
             mode === "register"
-              ? "bg-primary-700 text-white shadow-lg"
+              ? "bg-primary text-white shadow-lg"
               : "text-white/60 hover:text-white"
           )}
         >
@@ -346,7 +346,7 @@ function LoginContent({
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-primary-700 py-3 font-medium text-white shadow-lg shadow-primary-700/30 transition-all hover:bg-primary-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3 font-medium text-white shadow-lg shadow-primary/30 transition-all hover:bg-primary/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {loading
@@ -402,7 +402,7 @@ function FormField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           disabled={disabled}
-          className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm text-white placeholder:text-white/30 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
+          className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm text-white placeholder:text-white/30 transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
         />
       </div>
     </div>
@@ -443,7 +443,7 @@ function PasswordField({
           placeholder={placeholder}
           autoComplete={autoComplete}
           disabled={disabled}
-          className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-10 text-sm text-white placeholder:text-white/30 transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-50"
+          className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-10 text-sm text-white placeholder:text-white/30 transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
         />
         <button
           type="button"

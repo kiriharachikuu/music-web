@@ -93,7 +93,7 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
 
           {/* 刷新中提示：sticky 顶部，避免被底部固定栏遮挡 */}
           {refreshing && (
-            <div className="sticky top-2 z-20 mx-auto w-fit rounded-full bg-primary-700/90 px-4 py-1.5 text-xs text-white shadow-lg backdrop-blur-sm">
+            <div className="sticky top-2 z-20 mx-auto w-fit rounded-full bg-primary/90 px-4 py-1.5 text-xs text-white shadow-lg backdrop-blur-sm">
               刷新中…
             </div>
           )}

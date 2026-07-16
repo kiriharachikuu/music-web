@@ -86,7 +86,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
               className={
                 state.variant === "destructive"
                   ? "rounded-full"
-                  : "rounded-full bg-primary-700 text-white hover:bg-primary-600"
+                  : "rounded-full bg-primary text-white hover:bg-primary/90"
               }
             >
               {state.confirmText ?? "确定"}

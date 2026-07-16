@@ -153,7 +153,7 @@ export function EditPlaylistSheet({
               </label>
               <div className="mt-1 flex items-start gap-4">
                 <div className="relative shrink-0">
-                  <div className="h-20 w-20 overflow-hidden rounded-xl bg-primary-700/10 ring-2 ring-primary-700/30">
+                  <div className="h-20 w-20 overflow-hidden rounded-xl bg-primary/10 ring-2 ring-primary/30">
                     {cover ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -162,7 +162,7 @@ export function EditPlaylistSheet({
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-primary-700/40">
+                      <div className="flex h-full w-full items-center justify-center text-primary/40">
                         <ListMusic className="h-8 w-8" />
                       </div>
                     )}
@@ -171,7 +171,7 @@ export function EditPlaylistSheet({
                     type="button"
                     onClick={() => coverFileRef.current?.click()}
                     disabled={uploading || saving || mode === "create"}
-                    className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 text-white shadow-lg transition-all hover:bg-primary-600 disabled:opacity-50"
+                    className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all hover:bg-primary/90 disabled:opacity-50"
                     aria-label="上传封面"
                   >
                     {uploading ? (
@@ -207,7 +207,7 @@ export function EditPlaylistSheet({
               disabled={saving || !name.trim()}
               className={cn(
                 "flex w-full items-center justify-center gap-2 rounded-full py-3 font-medium shadow-lg transition-all active:scale-[0.98]",
-                "bg-primary-700 text-white shadow-primary-700/30 hover:bg-primary-600",
+                "bg-primary text-white shadow-primary/30 hover:bg-primary/90",
                 "disabled:cursor-not-allowed disabled:opacity-60"
               )}
             >
