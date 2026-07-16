@@ -10,13 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toaster";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogFooter,
+  ResponsiveDialogDescription,
+} from "@/components/ui/responsive-dialog";
 
 export interface EditProfileDialogProps {
   open: boolean;
@@ -94,12 +94,12 @@ export function EditProfileDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>编辑资料</DialogTitle>
-          <DialogDescription>修改昵称和头像</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-md">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>编辑资料</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>修改昵称和头像</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <div className="space-y-5">
           <div className="flex items-center gap-4">
             <div className="relative shrink-0">
@@ -161,7 +161,7 @@ export function EditProfileDialog({
             </p>
           </div>
         </div>
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -176,8 +176,8 @@ export function EditProfileDialog({
           >
             {saving ? "保存中…" : "保存"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

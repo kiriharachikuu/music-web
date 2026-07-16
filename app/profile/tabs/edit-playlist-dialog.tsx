@@ -10,13 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toaster";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogFooter,
+  ResponsiveDialogDescription,
+} from "@/components/ui/responsive-dialog";
 
 export interface EditPlaylistDialogProps {
   open: boolean;
@@ -109,16 +109,16 @@ export function EditPlaylistDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-md rounded-2xl">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>
             {mode === "create" ? "新建歌单" : "编辑歌单"}
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {mode === "create" ? "创建一个新歌单" : "修改歌单名称和封面"}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <div className="space-y-5">
           <div>
             <label className="text-sm font-medium">歌单名称</label>
@@ -185,7 +185,7 @@ export function EditPlaylistDialog({
             </div>
           </div>
         </div>
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -200,8 +200,8 @@ export function EditPlaylistDialog({
           >
             {saving ? "保存中…" : mode === "create" ? "创建" : "保存"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

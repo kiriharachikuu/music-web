@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+} from "@/components/ui/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { api, API_BASE } from "@/lib/api";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
@@ -149,24 +149,24 @@ export function UpdateDialog() {
   const isForce = checkResult?.forceUpdate ?? false;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !isForce && setOpen(v)}>
-      <DialogContent
+    <ResponsiveDialog open={open} onOpenChange={(v) => !isForce && setOpen(v)}>
+      <ResponsiveDialogContent
         className="max-w-md"
         // 强制更新时禁用 ESC 和遮罩点击关闭
         onPointerDownOutside={(e) => isForce && e.preventDefault()}
         onEscapeKeyDown={(e) => isForce && e.preventDefault()}
       >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Sparkles className="h-4 w-4" />
             </span>
             发现新版本
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {latest?.title || `v${latest?.versionName} 已发布`}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         {latest && (
           <div className="space-y-4">
@@ -219,8 +219,8 @@ export function UpdateDialog() {
             立即更新
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 

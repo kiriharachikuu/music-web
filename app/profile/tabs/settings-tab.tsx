@@ -15,8 +15,6 @@ import {
   Lock,
   Palette,
   KeyRound,
-  MessageSquare,
-  ExternalLink,
 } from "lucide-react";
 
 import { clearAllDownloads } from "@/lib/download";
@@ -438,20 +436,6 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
           className="rounded-full px-4 text-sm"
         >
           修改
-        </Button>
-      </SettingsRow>
-
-      {/* 意见反馈（兔小巢） */}
-      <SettingsRow icon={MessageSquare} title="意见反馈">
-        <Button
-          variant="outline"
-          onClick={() => {
-            window.location.href = "https://txc.qq.com/products/801342";
-          }}
-          className="rounded-full px-4 text-sm"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          去反馈
         </Button>
       </SettingsRow>
 

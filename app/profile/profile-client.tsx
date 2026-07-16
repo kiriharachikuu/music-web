@@ -47,7 +47,7 @@ type Tab =
   | "downloads"
   | "settings";
 
-const FEEDBACK_URL = "https://wj.qq.com/s2/27325090/5661/";
+const FEEDBACK_URL = "https://txc.qq.com/products/801342";
 
 const downloadsTab = isDownloadAvailable()
   ? [{ key: "downloads" as Tab, label: "下载管理", icon: Download }]
@@ -222,7 +222,7 @@ export function ProfileClient() {
         <MenuLink icon={Smartphone} label="下载 App" href="/download" />
         <MenuItem
           icon={MessageCircle}
-          label="问题反馈"
+          label="意见反馈"
           onClick={() => window.open(FEEDBACK_URL, "_blank")}
         />
         {profile.role === "ADMIN" && (
@@ -286,11 +286,11 @@ export function ProfileClient() {
           <Pencil className="h-4 w-4" />
           编辑资料
         </Button>
-        {/* 问题反馈 */}
+        {/* 意见反馈 */}
         <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer">
           <Button variant="outline" className="rounded-full px-4">
             <MessageCircle className="h-4 w-4" />
-            问题反馈
+            意见反馈
           </Button>
         </a>
         {/* 管理员入口 */}

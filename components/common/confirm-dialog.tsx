@@ -2,13 +2,13 @@
 
 import * as React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+} from "@/components/ui/responsive-dialog";
 import { Button } from "@/components/ui/button";
 
 /** 确认弹窗可配置项 */
@@ -61,18 +61,18 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   return (
     <ConfirmContext.Provider value={{ confirm }}>
       {children}
-      <Dialog
+      <ResponsiveDialog
         open={state.open}
         onOpenChange={(v) => !v && resolve(false)}
       >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{state.title ?? "请确认"}</DialogTitle>
+        <ResponsiveDialogContent className="max-w-md">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{state.title ?? "请确认"}</ResponsiveDialogTitle>
             {state.description && (
-              <DialogDescription>{state.description}</DialogDescription>
+              <ResponsiveDialogDescription>{state.description}</ResponsiveDialogDescription>
             )}
-          </DialogHeader>
-          <DialogFooter>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button
               variant="outline"
               onClick={() => resolve(false)}
@@ -91,9 +91,9 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
             >
               {state.confirmText ?? "确定"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </ConfirmContext.Provider>
   );
 }
