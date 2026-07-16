@@ -20,7 +20,7 @@ export function Sidebar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:flex">
       {/* 品牌 Logo */}
       <div className="flex h-16 items-center gap-2 px-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -46,18 +46,18 @@ export function Sidebar() {
               className={cn(
                 "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 active
-                  ? "bg-primary-50/10 text-primary-700 dark:text-primary-300"
+                  ? "bg-primary/5 text-primary dark:text-primary/70"
                   : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
               )}
             >
               {/* 选中左侧 3px 竖条 */}
               {active && (
-                <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-primary-700" />
+                <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-primary" />
               )}
               <Icon
                 className={cn(
                   "h-5 w-5 shrink-0",
-                  active ? "text-primary-700 dark:text-primary-300" : ""
+                  active ? "text-primary dark:text-primary/70" : ""
                 )}
               />
               {item.label}

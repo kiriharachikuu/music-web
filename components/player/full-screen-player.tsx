@@ -288,7 +288,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                   draggable={false}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-primary-700/20">
+                <div className="flex h-full w-full items-center justify-center bg-primary/20">
                   <Music2 className="h-16 w-16 text-white/40" />
                 </div>
               )}

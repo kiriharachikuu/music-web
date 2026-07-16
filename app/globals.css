@@ -85,6 +85,84 @@
     --progress-from: #9333ea;
     --progress-to: #6b21a8;
   }
+
+  /* =========================================================
+   * 天蓝色主题（Sky）— 亮色
+   * 主色：#007AFF（iOS 系统蓝）HSL 214 100% 50%
+   * =======================================================*/
+  [data-theme="sky"] {
+    --primary: 214 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 214 30% 96%;
+    --accent-foreground: 214 100% 30%;
+
+    --border: 214 25% 90%;
+    --input: 214 25% 90%;
+    --ring: 214 100% 50%;
+
+    --sidebar-active-bg: 214 100% 50%;
+
+    --progress-from: #0062CC;
+    --progress-to: #003266;
+  }
+
+  /* 天蓝色主题 — 暗色 */
+  .dark[data-theme="sky"] {
+    --primary: 214 100% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 214 30% 16%;
+    --accent-foreground: 0 0% 98%;
+
+    --border: 214 20% 18%;
+    --input: 214 20% 18%;
+    --ring: 214 100% 58%;
+
+    --sidebar-active-bg: 214 100% 58%;
+
+    --progress-from: #007AFF;
+    --progress-to: #004A99;
+  }
+
+  /* =========================================================
+   * 淡粉色主题（Pink）— 亮色
+   * 主色：#FF375F（Apple 玫瑰粉）HSL 350 100% 61%
+   * =======================================================*/
+  [data-theme="pink"] {
+    --primary: 350 100% 61%;
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 350 30% 96%;
+    --accent-foreground: 350 100% 30%;
+
+    --border: 350 20% 90%;
+    --input: 350 20% 90%;
+    --ring: 350 100% 61%;
+
+    --sidebar-active-bg: 350 100% 61%;
+
+    --progress-from: #E51A42;
+    --progress-to: #B30828;
+  }
+
+  /* 淡粉色主题 — 暗色 */
+  .dark[data-theme="pink"] {
+    --primary: 350 100% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --accent: 350 30% 16%;
+    --accent-foreground: 0 0% 98%;
+
+    --border: 350 20% 18%;
+    --input: 350 20% 18%;
+    --ring: 350 100% 67%;
+
+    --sidebar-active-bg: 350 100% 67%;
+
+    --progress-from: #FF375F;
+    --progress-to: #CC0F33;
+  }
 }
 
 @layer base {

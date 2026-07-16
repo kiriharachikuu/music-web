@@ -49,7 +49,7 @@ export function QueuePanel() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 right-0 z-40 hidden w-80 flex-col border-l border-primary-500/10 bg-white/80 backdrop-blur-xl transition-transform duration-300 ease-out dark:bg-gray-900/60 lg:flex",
+          "fixed inset-y-0 right-0 z-40 hidden w-80 flex-col border-l border-primary/10 bg-white/80 backdrop-blur-xl transition-transform duration-300 ease-out dark:bg-gray-900/60 lg:flex",
           "pt-safe pb-safe",
           isQueueOpen ? "translate-x-0" : "translate-x-full"
         )}
@@ -58,7 +58,7 @@ export function QueuePanel() {
         aria-label="播放队列"
       >
         {/* 顶部：当前播放歌曲 + 收起按钮 */}
-        <div className="border-b border-primary-500/10 p-4">
+        <div className="border-b border-primary/10 p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-foreground/40">
               正在播放
@@ -78,7 +78,7 @@ export function QueuePanel() {
               <button
                 type="button"
                 onClick={openLyricPage}
-                className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-primary-700/10"
+                className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-primary/10"
                 aria-label="展开播放页"
               >
                 {currentSong.cover ? (
@@ -89,7 +89,7 @@ export function QueuePanel() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <span className="flex h-full w-full items-center justify-center text-primary-700/60">
+                  <span className="flex h-full w-full items-center justify-center text-primary/60">
                     <Music2 className="h-5 w-5" />
                   </span>
                 )}
@@ -106,7 +106,7 @@ export function QueuePanel() {
                 onClick={toggle}
                 size="icon"
                 aria-label={isPlaying ? "暂停" : "播放"}
-                className="h-9 w-9 shrink-0 rounded-full bg-primary-700 text-white shadow-card hover:bg-primary-600"
+                className="h-9 w-9 shrink-0 rounded-full bg-primary text-white shadow-card hover:bg-primary/90"
               >
                 {isPlaying ? (
                   <Pause className="h-4 w-4" />
@@ -155,7 +155,7 @@ export function QueuePanel() {
                       className={cn(
                         "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors",
                         active
-                          ? "bg-primary-50/10"
+                          ? "bg-primary/5"
                           : "hover:bg-foreground/5"
                       )}
                     >
@@ -163,7 +163,7 @@ export function QueuePanel() {
                         className={cn(
                           "flex h-6 w-6 shrink-0 items-center justify-center rounded text-xs font-medium",
                           active
-                            ? "bg-primary-700 text-white"
+                            ? "bg-primary text-white"
                             : "bg-foreground/5 text-foreground/50"
                         )}
                       >
@@ -187,7 +187,7 @@ export function QueuePanel() {
                         <p
                           className={cn(
                             "truncate text-xs font-medium",
-                            active && "text-primary-700 dark:text-primary-300"
+                            active && "text-primary dark:text-primary/70"
                           )}
                         >
                           {song.title}

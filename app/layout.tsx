@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { ConfirmProvider } from "@/components/common/confirm-dialog";
 import { BaiduTongji } from "@/components/common/baidu-tongji";
+import { colorThemeInitScript } from "@/lib/store/color-theme-store";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -71,6 +72,8 @@ export default function RootLayout({
       <head>
         {/* 首屏注入 safe-area CSS 变量，避免 useSafeArea useEffect 前的内容闪烁 */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){var r=document.documentElement;r.style.setProperty('--safe-area-top','env(safe-area-inset-top,0px)');r.style.setProperty('--safe-area-bottom','env(safe-area-inset-bottom,0px)');r.style.setProperty('--safe-area-left','env(safe-area-inset-left,0px)');r.style.setProperty('--safe-area-right','env(safe-area-inset-right,0px)');})();` }} />
+        {/* 首屏同步颜色主题，避免 SSR/hydration 后闪烁 */}
+        <script dangerouslySetInnerHTML={{ __html: colorThemeInitScript }} />
       </head>
       <body className="min-h-full bg-background text-foreground">
         {/* next-themes：attribute=class 切换 .dark，suppressHydrationWarning 已在 <html> 声明 */}

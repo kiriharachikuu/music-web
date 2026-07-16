@@ -115,19 +115,19 @@ export function ProgressBar({ value, max, onSeek }: ProgressBarProps) {
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onKeyDown={onKeyDown}
-      className="group relative flex h-6 w-full cursor-pointer touch-none items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-700"
+      className="group relative flex h-6 w-full cursor-pointer touch-none items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
     >
       {/* 轨道 */}
       <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/20" />
-      {/* 已播放填充：primary-600 → primary-700 渐变 */}
+      {/* 已播放填充：主题渐变 */}
       <div
-        className="absolute left-0 h-1.5 rounded-full bg-gradient-to-r from-primary-600 to-primary-700"
+        className="absolute left-0 h-1.5 rounded-full progress-fill"
         style={{ width: `${pct}%` }}
       />
-      {/* 拖拽圆点：白边 + primary-700 实心 */}
+      {/* 拖拽圆点：白边 + 主题色实心 */}
       <div
         className={cn(
-          "absolute h-4 w-4 rounded-full border-2 border-white bg-primary-700 shadow-md transition-transform",
+          "absolute h-4 w-4 rounded-full border-2 border-white bg-primary shadow-md transition-transform",
           "group-hover:scale-110",
           dragging && "scale-125"
         )}

@@ -19,7 +19,7 @@ export function MobileTabBar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex flex-col border-t border-primary-500/10 bg-white/90 backdrop-blur-xl dark:bg-gray-900/80 md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 flex flex-col border-t border-primary/10 bg-white/90 backdrop-blur-xl dark:bg-gray-900/80 md:hidden">
       <div className="flex h-14 items-stretch landscape:h-12">
         {navItems.map((item) => {
           const active = isActive(item.href);
@@ -31,7 +31,7 @@ export function MobileTabBar() {
               className={cn(
                 "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors no-select landscape:gap-0 landscape:text-[10px]",
                 active
-                  ? "text-primary-700 dark:text-primary-300"
+                  ? "text-primary dark:text-primary/70"
                   : "text-foreground/50"
               )}
             >

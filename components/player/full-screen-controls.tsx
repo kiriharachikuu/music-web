@@ -81,7 +81,7 @@ export function FullScreenControls({
               ? "text-white/70 hover:text-white"
               : playMode === "sequential"
                 ? "text-amber-400"
-                : "text-primary-500"
+                : "text-primary"
           )}
           aria-label={playModeLabel}
         >
@@ -112,10 +112,10 @@ export function FullScreenControls({
           aria-label={isPlaying ? "暂停" : "播放"}
         >
           {isPlaying ? (
-            <Pause className="h-7 w-7 text-primary-700" fill="currentColor" />
+            <Pause className="h-7 w-7 text-primary" fill="currentColor" />
           ) : (
             <Play
-              className="h-7 w-7 translate-x-[2px] text-primary-700"
+              className="h-7 w-7 translate-x-[2px] text-primary"
               fill="currentColor"
             />
           )}
@@ -138,7 +138,7 @@ export function FullScreenControls({
           className={cn(
             "rounded-full p-2 transition-colors",
             isFavorite
-              ? "text-primary-500"
+              ? "text-primary"
               : "text-white/70 hover:text-white"
           )}
           aria-label={isFavorite ? "取消喜欢" : "喜欢"}

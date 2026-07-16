@@ -67,7 +67,7 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
                     {/* 当前播放左侧标记条 */}
                     <span className="w-1 shrink-0 self-stretch">
                       {isCurrent && (
-                        <span className="block h-full w-1 rounded-full bg-primary-700" />
+                        <span className="block h-full w-1 rounded-full bg-primary" />
                       )}
                     </span>
                     {/* 封面缩略图 */}

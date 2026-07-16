@@ -69,10 +69,10 @@ export function MiniPlayer() {
 
   return (
     <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--safe-area-bottom,0px))] max-md:landscape:bottom-[calc(3rem+var(--safe-area-bottom,0px))] z-40 md:bottom-0 md:left-64 md:z-40">
-      <div className="mx-auto border-t border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60">
+      <div className="mx-auto border-t border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60">
         <div className="flex items-center gap-3 px-3 py-2 md:gap-4 md:px-6 md:py-3 max-md:landscape:py-1.5">
           {/* 封面 */}
-          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary-700/10 md:h-14 md:w-14 max-md:landscape:h-10 max-md:landscape:w-10">
+          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/10 md:h-14 md:w-14 max-md:landscape:h-10 max-md:landscape:w-10">
             {currentSong?.cover ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -84,7 +84,7 @@ export function MiniPlayer() {
                 style={{ contain: "strict" }}
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+              <div className="flex h-full w-full items-center justify-center text-primary/60">
                 <Music2 className="h-5 w-5" />
               </div>
             )}
@@ -119,7 +119,7 @@ export function MiniPlayer() {
               onClick={toggle}
               size="icon"
               aria-label={isPlaying ? "暂停" : "播放"}
-              className="h-9 w-9 rounded-full bg-primary-700 text-white shadow-card hover:bg-primary-600 active:bg-primary-800 md:h-10 md:w-10 max-md:landscape:h-8 max-md:landscape:w-8"
+              className="h-9 w-9 rounded-full bg-primary text-white shadow-card hover:bg-primary/90 active:bg-primary-800 md:h-10 md:w-10 max-md:landscape:h-8 max-md:landscape:w-8"
             >
               {isPlaying ? (
                 <Pause className="h-4 w-4 md:h-5 md:w-5 max-md:landscape:h-3.5 max-md:landscape:w-3.5" />
@@ -153,7 +153,7 @@ export function MiniPlayer() {
               <div className="relative w-20 h-1.5">
                 <div className="absolute inset-0 rounded-full bg-foreground/20" />
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-primary-700"
+                  className="absolute inset-y-0 left-0 rounded-full bg-primary"
                   style={{ width: `${volume * 100}%` }}
                 />
                 <input
@@ -163,7 +163,7 @@ export function MiniPlayer() {
                   step="0.01"
                   value={volume}
                   onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="absolute inset-0 w-full h-full appearance-none cursor-pointer bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary-700 [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10"
+                  className="absolute inset-0 w-full h-full appearance-none cursor-pointer bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10"
                   aria-label="音量"
                 />
               </div>

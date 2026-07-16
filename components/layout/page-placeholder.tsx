@@ -21,7 +21,7 @@ export function PagePlaceholder({
           <span
             className={cn(
               "flex h-12 w-12 items-center justify-center rounded-2xl",
-              "bg-primary-700/10 text-primary-700 dark:text-primary-300"
+              "bg-primary/10 text-primary dark:text-primary/70"
             )}
           >
             <Icon className="h-6 w-6" />

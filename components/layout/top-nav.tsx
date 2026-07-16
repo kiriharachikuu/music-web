@@ -10,6 +10,7 @@ import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { ColorThemePicker } from "@/components/theme/color-theme-picker";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
@@ -95,7 +96,7 @@ export function TopNav() {
       className={cn(
         "fixed inset-x-0 top-0 z-30 border-b transition-colors duration-300 md:left-64",
         scrolled
-          ? "border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
+          ? "border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
       )}
     >
@@ -117,7 +118,7 @@ export function TopNav() {
               {avatarUrl ? (
                 <AvatarImage src={avatarUrl} alt="avatar" />
               ) : (
-                <AvatarFallback className="bg-primary-700/10 text-primary-700">
+                <AvatarFallback className="bg-primary/10 text-primary">
                   <User className="h-5 w-5" />
                 </AvatarFallback>
               )}
@@ -136,7 +137,7 @@ export function TopNav() {
           className={cn(
             "hidden h-9 w-9 lg:inline-flex",
             isQueueOpen
-              ? "text-primary-700 dark:text-primary-300"
+              ? "text-primary dark:text-primary/70"
               : "text-foreground/70 hover:text-foreground"
           )}
         >
@@ -154,6 +155,7 @@ export function TopNav() {
         </Link>
 
         <ThemeToggle />
+        <ColorThemePicker />
       </div>
     </header>
   );
