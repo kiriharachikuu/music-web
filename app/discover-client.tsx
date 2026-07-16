@@ -62,7 +62,7 @@ export function DiscoverClient({ data }: { data: DiscoverData }) {
           {hotArtists.length > 0 && (
             <div>
               <SectionTitle title="热门歌手" />
-              <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+              <div className="flex gap-4 overflow-x-auto px-1 pb-2 no-scrollbar md:grid md:grid-cols-6 md:gap-4 md:overflow-visible lg:grid-cols-8">
                 {hotArtists.map((artist) => (
                   <ArtistCard key={artist.id} artist={artist} />
                 ))}
