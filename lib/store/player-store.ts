@@ -8,6 +8,7 @@ import type { AudioEngine, AudioEngineEvents } from "@/lib/audio-engine/engine";
 import { getCachedAudio } from "@/lib/db/audio-cache";
 import { resolveMediaUrl } from "@/lib/utils";
 import { getPlatform } from "@/lib/platform";
+import { androidBridge } from "@/lib/jsbridge/android-bridge";
 
 /**
  * 上报播放记录到后端（静默失败，不阻塞播放）
@@ -224,37 +225,45 @@ export const usePlayerStore = create<PlayerState>()(
         };
         engine.setEvents(events);
 
-        // 4. URL 解析：先查 IndexedDB 缓存
-        //    - 浏览器模式命中：传 blob: URL 给 HowlerEngine（WebView 内可访问）
-        //    - TWA 模式命中：仍传网络 URL（blob: 原生 ExoPlayer 无法访问，
-        //      依靠原生 OkHttp 的 500MB 本地缓存实现离线播放）
-        //    - 未命中：resolveMediaUrl 处理相对路径，构造 Authorization headers
+        // 4. URL 解析：
+        //    - TWA 模式：优先查原生下载的本地文件（file://），真正实现离线播放；
+        //      未下载时走网络 URL（OkHttp 会自动缓存）
+        //    - 浏览器模式：命中 IndexedDB 用 blob: URL，未命中用网络 URL
         const platform = getPlatform();
         let url: string;
         let headers: Record<string, string> | undefined;
 
-        try {
-          const cached = await getCachedAudio(targetSong.id);
-          if (cached && !platform.isTWA) {
-            // 浏览器模式：使用 blob: URL
-            if (currentBlobUrl) {
-              URL.revokeObjectURL(currentBlobUrl);
-              currentBlobUrl = null;
-            }
-            url = URL.createObjectURL(cached.blob);
-            currentBlobUrl = url;
+        if (platform.isTWA) {
+          const localPath = androidBridge.getLocalSongPath(targetSong.id);
+          if (localPath) {
+            url = `file://${localPath}`;
             headers = undefined;
           } else {
-            // TWA 模式或未命中：使用网络 URL
             url = resolveMediaUrl(targetSong.url);
             const token = getToken();
             headers = token ? { Authorization: `Bearer ${token}` } : undefined;
           }
-        } catch {
-          // IndexedDB 查询失败：回退到网络 URL
-          url = resolveMediaUrl(targetSong.url);
-          const token = getToken();
-          headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        } else {
+          try {
+            const cached = await getCachedAudio(targetSong.id);
+            if (cached) {
+              if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+                currentBlobUrl = null;
+              }
+              url = URL.createObjectURL(cached.blob);
+              currentBlobUrl = url;
+              headers = undefined;
+            } else {
+              url = resolveMediaUrl(targetSong.url);
+              const token = getToken();
+              headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+            }
+          } catch {
+            url = resolveMediaUrl(targetSong.url);
+            const token = getToken();
+            headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+          }
         }
 
         // 5. 调用引擎加载并播放

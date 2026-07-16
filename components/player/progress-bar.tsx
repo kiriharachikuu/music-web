@@ -115,7 +115,7 @@ export function ProgressBar({ value, max, onSeek }: ProgressBarProps) {
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
       onKeyDown={onKeyDown}
-      className="group relative flex h-6 w-full cursor-pointer touch-none items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      className="group relative flex h-6 w-full cursor-pointer touch-none items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {/* 轨道 */}
       <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/20" />

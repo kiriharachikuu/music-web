@@ -1,46 +1,89 @@
 import type { ApiSong } from "@/lib/types";
 import { resolveMediaUrl } from "@/lib/utils";
 import { getToken } from "@/lib/auth";
-import { cacheAudio, getCachedAudio, isCached } from "@/lib/db/audio-cache";
+import {
+  cacheAudio,
+  getCachedAudio,
+  isCached,
+  listDownloads as listDownloadsWeb,
+  removeDownload as removeDownloadWeb,
+  clearAllDownloads as clearAllDownloadsWeb,
+  getCacheSize as getCacheSizeWeb,
+  getCachedUrl as getCachedUrlWeb,
+} from "@/lib/db/audio-cache";
 import { getPlatform } from "@/lib/platform/detect";
+import { androidBridge } from "@/lib/jsbridge/android-bridge";
+import { setupDownloadListeners } from "@/lib/jsbridge/native-events";
 
 /**
  * XingTone —— 下载触发器
  *
- * 流程：
- * 1. 先查本地缓存（getCachedAudio），已缓存直接返回 { cached: true }
- * 2. 未缓存：fetch 音频 URL（resolveMediaUrl 处理相对路径），转 Blob
- * 3. 调用 cacheAudio 存入 IndexedDB（LRU 自动淘汰）
- * 4. 失败抛错，由调用方 toast 提示
+ * 平台差异：
+ * - TWA 模式（App 内）：由原生 SongDownloadManager 下载到应用沙盒目录
+ *   （filesDir/songs/{songId}.mp3），元数据存 SharedPreferences
+ * - 浏览器模式：fetch → Blob → IndexedDB（LRU 30 首）
  *
- * 鉴权：音频走 /uploads/ 由 nginx 代理公开访问（与 Howler 播放一致），
+ * 鉴权：音频走 /uploads/ 由 nginx 代理公开访问，
  *      但为兼容需 cookie 鉴权的部署，携带 credentials: "include"。
  *      若存在 Bearer token 也一并带上（兼容受保护资源）。
  */
 
 export interface DownloadResult {
-  /** 是否已缓存（命中或新写入均为 true） */
   cached: boolean;
-  /** 本次是否为新下载（false 表示命中已有缓存） */
   newlyDownloaded: boolean;
-  /** 下载字节数（命中缓存时为 0） */
   size: number;
+}
+
+function isTWA(): boolean {
+  return getPlatform().isTWA;
 }
 
 /**
  * 下载并缓存一首歌曲
- * - 已缓存：直接返回，不重复下载
- * - 未缓存：fetch → blob → 存入 IndexedDB
  * @throws 网络错误或后端不可达时抛 Error
  */
 export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
-  // 1. 命中缓存
+  if (isTWA()) {
+    // TWA 模式：原生下载
+    if (androidBridge.isSongDownloaded(song.id)) {
+      return { cached: true, newlyDownloaded: false, size: 0 };
+    }
+    const url = resolveMediaUrl(song.fileUrl);
+    if (!url) {
+      throw new Error("音频地址无效");
+    }
+    const token = getToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+    return new Promise<DownloadResult>((resolve, reject) => {
+      setupDownloadListeners({
+        onComplete: (sid, size) => {
+          if (sid === song.id) {
+            resolve({ cached: true, newlyDownloaded: true, size });
+          }
+        },
+        onError: (sid, msg) => {
+          if (sid === song.id) {
+            reject(new Error(msg || "下载失败"));
+          }
+        },
+      });
+      androidBridge.downloadSong(song.id, url, headers, {
+        title: song.title,
+        artist: song.artist,
+        albumName: song.albumName || "",
+        coverUrl: song.coverUrl || "",
+        fileUrl: song.fileUrl,
+      });
+    });
+  }
+
+  // 浏览器模式：原来的 IndexedDB 逻辑
   const cached = await getCachedAudio(song.id);
   if (cached) {
     return { cached: true, newlyDownloaded: false, size: 0 };
   }
 
-  // 2. 拉取音频二进制
   const url = resolveMediaUrl(song.fileUrl);
   if (!url) {
     throw new Error("音频地址无效");
@@ -72,7 +115,6 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     throw new Error("音频内容为空");
   }
 
-  // 3. 写入缓存（LRU 内部自动淘汰）
   await cacheAudio(song, blob);
 
   return { cached: true, newlyDownloaded: true, size: blob.size };
@@ -102,22 +144,89 @@ export async function downloadSongs(
   return results;
 }
 
-/** 便捷判断：歌曲是否已下载（仅查询，不更新 cachedAt） */
+/** 便捷判断：歌曲是否已下载 */
 export async function isDownloaded(songId: string): Promise<boolean> {
+  if (isTWA()) {
+    return androidBridge.isSongDownloaded(songId);
+  }
   return isCached(songId);
 }
 
-/** 判断下载功能是否可用（仅 Android TWA 支持） */
+/** 判断下载功能是否可用（TWA 支持原生下载，浏览器支持 IndexedDB 下载） */
 export function isDownloadAvailable(): boolean {
-  return getPlatform().platform === "twa";
+  return true;
 }
 
-// re-export 缓存层方法，调用方无需关心 db 模块路径
-export {
-  getCachedAudio,
-  getCachedUrl,
-  listDownloads,
-  removeDownload,
-  clearAllDownloads,
-  getCacheSize,
-} from "@/lib/db/audio-cache";
+/**
+ * 获取已下载歌曲的本地播放 URL
+ * - TWA：返回 file:// 绝对路径
+ * - 浏览器：返回 blob: URL
+ * - 未下载：返回 null
+ */
+export async function getCachedUrl(songId: string): Promise<string | null> {
+  if (isTWA()) {
+    const path = androidBridge.getLocalSongPath(songId);
+    return path ? `file://${path}` : null;
+  }
+  return getCachedUrlWeb(songId);
+}
+
+/** 下载列表项（与 IndexedDB 的 DownloadListItem 对齐） */
+export interface DownloadListItem {
+  songId: string;
+  song: ApiSong;
+  size: number;
+  cachedAt: number;
+}
+
+/** 获取已下载列表（按 cachedAt 降序） */
+export async function listDownloads(): Promise<DownloadListItem[]> {
+  if (isTWA()) {
+    const list = androidBridge.listDownloadedSongs();
+    return list
+      .map((item) => ({
+        songId: item.songId,
+        size: item.size,
+        cachedAt: item.cachedAt,
+        song: {
+          id: item.songId,
+          title: item.title,
+          artist: item.artist,
+          albumName: item.albumName,
+          coverUrl: item.coverUrl,
+          fileUrl: item.fileUrl,
+          duration: 0,
+        } as ApiSong,
+      }))
+      .sort((a, b) => b.cachedAt - a.cachedAt);
+  }
+  return listDownloadsWeb();
+}
+
+/** 获取总缓存大小（字节） */
+export async function getCacheSize(): Promise<number> {
+  if (isTWA()) {
+    return androidBridge.getDownloadedTotalSize();
+  }
+  return getCacheSizeWeb();
+}
+
+/** 删除单条下载 */
+export async function removeDownload(songId: string): Promise<void> {
+  if (isTWA()) {
+    androidBridge.removeDownloadedSong(songId);
+    return;
+  }
+  return removeDownloadWeb(songId);
+}
+
+/** 清空全部下载 */
+export async function clearAllDownloads(): Promise<void> {
+  if (isTWA()) {
+    androidBridge.clearAllDownloadedSongs();
+    return;
+  }
+  return clearAllDownloadsWeb();
+}
+
+export { getCachedAudio } from "@/lib/db/audio-cache";

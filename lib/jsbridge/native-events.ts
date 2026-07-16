@@ -39,6 +39,10 @@ export interface NativePlayerEvents {
   onApkInstalled(): void;
   /** APK 安装失败，msg 为失败原因 */
   onApkInstallFailed(msg: string): void;
+  /** 歌曲下载完成，songId 为歌曲 ID，size 为文件大小（字节） */
+  onDownloadComplete(songId: string, size: number): void;
+  /** 歌曲下载失败，songId 为歌曲 ID，msg 为失败原因 */
+  onDownloadError(songId: string, msg: string): void;
 }
 
 declare global {
@@ -56,6 +60,13 @@ interface ApkInstallListeners {
   onFailed?: (msg: string) => void;
 }
 let apkListeners: ApkInstallListeners = {};
+
+/** 下载相关回调（由 download.ts 注册） */
+interface DownloadListeners {
+  onComplete?: (songId: string, size: number) => void;
+  onError?: (songId: string, msg: string) => void;
+}
+let downloadListeners: DownloadListeners = {};
 
 /**
  * 在 window 上注册 __nativePlayerEvents 对象（幂等，仅注册一次）
@@ -140,6 +151,20 @@ function ensureNativeEventsRegistered(): void {
         // 容错
       }
     },
+    onDownloadComplete(songId: string, size: number): void {
+      try {
+        downloadListeners.onComplete?.(songId, size);
+      } catch {
+        // 容错
+      }
+    },
+    onDownloadError(songId: string, msg: string): void {
+      try {
+        downloadListeners.onError?.(songId, msg);
+      } catch {
+        // 容错
+      }
+    },
   };
 }
 
@@ -165,8 +190,16 @@ export function setupApkInstallListeners(listeners: ApkInstallListeners): void {
 }
 
 /**
+ * 注册下载结果回调（供 download.ts 使用，独立于 AudioEngine 事件流）
+ */
+export function setupDownloadListeners(listeners: DownloadListeners): void {
+  ensureNativeEventsRegistered();
+  downloadListeners = listeners;
+}
+
+/**
  * 清理所有事件回调（用于 NativeEngine.unload）
- * - 仅清空 AudioEngine 事件，APK 安装回调保留（update-dialog 可能仍在等待）
+ * - 仅清空 AudioEngine 事件，APK 安装和下载回调保留
  */
 export function clearNativeEventListeners(): void {
   currentEvents = null;

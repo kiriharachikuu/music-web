@@ -50,6 +50,20 @@ export interface AndroidJSBridge {
   isLockScreenPlayerEnabled(): string;
   /** 设置锁屏/通知栏播放器开关状态（"true"/"false"） */
   setLockScreenPlayerEnabled(enabled: string): void;
+  /** 下载歌曲到应用沙盒目录（异步，结果通过 onDownloadComplete/onDownloadError 回传） */
+  downloadSong(songId: string, url: string, headersJson: string, metaJson: string): void;
+  /** 检查某首歌是否已下载（"true"/"false"） */
+  isSongDownloaded(songId: string): string;
+  /** 获取某首歌的本地文件路径（未下载返回空字符串） */
+  getLocalSongPath(songId: string): string;
+  /** 获取所有已下载歌曲列表（JSON 数组字符串） */
+  listDownloadedSongs(): string;
+  /** 获取所有已下载歌曲总大小（字节，字符串） */
+  getDownloadedTotalSize(): string;
+  /** 删除单首已下载歌曲 */
+  removeDownloadedSong(songId: string): void;
+  /** 清空所有已下载歌曲 */
+  clearAllDownloadedSongs(): void;
 }
 
 declare global {
@@ -309,6 +323,123 @@ export const androidBridge = {
     if (!bridge) return;
     try {
       bridge.setLockScreenPlayerEnabled(enabled ? "true" : "false");
+    } catch {
+      // 静默
+    }
+  },
+
+  /**
+   * 下载歌曲到应用沙盒目录（异步）
+   * - 结果通过 onDownloadComplete / onDownloadError 回传
+   * - 非 TWA 环境静默忽略
+   */
+  downloadSong(
+    songId: string,
+    url: string,
+    headers: Record<string, string> | undefined,
+    meta: { title: string; artist: string; albumName?: string; coverUrl?: string; fileUrl: string }
+  ): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      const metaJson = JSON.stringify(meta);
+      bridge.downloadSong(songId, url, serializeHeaders(headers), metaJson);
+    } catch {
+      // 静默
+    }
+  },
+
+  /**
+   * 检查某首歌是否已下载
+   * - 非 TWA 环境返回 false
+   */
+  isSongDownloaded(songId: string): boolean {
+    const bridge = getNativeBridge();
+    if (!bridge) return false;
+    try {
+      return bridge.isSongDownloaded(songId) === "true";
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * 获取某首歌的本地文件路径
+   * - 未下载或非 TWA 环境返回空字符串
+   */
+  getLocalSongPath(songId: string): string {
+    const bridge = getNativeBridge();
+    if (!bridge) return "";
+    try {
+      return bridge.getLocalSongPath(songId);
+    } catch {
+      return "";
+    }
+  },
+
+  /**
+   * 获取所有已下载歌曲列表（JSON 数组）
+   * - 非 TWA 环境返回空数组
+   */
+  listDownloadedSongs(): Array<{
+    songId: string;
+    title: string;
+    artist: string;
+    albumName: string;
+    coverUrl: string;
+    fileUrl: string;
+    size: number;
+    cachedAt: number;
+  }> {
+    const bridge = getNativeBridge();
+    if (!bridge) return [];
+    try {
+      const jsonStr = bridge.listDownloadedSongs();
+      return JSON.parse(jsonStr || "[]");
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * 获取所有已下载歌曲总大小（字节）
+   * - 非 TWA 环境返回 0
+   */
+  getDownloadedTotalSize(): number {
+    const bridge = getNativeBridge();
+    if (!bridge) return 0;
+    try {
+      const val = bridge.getDownloadedTotalSize();
+      const num = parseInt(val, 10);
+      return isNaN(num) ? 0 : num;
+    } catch {
+      return 0;
+    }
+  },
+
+  /**
+   * 删除单首已下载歌曲
+   * - 非 TWA 环境静默忽略
+   */
+  removeDownloadedSong(songId: string): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      bridge.removeDownloadedSong(songId);
+    } catch {
+      // 静默
+    }
+  },
+
+  /**
+   * 清空所有已下载歌曲
+   * - 非 TWA 环境静默忽略
+   */
+  clearAllDownloadedSongs(): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      bridge.clearAllDownloadedSongs();
     } catch {
       // 静默
     }
