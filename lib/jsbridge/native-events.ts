@@ -31,6 +31,10 @@ export interface NativePlayerEvents {
   onTimeUpdate(currentMs: number): void;
   /** 错误，message 用于 Toast 提示 */
   onError(message: string): void;
+  /** 通知栏/锁屏：下一曲 */
+  onSkipToNext(): void;
+  /** 通知栏/锁屏：上一曲 */
+  onSkipToPrevious(): void;
   /** APK 安装成功 */
   onApkInstalled(): void;
   /** APK 安装失败，msg 为失败原因 */
@@ -104,6 +108,20 @@ function ensureNativeEventsRegistered(): void {
     onError(message: string): void {
       try {
         currentEvents?.onError(message);
+      } catch {
+        // 容错
+      }
+    },
+    onSkipToNext(): void {
+      try {
+        currentEvents?.onSkipToNext?.();
+      } catch {
+        // 容错
+      }
+    },
+    onSkipToPrevious(): void {
+      try {
+        currentEvents?.onSkipToPrevious?.();
       } catch {
         // 容错
       }

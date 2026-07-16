@@ -31,6 +31,10 @@ export interface AudioEngineEvents {
   onTimeUpdate: (currentTime: number) => void;
   /** 加载或播放错误，message 用于 Toast 提示 */
   onError: (message: string) => void;
+  /** 通知栏/锁屏：下一曲（TWA 原生 MediaSession 触发） */
+  onSkipToNext?: () => void;
+  /** 通知栏/锁屏：上一曲（TWA 原生 MediaSession 触发） */
+  onSkipToPrevious?: () => void;
 }
 
 /** 加载播放的可选参数 */

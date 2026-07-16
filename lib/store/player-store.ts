@@ -218,6 +218,8 @@ export const usePlayerStore = create<PlayerState>()(
               isPlaying: false,
               error: message || `音频加载失败：${targetSong.title}`,
             }),
+          onSkipToNext: () => get().next(),
+          onSkipToPrevious: () => get().prev(),
         };
         engine.setEvents(events);
 

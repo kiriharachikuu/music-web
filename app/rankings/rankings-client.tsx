@@ -3,9 +3,12 @@
 import * as React from "react";
 import { Play, Shuffle, TrendingUp } from "lucide-react";
 
-import type { RankingsData, RankingType } from "@/lib/types";
+import type { RankingsData, RankingType, ApiSong } from "@/lib/types";
 import { toPlayerSong, toPlayerSongs } from "@/lib/types";
 import { usePlayerStore } from "@/lib/store/player-store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useFavoritesStore } from "@/lib/store/favorites-store";
+import { getToken } from "@/lib/auth";
 import { SongList } from "@/components/common/song-list";
 import { EmptyState } from "@/components/common/empty-state";
 import { SongListSkeleton } from "@/components/common/loading-skeleton";
@@ -46,6 +49,29 @@ export function RankingsClient({ data }: { data: RankingsData }) {
   const [active, setActive] = React.useState<RankingType>("soar");
   const play = usePlayerStore((s) => s.play);
   const setPlayMode = usePlayerStore((s) => s.setPlayMode);
+  const openLogin = useAuthStore((s) => s.openLogin);
+  const likedIds = useFavoritesStore((s) => s.likedIds);
+  const toggleLike = useFavoritesStore((s) => s.toggleLike);
+  const loadLikedFromServer = useFavoritesStore((s) => s.loadFromServer);
+
+  // 加载喜欢的歌曲列表（仅加载一次）
+  React.useEffect(() => {
+    if (!getToken()) return;
+    const loaded = useFavoritesStore.getState().loaded;
+    if (!loaded) {
+      void loadLikedFromServer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 喜欢/取消喜欢（未登录时触发登录弹窗）
+  const handleLike = (song: ApiSong) => {
+    if (!getToken()) {
+      openLogin();
+      return;
+    }
+    void toggleLike(song.id);
+  };
 
   const songs = rankings[active] ?? [];
   const currentTab = TABS.find((t) => t.key === active)!;
@@ -183,7 +209,13 @@ export function RankingsClient({ data }: { data: RankingsData }) {
         </div>
       ) : songs.length > 0 ? (
         <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
-          <SongList songs={songs} showRank startRank={1} />
+          <SongList
+            songs={songs}
+            showRank
+            startRank={1}
+            likedIds={likedIds}
+            onLike={handleLike}
+          />
         </div>
       ) : (
         <EmptyState

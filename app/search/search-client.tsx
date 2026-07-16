@@ -11,9 +11,12 @@ import type {
   DateRange,
 } from "@/lib/types";
 import { api } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useFavoritesStore } from "@/lib/store/favorites-store";
+import { useAuthStore } from "@/lib/store/auth-store";
 
 import { SearchResults, SearchResultsSkeleton } from "./search-results";
 
@@ -70,7 +73,10 @@ export function SearchClient({
   const [results, setResults] = React.useState<SearchResult | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [history, setHistory] = React.useState<string[]>([]);
-  const [likedIds, setLikedIds] = React.useState<Set<string>>(new Set());
+  const likedIds = useFavoritesStore((s) => s.likedIds);
+  const toggleLike = useFavoritesStore((s) => s.toggleLike);
+  const loadLikedFromServer = useFavoritesStore((s) => s.loadFromServer);
+  const openLogin = useAuthStore((s) => s.openLogin);
   const [hasMore, setHasMore] = React.useState(false);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const searchInputMobileRef = React.useRef<HTMLInputElement>(null);
@@ -90,34 +96,26 @@ export function SearchClient({
     }
   }, []);
 
-  /** 收藏 / 取消收藏歌曲（401 由 api.ts 自动触发登录弹窗） */
+  // 加载喜欢的歌曲列表（仅加载一次）
+  React.useEffect(() => {
+    if (!getToken()) return;
+    const loaded = useFavoritesStore.getState().loaded;
+    if (!loaded) {
+      void loadLikedFromServer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /** 喜欢 / 取消喜欢歌曲（未登录时触发登录弹窗） */
   const handleLike = React.useCallback(
-    async (song: ApiSong) => {
-      const isLiked = likedIds.has(song.id);
-      // 乐观 UI
-      setLikedIds((prev) => {
-        const next = new Set(prev);
-        if (isLiked) next.delete(song.id);
-        else next.add(song.id);
-        return next;
-      });
-      try {
-        if (isLiked) {
-          await api.del(`/user/favorites/${song.id}`);
-        } else {
-          await api.post("/user/favorites", { songId: song.id });
-        }
-      } catch {
-        // 失败回滚（401 已由 api.ts 触发登录弹窗）
-        setLikedIds((prev) => {
-          const next = new Set(prev);
-          if (isLiked) next.add(song.id);
-          else next.delete(song.id);
-          return next;
-        });
+    (song: ApiSong) => {
+      if (!getToken()) {
+        openLogin();
+        return;
       }
+      void toggleLike(song.id);
     },
-    [likedIds]
+    [toggleLike, openLogin]
   );
 
   // 读取本地历史（仅客户端）

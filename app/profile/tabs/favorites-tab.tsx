@@ -14,7 +14,10 @@ import {
 import type { ApiSong } from "@/lib/types";
 import { toPlayerSong, toPlayerSongs } from "@/lib/types";
 import { api } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import { usePlayerStore } from "@/lib/store/player-store";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useFavoritesStore } from "@/lib/store/favorites-store";
 import { SongList } from "@/components/common/song-list";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
@@ -29,6 +32,10 @@ export function FavoritesTab() {
   const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
   const play = usePlayerStore((s) => s.play);
   const playNextMany = usePlayerStore((s) => s.playNextMany);
+  const openLogin = useAuthStore((s) => s.openLogin);
+  const likedIds = useFavoritesStore((s) => s.likedIds);
+  const toggleLike = useFavoritesStore((s) => s.toggleLike);
+  const initLikedIds = useFavoritesStore((s) => s.initLikedIds);
 
   React.useEffect(() => {
     void load();
@@ -36,15 +43,25 @@ export function FavoritesTab() {
 
   const load = async () => {
     try {
-      // 后端返回分页结构 { list: FavoriteItem[], total }
-      // FavoriteItem = { id, userId, songId, createdAt, song: ApiSong }
-      const data = await api.get<{ list: { song: ApiSong }[]; total: number }>(
+      const data = await api.get<{ list: { songId: string; song: ApiSong }[]; total: number }>(
         "/user/favorites"
       );
-      setSongs(data?.list?.map((f) => f.song) ?? []);
+      const list = data?.list ?? [];
+      setSongs(list.map((f) => f.song));
+      initLikedIds(list.map((f) => f.songId));
     } catch {
       setSongs([]);
     }
+  };
+
+  // 喜欢/取消喜欢（未登录时触发登录弹窗）
+  const handleLike = (song: ApiSong) => {
+    if (!getToken()) {
+      openLogin();
+      return;
+    }
+    void toggleLike(song.id);
+    void load();
   };
 
   const toggleSelect = (id: string) => {
@@ -173,6 +190,8 @@ export function FavoritesTab() {
             selectable={manageMode}
             selectedIds={selected}
             onToggleSelect={toggleSelect}
+            likedIds={likedIds}
+            onLike={handleLike}
             emptyText="还没有喜欢的歌曲"
           />
         </div>

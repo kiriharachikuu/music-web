@@ -7,6 +7,7 @@ import type { AlbumDetail, Album, ApiSong } from "@/lib/types";
 import { toPlayerSong, toPlayerSongs } from "@/lib/types";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useFavoritesStore } from "@/lib/store/favorites-store";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { SongList } from "@/components/common/song-list";
@@ -32,8 +33,30 @@ export function AlbumDetailClient({
   const play = usePlayerStore((s) => s.play);
   const setPlayMode = usePlayerStore((s) => s.setPlayMode);
   const openLogin = useAuthStore((s) => s.openLogin);
+  const likedIds = useFavoritesStore((s) => s.likedIds);
+  const toggleLike = useFavoritesStore((s) => s.toggleLike);
+  const loadLikedFromServer = useFavoritesStore((s) => s.loadFromServer);
   const [favorited, setFavorited] = React.useState(false);
   const [favLoading, setFavLoading] = React.useState(false);
+
+  // 加载喜欢的歌曲列表（仅加载一次）
+  React.useEffect(() => {
+    if (!getToken()) return;
+    const loaded = useFavoritesStore.getState().loaded;
+    if (!loaded) {
+      void loadLikedFromServer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 喜欢/取消喜欢（未登录时触发登录弹窗）
+  const handleLike = (song: ApiSong) => {
+    if (!getToken()) {
+      openLogin();
+      return;
+    }
+    void toggleLike(song.id);
+  };
 
   // 检查是否已收藏
   React.useEffect(() => {
@@ -195,7 +218,11 @@ export function AlbumDetailClient({
       {/* ===== 曲目列表 ===== */}
       {songs.length > 0 ? (
         <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
-          <SongList songs={songs} />
+          <SongList
+            songs={songs}
+            likedIds={likedIds}
+            onLike={handleLike}
+          />
         </div>
       ) : (
         <EmptyState

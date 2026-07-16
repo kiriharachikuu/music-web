@@ -3,8 +3,11 @@
 import * as React from "react";
 import { History, Trash2 } from "lucide-react";
 
-import type { PlayHistoryItem } from "@/lib/types";
+import type { PlayHistoryItem, ApiSong } from "@/lib/types";
 import { api } from "@/lib/api";
+import { getToken } from "@/lib/auth";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { useFavoritesStore } from "@/lib/store/favorites-store";
 import { SongList } from "@/components/common/song-list";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
@@ -15,6 +18,29 @@ import { useConfirm } from "@/components/common/confirm-dialog";
 export function HistoryTab() {
   const [items, setItems] = React.useState<PlayHistoryItem[] | null>(null);
   const confirm = useConfirm();
+  const openLogin = useAuthStore((s) => s.openLogin);
+  const likedIds = useFavoritesStore((s) => s.likedIds);
+  const toggleLike = useFavoritesStore((s) => s.toggleLike);
+  const loadLikedFromServer = useFavoritesStore((s) => s.loadFromServer);
+
+  // 加载喜欢的歌曲列表（仅加载一次）
+  React.useEffect(() => {
+    if (!getToken()) return;
+    const loaded = useFavoritesStore.getState().loaded;
+    if (!loaded) {
+      void loadLikedFromServer();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 喜欢/取消喜欢（未登录时触发登录弹窗）
+  const handleLike = (song: ApiSong) => {
+    if (!getToken()) {
+      openLogin();
+      return;
+    }
+    void toggleLike(song.id);
+  };
 
   const load = async () => {
     try {
@@ -99,6 +125,8 @@ export function HistoryTab() {
               <SongList
                 songs={g.items.map((it) => it.song)}
                 onDelete={(song) => void deleteItem(song.id)}
+                likedIds={likedIds}
+                onLike={handleLike}
               />
             </div>
           </div>

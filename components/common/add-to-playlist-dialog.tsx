@@ -14,25 +14,27 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 
-/**
- * "添加到歌单" 对话框
- * - 打开时拉取用户歌单列表
- * - 点击歌单即添加歌曲，已添加的歌单显示 ✓
- * - 支持快速新建歌单
- */
 export function AddToPlaylistDialog({
   songIds,
   open,
   onOpenChange,
 }: {
-  /** 要添加的歌曲 ID 列表（支持单首或多首批量） */
   songIds: string[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const isMobile = useIsMobile();
   const openLogin = useAuthStore((s) => s.openLogin);
   const [playlists, setPlaylists] = React.useState<Playlist[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -41,7 +43,6 @@ export function AddToPlaylistDialog({
   const [newPlaylistName, setNewPlaylistName] = React.useState("");
   const [creating, setCreating] = React.useState(false);
 
-  // 拉取用户歌单列表
   React.useEffect(() => {
     if (!open || !getToken()) return;
     setLoading(true);
@@ -53,13 +54,13 @@ export function AddToPlaylistDialog({
       .finally(() => setLoading(false));
   }, [open]);
 
-  // 添加到歌单
   const handleAdd = async (playlistId: string) => {
     if (songIds.length === 0) return;
     setAddingId(playlistId);
     try {
       await api.post(`/user/playlists/${playlistId}/songs`, { songIds });
       setAddedIds((prev) => new Set(prev).add(playlistId));
+      setTimeout(() => onOpenChange(false), 300);
     } catch {
       /* 忽略 */
     } finally {
@@ -67,7 +68,6 @@ export function AddToPlaylistDialog({
     }
   };
 
-  // 快速新建歌单并添加
   const handleCreateAndAdd = async () => {
     if (songIds.length === 0 || !newPlaylistName.trim()) return;
     setCreating(true);
@@ -79,12 +79,121 @@ export function AddToPlaylistDialog({
       setPlaylists((prev) => [pl, ...prev]);
       setAddedIds((prev) => new Set(prev).add(pl.id));
       setNewPlaylistName("");
+      setTimeout(() => onOpenChange(false), 300);
     } catch {
       /* 忽略 */
     } finally {
       setCreating(false);
     }
   };
+
+  const content = (
+    <>
+      <div className="flex gap-2">
+        <Input
+          value={newPlaylistName}
+          onChange={(e) => setNewPlaylistName(e.target.value)}
+          placeholder="新建歌单..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && newPlaylistName.trim()) {
+              void handleCreateAndAdd();
+            }
+          }}
+          className="h-9"
+        />
+        <Button
+          onClick={handleCreateAndAdd}
+          disabled={!newPlaylistName.trim() || creating}
+          size="sm"
+          className="shrink-0"
+        >
+          {creating ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          新建
+        </Button>
+      </div>
+
+      <div className="max-h-64 space-y-1 overflow-y-auto">
+        {loading ? (
+          <div className="flex items-center justify-center py-8 text-foreground/40">
+            <Loader2 className="h-5 w-5 animate-spin" />
+          </div>
+        ) : playlists.length === 0 ? (
+          <p className="py-8 text-center text-sm text-foreground/40">
+            还没有歌单，在上方创建一个吧
+          </p>
+        ) : (
+          playlists.map((pl) => {
+            const added = addedIds.has(pl.id);
+            return (
+              <button
+                key={pl.id}
+                type="button"
+                onClick={() => handleAdd(pl.id)}
+                disabled={addingId === pl.id || added}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-primary-700/5 disabled:opacity-50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-700/5 text-primary-700/60">
+                  {pl.cover ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={pl.cover}
+                      alt={pl.name}
+                      className="h-full w-full rounded-md object-cover"
+                    />
+                  ) : (
+                    <ListMusic className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{pl.name}</p>
+                  <p className="text-xs text-foreground/40">
+                    {pl.isPublic ? "公开" : "私有"}
+                  </p>
+                </div>
+                {addingId === pl.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary-700" />
+                ) : added ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : null}
+              </button>
+            );
+          })
+        )}
+      </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="bottom"
+          className="border-t-0 rounded-t-[28px] p-0 sm:rounded-t-[32px]"
+        >
+          <div
+            className="relative flex h-1.5 w-12 shrink-0 rounded-full bg-foreground/20 mx-auto mt-3 mb-1"
+            aria-hidden="true"
+          />
+          <div className="px-6 pb-6 pt-2 md:px-8 md:pb-8">
+            <SheetHeader className="space-y-1.5 text-center">
+              <SheetTitle className="flex items-center justify-center gap-2 text-xl font-bold tracking-tight">
+                <ListMusic className="h-5 w-5 text-primary-700" />
+                添加到歌单
+              </SheetTitle>
+              <SheetDescription className="text-sm text-foreground/50">
+                选择一个歌单，将{songIds.length > 1 ? ` ${songIds.length} 首歌曲 ` : "歌曲"}添加进去
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-6 space-y-4">{content}</div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,84 +207,7 @@ export function AddToPlaylistDialog({
             选择一个歌单，将{songIds.length > 1 ? ` ${songIds.length} 首歌曲 ` : "歌曲"}添加进去
           </DialogDescription>
         </DialogHeader>
-
-        {/* 快速新建歌单 */}
-        <div className="flex gap-2">
-          <Input
-            value={newPlaylistName}
-            onChange={(e) => setNewPlaylistName(e.target.value)}
-            placeholder="新建歌单..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && newPlaylistName.trim()) {
-                void handleCreateAndAdd();
-              }
-            }}
-            className="h-9"
-          />
-          <Button
-            onClick={handleCreateAndAdd}
-            disabled={!newPlaylistName.trim() || creating}
-            size="sm"
-            className="shrink-0"
-          >
-            {creating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-            新建
-          </Button>
-        </div>
-
-        {/* 歌单列表 */}
-        <div className="max-h-64 space-y-1 overflow-y-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-8 text-foreground/40">
-              <Loader2 className="h-5 w-5 animate-spin" />
-            </div>
-          ) : playlists.length === 0 ? (
-            <p className="py-8 text-center text-sm text-foreground/40">
-              还没有歌单，在上方创建一个吧
-            </p>
-          ) : (
-            playlists.map((pl) => {
-              const added = addedIds.has(pl.id);
-              return (
-                <button
-                  key={pl.id}
-                  type="button"
-                  onClick={() => handleAdd(pl.id)}
-                  disabled={addingId === pl.id || added}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-primary-700/5 disabled:opacity-50"
-                >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-700/5 text-primary-700/60">
-                    {pl.cover ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={pl.cover}
-                        alt={pl.name}
-                        className="h-full w-full rounded-md object-cover"
-                      />
-                    ) : (
-                      <ListMusic className="h-5 w-5" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{pl.name}</p>
-                    <p className="text-xs text-foreground/40">
-                      {pl.isPublic ? "公开" : "私有"}
-                    </p>
-                  </div>
-                  {addingId === pl.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-primary-700" />
-                  ) : added ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : null}
-                </button>
-              );
-            })
-          )}
-        </div>
+        {content}
       </DialogContent>
     </Dialog>
   );

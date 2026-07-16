@@ -51,6 +51,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
   const [isTWA, setIsTWA] = React.useState(false);
   const [cacheSizeMB, setCacheSizeMBState] = React.useState(500);
   const [lockScreenPlayerEnabled, setLockScreenPlayerEnabledState] = React.useState(true);
+  const cacheSizeSavedRef = React.useRef(500);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -59,7 +60,9 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
     const platform = getPlatform();
     setIsTWA(platform.isTWA);
     if (platform.isTWA) {
-      setCacheSizeMBState(androidBridge.getCacheSizeMB());
+      const savedSize = androidBridge.getCacheSizeMB();
+      setCacheSizeMBState(savedSize);
+      cacheSizeSavedRef.current = savedSize;
       setLockScreenPlayerEnabledState(androidBridge.isLockScreenPlayerEnabled());
     }
     try {
@@ -80,11 +83,17 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
     }
   };
 
-  const handleCacheSizeChange = (mb: number) => {
+  const handleCacheSizeInput = (mb: number) => {
     const clamped = Math.max(50, Math.min(5000, Math.floor(mb)));
     setCacheSizeMBState(clamped);
-    androidBridge.setCacheSizeMB(clamped);
-    toast.success(`临时缓存已设置为 ${clamped}MB`);
+  };
+
+  const handleCacheSizeCommit = () => {
+    const current = cacheSizeMB;
+    if (current === cacheSizeSavedRef.current) return;
+    cacheSizeSavedRef.current = current;
+    androidBridge.setCacheSizeMB(current);
+    toast.success(`临时缓存已设置为 ${current}MB`);
   };
 
   const handleLockScreenPlayerChange = (enabled: boolean) => {
@@ -297,7 +306,13 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
               max={5000}
               step={50}
               value={cacheSizeMB}
-              onChange={(e) => handleCacheSizeChange(Number(e.target.value))}
+              onChange={(e) => handleCacheSizeInput(Number(e.target.value))}
+              onPointerUp={handleCacheSizeCommit}
+              onKeyUp={(e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                  handleCacheSizeCommit();
+                }
+              }}
               className="w-full h-2 rounded-full bg-foreground/10 appearance-none cursor-pointer accent-primary-700"
             />
             <div className="flex justify-between text-[11px] text-foreground/40">

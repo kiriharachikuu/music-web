@@ -117,6 +117,8 @@ export function createNativeEngine(): AudioEngine {
           events.onTimeUpdate(currentTime);
         },
         onError: (message) => events.onError(message),
+        onSkipToNext: () => events.onSkipToNext?.(),
+        onSkipToPrevious: () => events.onSkipToPrevious?.(),
       });
     },
 
