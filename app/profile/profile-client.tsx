@@ -16,6 +16,7 @@ import {
   Info,
   Smartphone,
   LogOut,
+  MessageCircle,
 } from "lucide-react";
 import { isDownloadAvailable } from "@/lib/download";
 import { AnimatePresence, motion } from "framer-motion";
@@ -45,6 +46,8 @@ type Tab =
   | "history"
   | "downloads"
   | "settings";
+
+const FEEDBACK_URL = "https://wj.qq.com/s2/27325090/5661/";
 
 const downloadsTab = isDownloadAvailable()
   ? [{ key: "downloads" as Tab, label: "下载管理", icon: Download }]
@@ -126,7 +129,7 @@ export function ProfileClient() {
           action={
             <Button
               onClick={() => openLogin(() => void loadProfile())}
-              className="rounded-full bg-primary-700 px-6 text-white hover:bg-primary-600"
+              className="rounded-full bg-primary px-6 text-white hover:bg-primary/90"
             >
               立即登录
             </Button>
@@ -140,10 +143,10 @@ export function ProfileClient() {
   const MobileView = (
     <div className="animate-fade-in space-y-4 md:hidden">
       {/* 用户信息卡片 */}
-      <div className="rounded-2xl border border-primary-500/10 bg-card p-4">
+      <div className="rounded-2xl border border-primary/10 bg-card p-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-full ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
-            <div className="h-14 w-14 overflow-hidden rounded-full bg-primary-700/10">
+          <div className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background">
+            <div className="h-14 w-14 overflow-hidden rounded-full bg-primary/10">
               {profile.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -152,7 +155,7 @@ export function ProfileClient() {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+                <div className="flex h-full w-full items-center justify-center text-primary/60">
                   <User className="h-6 w-6" />
                 </div>
               )}
@@ -195,6 +198,11 @@ export function ProfileClient() {
       <MenuSection title="其他">
         <MenuLink icon={Info} label="关于项目" href="/about" />
         <MenuLink icon={Smartphone} label="下载 App" href="/download" />
+        <MenuItem
+          icon={MessageCircle}
+          label="问题反馈"
+          onClick={() => window.open(FEEDBACK_URL, "_blank")}
+        />
         {profile.role === "ADMIN" && (
           <MenuItem
             icon={Shield}
@@ -220,8 +228,8 @@ export function ProfileClient() {
     <section className="hidden animate-fade-in space-y-6 md:block">
       {/* 用户信息头部 */}
       <header className="flex items-center gap-4">
-        <div className="rounded-full ring-2 ring-primary-700 ring-offset-2 ring-offset-background">
-          <div className="h-16 w-16 overflow-hidden rounded-full bg-primary-700/10 md:h-20 md:w-20">
+        <div className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background">
+          <div className="h-16 w-16 overflow-hidden rounded-full bg-primary/10 md:h-20 md:w-20">
             {profile.avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -230,7 +238,7 @@ export function ProfileClient() {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-primary-700/60">
+              <div className="flex h-full w-full items-center justify-center text-primary/60">
                 <User className="h-8 w-8" />
               </div>
             )}
@@ -256,10 +264,17 @@ export function ProfileClient() {
           <Pencil className="h-4 w-4" />
           编辑资料
         </Button>
+        {/* 问题反馈 */}
+        <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer">
+          <Button variant="outline" className="rounded-full px-4">
+            <MessageCircle className="h-4 w-4" />
+            问题反馈
+          </Button>
+        </a>
         {/* 管理员入口 */}
         {profile.role === "ADMIN" && (
           <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer">
-            <Button className="rounded-full bg-primary-700 px-4 text-white shadow-card hover:bg-primary-600">
+            <Button className="rounded-full bg-primary px-4 text-white shadow-card hover:bg-primary/90">
               <Shield className="h-4 w-4" />
               管理后台
             </Button>
@@ -279,14 +294,14 @@ export function ProfileClient() {
               className={cn(
                 "relative flex shrink-0 items-center gap-1.5 pb-2.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "text-primary-700 dark:text-primary-300"
+                  ? "text-primary dark:text-primary/80"
                   : "text-foreground/50 hover:text-foreground"
               )}
             >
               <t.icon className="h-4 w-4" />
               {t.label}
               {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary-700" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary" />
               )}
             </button>
           );
@@ -344,7 +359,7 @@ function MenuSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-primary-500/10 bg-card">
+    <div className="overflow-hidden rounded-2xl border border-primary/10 bg-card">
       <div className="flex w-full items-center justify-between px-4 py-3">
         <span className="text-sm font-semibold">{title}</span>
       </div>
@@ -366,7 +381,7 @@ function MenuLink({
   return (
     <Link
       href={href}
-      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground/80 no-select transition-colors active:bg-foreground/5 hover:text-primary-700 hover:dark:text-primary-300"
+      className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-foreground/80 no-select transition-colors active:bg-foreground/5 hover:text-primary hover:dark:text-primary/80"
     >
       <Icon className="h-5 w-5 shrink-0 text-foreground/50" />
       <span className="flex-1">{label}</span>

@@ -12,6 +12,7 @@ import {
   Settings2,
   Globe2,
   ShieldCheck,
+  Heart,
 } from "lucide-react";
 
 import {
@@ -99,9 +100,9 @@ const techStack = [
 ];
 
 /**
- * 团队成员
+ * 开发团队
  */
-const teamMembers = [
+const devTeamMembers = [
   {
     name: "不啦不啦小星瞳",
     role: "项目负责人 · Flutter客户端开发",
@@ -112,6 +113,12 @@ const teamMembers = [
     role: "视觉设计 · 前端开发",
     avatarColor: "from-pink-500 to-rose-600",
   },
+];
+
+/**
+ * 友情支持
+ */
+const supportMembers = [
   {
     name: "SingleDog233",
     role: "资源整理专员",
@@ -135,10 +142,10 @@ export default function AboutPage() {
   return (
     <section className="animate-fade-in space-y-10 md:space-y-16">
       {/* ===== Hero 区域 ===== */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary-500/10 bg-gradient-to-br from-primary-700 via-primary-800 to-gray-950 text-white shadow-card md:rounded-3xl">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-primary-700 via-primary-800 to-gray-950 text-white shadow-card md:rounded-3xl">
         {/* 装饰光晕 */}
-        <div className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary-400/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 right-8 h-40 w-40 rounded-full bg-primary-300/20 blur-3xl" />
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 right-8 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
 
         <div className="relative px-5 py-10 sm:px-10 sm:py-14 md:px-16 md:py-20">
           <div className="flex flex-col items-center gap-5 text-center sm:gap-6">
@@ -155,7 +162,7 @@ export default function AboutPage() {
 
             <div className="space-y-2 sm:space-y-3">
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
-                XingTone 星瞳音乐
+                XingTone 瞳瞳音乐
               </h1>
               <p className="mx-auto max-w-xl text-sm leading-relaxed text-white/70 sm:text-base">
                 为星瞳而作的专属音乐播放器
@@ -246,7 +253,7 @@ export default function AboutPage() {
               key={cat.title}
               className="rounded-xl border border-border/60 bg-card p-5 shadow-sm sm:rounded-2xl sm:p-6"
             >
-              <h3 className="mb-3 text-sm font-semibold text-primary-700 dark:text-primary-300 sm:text-base">
+              <h3 className="mb-3 text-sm font-semibold text-primary dark:text-primary/80 sm:text-base">
                 {cat.title}
               </h3>
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -272,10 +279,42 @@ export default function AboutPage() {
           subtitle="Our Team"
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
-          {teamMembers.map((m) => (
+          {devTeamMembers.map((m) => (
             <div
               key={m.name}
-              className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center transition-colors hover:border-primary-500/30 sm:p-5"
+              className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center transition-colors hover:border-primary/30 sm:p-5"
+            >
+              <div
+                className={cn(
+                  "flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-lg font-bold text-white shadow-md sm:h-14 sm:w-14 sm:text-xl",
+                  m.avatarColor
+                )}
+              >
+                {m.name.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{m.name}</p>
+                <p className="mt-0.5 truncate text-xs text-foreground/50">
+                  {m.role}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ===== 友情支持 ===== */}
+      <div className="space-y-5 md:space-y-6">
+        <SectionHeader
+          icon={Heart}
+          title="友情支持"
+          subtitle="Special Thanks"
+        />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
+          {supportMembers.map((m) => (
+            <div
+              key={m.name}
+              className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center transition-colors hover:border-primary/30 sm:p-5"
             >
               <div
                 className={cn(
@@ -305,7 +344,7 @@ export default function AboutPage() {
             alt="XingTone"
             className="h-6 w-6 rounded-md"
           />
-          <span className="font-semibold">XingTone 星瞳音乐</span>
+          <span className="font-semibold">XingTone 瞳瞳音乐</span>
         </div>
         <p className="text-xs text-foreground/40 sm:text-sm">
           © {new Date().getFullYear()} XingTone · 用音乐传递爱与希望
@@ -329,7 +368,7 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700 dark:bg-primary-900/30 sm:h-10 sm:w-10 sm:rounded-xl">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 sm:h-10 sm:w-10 sm:rounded-xl">
         <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
       </span>
       <div>
@@ -362,7 +401,7 @@ function VersionBlock({
       className={cn(
         "overflow-hidden rounded-xl border bg-card shadow-sm sm:rounded-2xl",
         isLatest
-          ? "border-primary-500/20 ring-1 ring-primary-500/10"
+          ? "border-primary/20 ring-1 ring-primary/10"
           : "border-border/60"
       )}
     >
@@ -373,14 +412,14 @@ function VersionBlock({
             className={cn(
               "rounded-md px-2.5 py-1 text-sm font-bold sm:text-base",
               isLatest
-                ? "bg-primary-700 text-white"
+                ? "bg-primary text-white"
                 : "bg-muted text-foreground/70"
             )}
           >
             v{entry.version}
           </span>
           {isLatest && (
-            <span className="flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700 dark:bg-primary-500/10 dark:text-primary-300">
+            <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary dark:bg-primary/20 dark:text-primary/80">
               <CheckCircle2 className="h-3 w-3" />
               当前版本
             </span>

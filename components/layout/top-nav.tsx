@@ -10,7 +10,6 @@ import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { ColorThemePicker } from "@/components/theme/color-theme-picker";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
@@ -155,7 +154,6 @@ export function TopNav() {
         </Link>
 
         <ThemeToggle />
-        <ColorThemePicker />
       </div>
     </header>
   );

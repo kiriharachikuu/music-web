@@ -7,6 +7,7 @@ import { getToken } from "@/lib/auth";
 import type { AudioEngine, AudioEngineEvents } from "@/lib/audio-engine/engine";
 import { getCachedAudio } from "@/lib/db/audio-cache";
 import { resolveMediaUrl } from "@/lib/utils";
+import { getPlatform } from "@/lib/platform";
 
 /**
  * 上报播放记录到后端（静默失败，不阻塞播放）
@@ -224,23 +225,27 @@ export const usePlayerStore = create<PlayerState>()(
         engine.setEvents(events);
 
         // 4. URL 解析：先查 IndexedDB 缓存
-        //    - 命中：传 blob: URL 给引擎，无需 headers
+        //    - 浏览器模式命中：传 blob: URL 给 HowlerEngine（WebView 内可访问）
+        //    - TWA 模式命中：仍传网络 URL（blob: 原生 ExoPlayer 无法访问，
+        //      依靠原生 OkHttp 的 500MB 本地缓存实现离线播放）
         //    - 未命中：resolveMediaUrl 处理相对路径，构造 Authorization headers
+        const platform = getPlatform();
         let url: string;
         let headers: Record<string, string> | undefined;
 
         try {
           const cached = await getCachedAudio(targetSong.id);
-          if (cached) {
-            // 释放上一首的 blob URL
+          if (cached && !platform.isTWA) {
+            // 浏览器模式：使用 blob: URL
             if (currentBlobUrl) {
               URL.revokeObjectURL(currentBlobUrl);
               currentBlobUrl = null;
             }
             url = URL.createObjectURL(cached.blob);
             currentBlobUrl = url;
-            headers = undefined; // blob: 不需要鉴权
+            headers = undefined;
           } else {
+            // TWA 模式或未命中：使用网络 URL
             url = resolveMediaUrl(targetSong.url);
             const token = getToken();
             headers = token ? { Authorization: `Bearer ${token}` } : undefined;

@@ -13,6 +13,7 @@ import {
   Check,
   HardDrive,
   Lock,
+  Palette,
 } from "lucide-react";
 
 import { clearAllDownloads } from "@/lib/download";
@@ -22,6 +23,7 @@ import { useToast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { getPlatform } from "@/lib/platform";
+import { useColorThemeStore, type ColorTheme } from "@/lib/store/color-theme-store";
 
 /** localStorage key */
 const DOWNLOADS_KEY = "xt-music-downloads";
@@ -46,6 +48,8 @@ export interface SettingsTabProps {
 /** 子模块 5：设置（外观主题 / 音质 / 自动播放 / 清除缓存 / 退出登录） */
 export function SettingsTab({ onLogout }: SettingsTabProps) {
   const { theme, setTheme } = useTheme();
+  const colorTheme = useColorThemeStore((s) => s.theme);
+  const setColorTheme = useColorThemeStore((s) => s.setTheme);
   const [mounted, setMounted] = React.useState(false);
   const [settings, setSettings] = React.useState<UserSettings>(DEFAULT_SETTINGS);
   const [isTWA, setIsTWA] = React.useState(false);
@@ -194,7 +198,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                 className={cn(
                   "group relative overflow-hidden rounded-xl border-2 transition-all",
                   isActive
-                    ? "border-primary-700 shadow-sm shadow-primary-700/20"
+                    ? "border-primary shadow-sm shadow-primary/20"
                     : "border-transparent bg-foreground/5 hover:bg-foreground/10"
                 )}
               >
@@ -208,7 +212,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                     className={cn(
                       "h-3 w-3",
                       isActive
-                        ? "text-primary-700 dark:text-primary-300"
+                        ? "text-primary dark:text-primary/70"
                         : "text-foreground/50"
                     )}
                   />
@@ -216,7 +220,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                     className={cn(
                       "text-[11px] font-medium",
                       isActive
-                        ? "text-primary-700 dark:text-primary-300"
+                        ? "text-primary dark:text-primary/70"
                         : "text-foreground/60"
                     )}
                   >
@@ -225,7 +229,92 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                 </div>
                 {/* 选中角标 */}
                 {isActive && (
-                  <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-700 text-white">
+                  <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
+                    <Check className="h-2.5 w-2.5" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 颜色主题：星瞳紫 / 天蓝色 / 淡粉色 */}
+      <div>
+        <p className="mb-3 text-sm font-medium text-foreground/80">颜色主题</p>
+        <div className="grid grid-cols-3 gap-3">
+          {(
+            [
+              {
+                key: "purple" as ColorTheme,
+                label: "星瞳紫",
+                desc: "默认品牌色",
+                color: "#8B00FF",
+                preview: (
+                  <div className="flex h-full items-center justify-between px-2.5" style={{ background: "linear-gradient(135deg, #FAF5FF 0%, #8B00FF 100%)" }}>
+                    <span className="text-xs font-semibold text-gray-900">Aa</span>
+                    <span className="h-3 w-3 rounded-sm bg-[#8B00FF]" />
+                  </div>
+                ),
+              },
+              {
+                key: "sky" as ColorTheme,
+                label: "天蓝色",
+                desc: "清爽明亮",
+                color: "#007AFF",
+                preview: (
+                  <div className="flex h-full items-center justify-between px-2.5" style={{ background: "linear-gradient(135deg, #E3F2FF 0%, #007AFF 100%)" }}>
+                    <span className="text-xs font-semibold text-gray-900">Aa</span>
+                    <span className="h-3 w-3 rounded-sm bg-[#007AFF]" />
+                  </div>
+                ),
+              },
+              {
+                key: "pink" as ColorTheme,
+                label: "淡粉色",
+                desc: "柔和温暖",
+                color: "#FF375F",
+                preview: (
+                  <div className="flex h-full items-center justify-between px-2.5" style={{ background: "linear-gradient(135deg, #FFE8EE 0%, #FF375F 100%)" }}>
+                    <span className="text-xs font-semibold text-gray-900">Aa</span>
+                    <span className="h-3 w-3 rounded-sm bg-[#FF375F]" />
+                  </div>
+                ),
+              },
+            ] as const
+          ).map((t) => {
+            const isActive = mounted && colorTheme === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setColorTheme(t.key)}
+                aria-pressed={isActive}
+                className={cn(
+                  "group relative overflow-hidden rounded-xl border-2 transition-all",
+                  isActive
+                    ? "border-primary shadow-sm shadow-primary/20"
+                    : "border-transparent bg-foreground/5 hover:bg-foreground/10"
+                )}
+              >
+                <div className="h-12 w-full border-b border-border/40">
+                  {t.preview}
+                </div>
+                <div className="flex flex-col items-center justify-center gap-0.5 py-1.5">
+                  <span
+                    className={cn(
+                      "text-[11px] font-medium",
+                      isActive ? "text-primary" : "text-foreground/60"
+                    )}
+                  >
+                    {t.label}
+                  </span>
+                  <span className="text-[10px] text-foreground/40">
+                    {t.desc}
+                  </span>
+                </div>
+                {isActive && (
+                  <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
                     <Check className="h-2.5 w-2.5" />
                   </span>
                 )}
@@ -256,7 +345,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                   className={cn(
                     "cursor-not-allowed rounded-full px-3 py-1.5 text-xs font-medium",
                     isActive
-                      ? "bg-primary-700 text-white"
+                      ? "bg-primary text-white"
                       : "bg-foreground/5 text-foreground/50"
                   )}
                 >
@@ -313,7 +402,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                   handleCacheSizeCommit();
                 }
               }}
-              className="w-full h-2 rounded-full bg-foreground/10 appearance-none cursor-pointer accent-primary-700"
+              className="w-full h-2 rounded-full bg-foreground/10 appearance-none cursor-pointer accent-primary"
             />
             <div className="flex justify-between text-[11px] text-foreground/40">
               <span>50MB</span>
@@ -361,9 +450,9 @@ function SettingsRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-primary-500/10 bg-card/40 px-4 py-3.5">
+    <div className="flex items-center justify-between rounded-2xl border border-primary/10 bg-card/40 px-4 py-3.5">
       <div className="flex items-center gap-2.5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-700/10 text-primary-700 dark:text-primary-300">
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary dark:text-primary/70">
           <Icon className="h-4 w-4" />
         </span>
         <span className="text-sm font-medium">{title}</span>
@@ -392,7 +481,7 @@ function Switch({
       onClick={() => onChange(!checked)}
       className={cn(
         "relative h-6 w-11 overflow-hidden rounded-full transition-colors",
-        checked ? "bg-primary-700" : "bg-foreground/15"
+        checked ? "bg-primary" : "bg-foreground/15"
       )}
     >
       <span
