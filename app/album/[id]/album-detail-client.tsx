@@ -130,7 +130,7 @@ export function AlbumDetailClient({
 
         <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:gap-8 md:p-8">
           {/* 大封面 */}
-          <div className="h-44 w-44 shrink-0 overflow-hidden rounded-2xl bg-primary-700/5 shadow-card-dark md:h-56 md:w-56">
+          <div className="h-44 w-44 shrink-0 overflow-hidden rounded-2xl bg-primary/5 shadow-card-dark md:h-56 md:w-56">
             {album.cover ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -139,7 +139,7 @@ export function AlbumDetailClient({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-primary-700/40">
+              <div className="flex h-full w-full items-center justify-center text-primary/40">
                 <Disc3 className="h-16 w-16" />
               </div>
             )}
@@ -181,7 +181,7 @@ export function AlbumDetailClient({
         <Button
           onClick={playAll}
           disabled={songs.length === 0}
-          className="rounded-full bg-primary-700 px-5 text-white shadow-card hover:bg-primary-600 active:bg-primary-800"
+          className="rounded-full bg-primary px-5 text-white shadow-card hover:bg-primary/90 active:bg-primary/95"
         >
           <Play className="h-4 w-4 translate-x-[1px]" />
           播放全部
@@ -205,7 +205,7 @@ export function AlbumDetailClient({
           <Heart
             className={cn(
               "h-4 w-4 transition-colors",
-              favorited && "fill-current text-primary-700 dark:text-primary-300"
+              favorited && "fill-current text-primary dark:text-primary/60"
             )}
           />
           {favorited ? "已收藏" : "收藏"}
@@ -217,7 +217,7 @@ export function AlbumDetailClient({
 
       {/* ===== 曲目列表 ===== */}
       {songs.length > 0 ? (
-        <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
+        <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
           <SongList
             songs={songs}
             likedIds={likedIds}
@@ -236,7 +236,7 @@ export function AlbumDetailClient({
       {relatedAlbums.length > 0 && (
         <div className="space-y-4">
           <h2 className="flex items-center gap-2.5 text-xl font-bold tracking-tight md:text-2xl">
-            <span className="h-5 w-[2px] rounded-full bg-primary-700 dark:bg-primary-500" />
+            <span className="h-5 w-[2px] rounded-full bg-primary dark:bg-primary/80" />
             更多来自 {album.artist}
           </h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">

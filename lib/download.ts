@@ -161,8 +161,11 @@ export async function isDownloaded(songId: string): Promise<boolean> {
   return isCached(songId);
 }
 
-/** 判断下载功能是否可用（TWA 支持原生下载，浏览器支持 IndexedDB 下载） */
+/** 判断下载功能是否可用（仅 TWA 和非 iOS 平台支持） */
 export function isDownloadAvailable(): boolean {
+  const p = getPlatform();
+  if (p.isTWA) return true;
+  if (p.isIOS) return false;
   return true;
 }
 

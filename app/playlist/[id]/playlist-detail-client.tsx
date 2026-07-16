@@ -229,7 +229,7 @@ export function PlaylistDetailClient({
 
         <div className="flex flex-col gap-6 p-6 md:flex-row md:items-end md:gap-8 md:p-8">
           {/* 大封面 */}
-          <div className="h-44 w-44 shrink-0 overflow-hidden rounded-2xl bg-primary-700/5 shadow-card-dark md:h-56 md:w-56">
+          <div className="h-44 w-44 shrink-0 overflow-hidden rounded-2xl bg-primary/5 shadow-card-dark md:h-56 md:w-56">
             {playlist.cover ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -238,7 +238,7 @@ export function PlaylistDetailClient({
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-primary-700/40">
+              <div className="flex h-full w-full items-center justify-center text-primary/40">
                 <ListMusic className="h-16 w-16" />
               </div>
             )}
@@ -263,7 +263,7 @@ export function PlaylistDetailClient({
                   className="h-6 w-6 rounded-full object-cover"
                 />
               ) : (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-700/10 text-primary-700/60">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary/60">
                   <User2 className="h-3.5 w-3.5" />
                 </span>
               )}
@@ -295,7 +295,7 @@ export function PlaylistDetailClient({
         <Button
           onClick={playAll}
           disabled={songList.length === 0}
-          className="rounded-full bg-primary-700 px-5 text-white shadow-card hover:bg-primary-600 active:bg-primary-800"
+          className="rounded-full bg-primary px-5 text-white shadow-card hover:bg-primary/90 active:bg-primary/95"
         >
           <Play className="h-4 w-4 translate-x-[1px]" />
           播放全部
@@ -310,7 +310,7 @@ export function PlaylistDetailClient({
           <Heart
             className={cn(
               "h-4 w-4 transition-colors",
-              favorited && "fill-current text-primary-700 dark:text-primary-300"
+              favorited && "fill-current text-primary dark:text-primary/60"
             )}
           />
           {favorited ? "已收藏" : "收藏"}
@@ -348,7 +348,7 @@ export function PlaylistDetailClient({
 
       {/* ===== 曲目列表 ===== */}
       {songList.length > 0 ? (
-        <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
+        <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
           {!manageMode ? (
             <SongList
               songs={songList}
@@ -445,7 +445,7 @@ function SortableSongRow({
       style={style}
       className={cn(
         "group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-foreground/5",
-        isDragging && "bg-background opacity-80 shadow-lg ring-1 ring-primary-500/30"
+        isDragging && "bg-background opacity-80 shadow-lg ring-1 ring-primary/30"
       )}
     >
       {/* 拖拽手柄（仅手柄区域可发起拖拽） */}
@@ -463,7 +463,7 @@ function SortableSongRow({
         {index + 1}
       </span>
       {/* 封面 */}
-      <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-primary-700/5">
+      <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-primary/5">
         {song.coverUrl || (song.album?.cover && song.album.cover) ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -472,7 +472,7 @@ function SortableSongRow({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-primary-700/30">
+          <div className="flex h-full w-full items-center justify-center text-primary/30">
             <Music2 className="h-4 w-4" />
           </div>
         )}

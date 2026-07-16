@@ -254,7 +254,7 @@ export function SearchClient({
   return (
     <div className="min-h-dvh">
       {/* 移动端：固定顶部搜索栏 */}
-      <div className="fixed inset-x-0 top-0 z-30 border-b border-primary-500/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:hidden pt-safe">
+      <div className="fixed inset-x-0 top-0 z-30 border-b border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:hidden pt-safe">
         <div className="flex h-12 items-center gap-3 px-4">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
@@ -265,7 +265,7 @@ export function SearchClient({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="搜索歌曲、歌手、专辑、歌单"
-              className="h-10 w-full rounded-full border border-input bg-card/60 pl-12 pr-12 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20 dark:bg-card/40"
+              className="h-10 w-full rounded-full border border-input bg-card/60 pl-12 pr-12 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-card/40"
             />
             {query && (
               <button
@@ -296,7 +296,7 @@ export function SearchClient({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="搜索歌曲、歌手、专辑、歌单"
-            className="h-12 w-full rounded-full border border-input bg-card/60 pl-12 pr-12 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20 dark:bg-card/40"
+            className="h-12 w-full rounded-full border border-input bg-card/60 pl-12 pr-12 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-card/40"
           />
           {query && (
             <button
@@ -338,7 +338,7 @@ export function SearchClient({
                     key={kw}
                     type="button"
                     onClick={() => pickKeyword(kw)}
-                    className="rounded-full bg-foreground/5 px-3 py-1.5 text-xs text-foreground/60 transition-colors hover:bg-primary-700/10 hover:text-primary-700 active:bg-primary-700/15 dark:hover:text-primary-300"
+                    className="rounded-full bg-foreground/5 px-3 py-1.5 text-xs text-foreground/60 transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 dark:hover:text-primary/60"
                   >
                     {kw}
                   </button>
@@ -359,10 +359,10 @@ export function SearchClient({
                   key={kw}
                   type="button"
                   onClick={() => pickKeyword(kw)}
-                  className="flex items-center gap-1.5 rounded-full bg-foreground/5 px-3 py-1.5 text-xs text-foreground/60 transition-colors hover:bg-primary-700/10 hover:text-primary-700 active:bg-primary-700/15 dark:hover:text-primary-300"
+                  className="flex items-center gap-1.5 rounded-full bg-foreground/5 px-3 py-1.5 text-xs text-foreground/60 transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 dark:hover:text-primary/60"
                 >
                   {i < 3 && (
-                    <span className="font-mono text-primary-700 dark:text-primary-300">
+                    <span className="font-mono text-primary dark:text-primary/60">
                       {i + 1}
                     </span>
                   )}
@@ -391,13 +391,13 @@ export function SearchClient({
                     className={cn(
                       "relative shrink-0 pb-2.5 text-sm font-medium transition-colors",
                       isActive
-                        ? "text-primary-700 dark:text-primary-300"
+                        ? "text-primary dark:text-primary/60"
                         : "text-foreground/50 hover:text-foreground active:text-foreground"
                     )}
                   >
                     {c.label}
                     {isActive && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary-700" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary" />
                     )}
                   </button>
                 );
@@ -421,7 +421,7 @@ export function SearchClient({
                           className={cn(
                             "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                             isActive
-                              ? "bg-primary-700 text-white"
+                              ? "bg-primary text-white"
                               : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
                           )}
                         >
@@ -438,7 +438,7 @@ export function SearchClient({
                       className={cn(
                         "flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors",
                         dateRange.startDate || dateRange.endDate
-                          ? "bg-primary-700 text-white"
+                          ? "bg-primary text-white"
                           : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
                       )}
                     >
@@ -469,7 +469,7 @@ export function SearchClient({
                                   startDate: e.target.value || undefined,
                                 }))
                               }
-                              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs outline-none transition-colors focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20"
+                              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                             />
                           </div>
                           <div>
@@ -485,7 +485,7 @@ export function SearchClient({
                                   endDate: e.target.value || undefined,
                                 }))
                               }
-                              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs outline-none transition-colors focus:border-primary-700 focus:ring-2 focus:ring-primary-700/20"
+                              className="w-full rounded-lg border border-input bg-card px-3 py-2 text-xs outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                             />
                           </div>
                           <div className="flex gap-2 pt-1">
@@ -499,7 +499,7 @@ export function SearchClient({
                             <button
                               type="button"
                               onClick={() => setShowDatePicker(false)}
-                              className="flex-1 rounded-lg bg-primary-700 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-600 active:bg-primary-800"
+                              className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary/90 active:bg-primary/95"
                             >
                               确定
                             </button>
@@ -518,7 +518,7 @@ export function SearchClient({
                     className={cn(
                       "rounded-full px-2.5 py-1 text-xs transition-colors",
                       !tag
-                        ? "bg-primary-700 text-white"
+                        ? "bg-primary text-white"
                         : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
                     )}
                   >
@@ -534,7 +534,7 @@ export function SearchClient({
                         className={cn(
                           "rounded-full px-2.5 py-1 text-xs transition-colors",
                           isActive
-                            ? "bg-primary-700 text-white"
+                            ? "bg-primary text-white"
                             : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground active:bg-foreground/15"
                         )}
                       >

@@ -113,7 +113,7 @@ export function FavoritesTab() {
       <div className="flex flex-wrap items-center gap-2.5">
         <Button
           onClick={playSelected}
-          className="rounded-full bg-primary-700 px-5 text-white shadow-card hover:bg-primary-600 active:bg-primary-800"
+          className="rounded-full bg-primary px-5 text-white shadow-card hover:bg-primary/90 active:bg-primary/95"
         >
           <Play className="h-4 w-4 translate-x-[1px]" />
           播放{selected.size > 0 ? `(${selected.size})` : "全部"}
@@ -184,7 +184,7 @@ export function FavoritesTab() {
       </div>
 
       {songs.length > 0 ? (
-        <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
+        <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
           <SongList
             songs={songs}
             selectable={manageMode}

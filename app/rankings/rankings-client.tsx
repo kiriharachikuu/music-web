@@ -116,7 +116,7 @@ export function RankingsClient({ data }: { data: RankingsData }) {
     <section className="animate-fade-in space-y-6">
       {/* 页面标题 */}
       <header className="flex items-center gap-4">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-700/10 text-primary-700 dark:text-primary-300">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:text-primary/60">
           <TrendingUp className="h-6 w-6" />
         </span>
         <div>
@@ -142,7 +142,7 @@ export function RankingsClient({ data }: { data: RankingsData }) {
               className={cn(
                 "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-primary-700 text-white shadow-sm shadow-primary-700/30"
+                  ? "bg-primary text-white shadow-sm shadow-primary/30"
                   : "text-foreground/60 hover:text-foreground"
               )}
             >
@@ -164,14 +164,14 @@ export function RankingsClient({ data }: { data: RankingsData }) {
               className={cn(
                 "relative shrink-0 pb-3 pt-1 text-sm font-medium transition-colors md:text-base",
                 isActive
-                  ? "text-primary-700 dark:text-primary-300"
+                  ? "text-primary dark:text-primary/60"
                   : "text-foreground/50 hover:text-foreground"
               )}
             >
               {t.label}
               {/* 选中下划线 */}
               {isActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary-700" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-primary" />
               )}
             </button>
           );
@@ -183,7 +183,7 @@ export function RankingsClient({ data }: { data: RankingsData }) {
         <div className="flex items-center gap-2.5">
           <Button
             onClick={playAll}
-            className="rounded-full bg-primary-700 px-5 text-white shadow-card hover:bg-primary-600 active:bg-primary-800"
+            className="rounded-full bg-primary px-5 text-white shadow-card hover:bg-primary/90 active:bg-primary/95"
           >
             <Play className="h-4 w-4 translate-x-[1px]" />
             播放全部
@@ -204,11 +204,11 @@ export function RankingsClient({ data }: { data: RankingsData }) {
 
       {/* 榜单列表 / 加载骨架 */}
       {loading ? (
-        <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
+        <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
           <SongListSkeleton count={10} />
         </div>
       ) : songs.length > 0 ? (
-        <div className="rounded-2xl border border-primary-500/10 bg-card/40 p-2 md:p-3">
+        <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
           <SongList
             songs={songs}
             showRank

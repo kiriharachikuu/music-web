@@ -13,6 +13,8 @@ import {
   Globe2,
   ShieldCheck,
   Heart,
+  MessageSquare,
+  ExternalLink,
 } from "lucide-react";
 
 import {
@@ -346,6 +348,16 @@ export default function AboutPage() {
           />
           <span className="font-semibold">XingTone 瞳瞳音乐</span>
         </div>
+        <a
+          href="https://txc.qq.com/products/801342"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-3 inline-flex items-center gap-1.5 text-xs text-foreground/50 transition-colors hover:text-primary sm:text-sm"
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          意见反馈
+          <ExternalLink className="h-3 w-3" />
+        </a>
         <p className="text-xs text-foreground/40 sm:text-sm">
           © {new Date().getFullYear()} XingTone · 用音乐传递爱与希望
         </p>

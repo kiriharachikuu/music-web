@@ -14,6 +14,9 @@ import {
   HardDrive,
   Lock,
   Palette,
+  KeyRound,
+  MessageSquare,
+  ExternalLink,
 } from "lucide-react";
 
 import { clearAllDownloads } from "@/lib/download";
@@ -24,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { getPlatform } from "@/lib/platform";
 import { useColorThemeStore, type ColorTheme } from "@/lib/store/color-theme-store";
+import { ChangePasswordDialog } from "./change-password-dialog";
 
 /** localStorage key */
 const DOWNLOADS_KEY = "xt-music-downloads";
@@ -56,6 +60,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
   const [cacheSizeMB, setCacheSizeMBState] = React.useState(500);
   const [lockScreenPlayerEnabled, setLockScreenPlayerEnabledState] = React.useState(true);
   const cacheSizeSavedRef = React.useRef(500);
+  const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -134,7 +139,8 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <React.Fragment>
+      <div className="space-y-6">
       {/* 外观主题：预览卡片，点击立即应用 */}
       <div>
         <p className="mb-3 text-sm font-medium text-foreground/80">外观主题</p>
@@ -424,6 +430,31 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
         </Button>
       </SettingsRow>
 
+      {/* 修改密码 */}
+      <SettingsRow icon={KeyRound} title="修改密码">
+        <Button
+          variant="outline"
+          onClick={() => setChangePasswordOpen(true)}
+          className="rounded-full px-4 text-sm"
+        >
+          修改
+        </Button>
+      </SettingsRow>
+
+      {/* 意见反馈（兔小巢） */}
+      <SettingsRow icon={MessageSquare} title="意见反馈">
+        <Button
+          variant="outline"
+          onClick={() => {
+            window.location.href = "https://txc.qq.com/products/801342";
+          }}
+          className="rounded-full px-4 text-sm"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          去反馈
+        </Button>
+      </SettingsRow>
+
       {/* 退出登录 */}
       <div className="pt-2">
         <Button
@@ -435,7 +466,13 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
           退出登录
         </Button>
       </div>
-    </div>
+      </div>
+
+      <ChangePasswordDialog
+        open={changePasswordOpen}
+        onOpenChange={setChangePasswordOpen}
+      />
+    </React.Fragment>
   );
 }
 

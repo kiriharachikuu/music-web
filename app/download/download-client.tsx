@@ -382,7 +382,7 @@ export function DownloadClient() {
                 <span className="rounded-md bg-primary px-2.5 py-1 text-sm font-bold text-white sm:text-base">
                   v{displayVersion.versionName}
                 </span>
-                <span className="flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary dark:bg-primary/10 dark:text-primary/60">
+                <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary dark:bg-primary/10 dark:text-primary/60">
                   <CheckCircle2 className="h-3 w-3" />
                   最新版本
                 </span>
@@ -664,7 +664,7 @@ function VersionBlock({
             v{entry.version}
           </span>
           {isLatest && (
-            <span className="flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary dark:bg-primary/10 dark:text-primary/60">
+            <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary dark:bg-primary/10 dark:text-primary/60">
               <CheckCircle2 className="h-3 w-3" />
               最新版本
             </span>
