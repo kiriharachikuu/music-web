@@ -22,25 +22,48 @@ export interface LyricCacheRecord {
   cachedAt: number;
 }
 
-let _dbPromise: Promise<IDBPDatabase> | null = null;
+let _dbPromise: Promise<IDBPDatabase | null> | null = null;
+let _dbAvailable: boolean | null = null;
+
+const DB_TIMEOUT_MS = 2000;
 
 function getDB(): Promise<IDBPDatabase | null> {
   if (typeof window === "undefined" || !("indexedDB" in window)) {
     return Promise.resolve(null);
   }
+  if (_dbAvailable === false) {
+    return Promise.resolve(null);
+  }
   if (!_dbPromise) {
-    _dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains("audio")) {
-          db.createObjectStore("audio", { keyPath: "songId" });
-        }
-        if (!db.objectStoreNames.contains("meta")) {
-          db.createObjectStore("meta", { keyPath: "key" });
-        }
-        if (!db.objectStoreNames.contains(STORE_LYRICS)) {
-          db.createObjectStore(STORE_LYRICS, { keyPath: "songId" });
-        }
-      },
+    _dbPromise = new Promise<IDBPDatabase | null>((resolve) => {
+      const timeoutId = setTimeout(() => {
+        _dbAvailable = false;
+        resolve(null);
+      }, DB_TIMEOUT_MS);
+
+      openDB(DB_NAME, DB_VERSION, {
+        upgrade(db) {
+          if (!db.objectStoreNames.contains("audio")) {
+            db.createObjectStore("audio", { keyPath: "songId" });
+          }
+          if (!db.objectStoreNames.contains("meta")) {
+            db.createObjectStore("meta", { keyPath: "key" });
+          }
+          if (!db.objectStoreNames.contains(STORE_LYRICS)) {
+            db.createObjectStore(STORE_LYRICS, { keyPath: "songId" });
+          }
+        },
+      })
+        .then((db) => {
+          clearTimeout(timeoutId);
+          _dbAvailable = true;
+          resolve(db);
+        })
+        .catch(() => {
+          clearTimeout(timeoutId);
+          _dbAvailable = false;
+          resolve(null);
+        });
     });
   }
   return _dbPromise;

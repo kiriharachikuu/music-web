@@ -13,7 +13,7 @@ import {
   usePlayerStore,
   type PlayMode,
 } from "@/lib/store/player-store";
-import { api } from "@/lib/api";
+import { useFavoritesStore } from "@/lib/store/favorites-store";
 import { getCachedLyric, fetchAndCacheLyric } from "@/lib/db/lyric-cache";
 import { LyricsView } from "./lyrics-view";
 import { QueueSheet } from "./queue-sheet";
@@ -155,17 +155,14 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   // ----- 队列抽屉状态 -----
   const [queueOpen, setQueueOpen] = React.useState(false);
 
-  // ----- 喜欢状态 -----
-  const [isFavorite, setIsFavorite] = React.useState(false);
+  // ----- 喜欢状态（全局 store） -----
+  const likedIds = useFavoritesStore((s) => s.likedIds);
+  const toggleLike = useFavoritesStore((s) => s.toggleLike);
+  const isFavorite = currentSong ? likedIds.has(currentSong.id) : false;
 
   const toggleFavorite = async () => {
     if (!currentSong) return;
-    try {
-      await api.post("/user/favorites", { songId: currentSong.id });
-      setIsFavorite((prev) => !prev);
-    } catch {
-      // 静默失败
-    }
+    await toggleLike(currentSong.id);
   };
 
   // ----- 拖拽关闭判断 -----
