@@ -2,33 +2,72 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Music2 } from "lucide-react";
+import { Music2, Sparkles } from "lucide-react";
 
+import { api } from "@/lib/api";
 import type { DiscoverData } from "@/lib/types";
 import { SectionTitle } from "@/components/common/section-title";
 import { BannerCarousel } from "@/components/common/banner-carousel";
 import { SongCard } from "@/components/common/song-card";
 import { PlaylistGrid } from "@/components/common/playlist-grid";
 import { EmptyState } from "@/components/common/empty-state";
+import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { PullToRefresh } from "@/components/common/pull-to-refresh";
 import { ArtistCard } from "@/app/search/search-results";
 
 /**
  * 发现页客户端组件
- * - 接收 SSR 数据，渲染各板块
+ * - 接收 SSR 数据（可能为 null），渲染各板块
+ * - SSR 数据为空时自动在客户端 fallback 请求
  * - 移动端下拉刷新：调用 router.refresh() 重新拉取服务端数据
  */
-export function DiscoverClient({ data }: { data: DiscoverData }) {
+export function DiscoverClient({ data: ssrData }: { data: DiscoverData | null }) {
   const router = useRouter();
+  const [data, setData] = React.useState<DiscoverData | null>(ssrData);
+  const [loading, setLoading] = React.useState(!ssrData);
   const [refreshing, setRefreshing] = React.useState(false);
+
+  // SSR 数据为空时，客户端自动 fallback 请求
+  React.useEffect(() => {
+    if (ssrData) return;
+    let cancelled = false;
+    api.get<DiscoverData>("/discover")
+      .then((res) => { if (!cancelled) setData(res); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [ssrData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     router.refresh();
-    // 等待路由刷新完成（router.refresh 是异步的，给一个最小展示时长）
+    // 同时客户端重新拉取，确保数据更新
+    try {
+      const fresh = await api.get<DiscoverData>("/discover");
+      setData(fresh);
+    } catch { /* 忽略 */ }
     await new Promise((r) => setTimeout(r, 800));
     setRefreshing(false);
   };
+
+  // 加载中：骨架屏
+  if (loading && !data) {
+    return <PageSkeleton variant="row" />;
+  }
+
+  // 客户端也请求失败：空状态
+  if (!data) {
+    return (
+      <section className="animate-fade-in space-y-8">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">发现</h1>
+        <EmptyState
+          icon={Sparkles}
+          title="暂无推荐内容"
+          description="后端服务未就绪或暂无数据，启动 music-server 后即可看到精选内容。"
+        />
+      </section>
+    );
+  }
 
   const {
     banners = [],
