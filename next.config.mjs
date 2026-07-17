@@ -83,6 +83,10 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // 优化大型包的导入，减少 tree-shaking 后的包体积
+    optimizePackageImports: ["lucide-react", "@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu"],
+  },
   // 开发环境下将 /api 和 /uploads 代理到后端（3000 端口）
   // 生产环境由 Nginx 统一反向代理
   async rewrites() {

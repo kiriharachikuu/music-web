@@ -3,8 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useScroll, useMotionValueEvent } from "framer-motion";
-import { Info, Download, Search, ListMusic, User } from "lucide-react";
+import { Search, ListMusic, User } from "lucide-react";
 
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -28,7 +27,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { scrollY } = useScroll();
   const [scrolled, setScrolled] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
@@ -40,13 +38,20 @@ export function TopNav() {
 
   const openLogin = useAuthStore((s) => s.openLogin);
 
-  const scrollTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  useMotionValueEvent(scrollY, "change", (y) => {
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-    scrollTimeoutRef.current = setTimeout(() => {
-      setScrolled(y > 8);
-    }, 50);
-  });
+  // 原生 scroll 监听替代 framer-motion useScroll，减少 ~40KB 初始包体积
+  React.useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 8);
+        ticking = false;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   React.useEffect(() => {
     const token = getToken();

@@ -1,22 +1,30 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
 import { MiniPlayer } from "@/components/layout/mini-player";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
-import { QueuePanel } from "@/components/layout/queue-panel";
-import { FullScreenPlayer } from "@/components/player/full-screen-player";
-import { LoginSheet } from "@/components/auth/login-sheet";
-import { UpdateDialog } from "@/components/common/update-dialog";
-import { InstallPrompt } from "@/components/common/install-prompt";
 import { Toaster } from "@/components/ui/toaster";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
+
+// 动态导入非首屏重型组件，减少初始 JS 包体积
+// FullScreenPlayer: ~440 行 + framer-motion（AnalyzePresence/motion/drag）
+// QueuePanel: PC 端队列面板
+// LoginSheet: 401 时弹出
+// UpdateDialog: 延迟 2s 检查
+// InstallPrompt: 移动端浏览器 PWA 安装提示
+const FullScreenPlayer = dynamic(() => import("@/components/player/full-screen-player").then(m => ({ default: m.FullScreenPlayer })), { ssr: false });
+const QueuePanel = dynamic(() => import("@/components/layout/queue-panel").then(m => ({ default: m.QueuePanel })), { ssr: false });
+const LoginSheet = dynamic(() => import("@/components/auth/login-sheet").then(m => ({ default: m.LoginSheet })), { ssr: false });
+const UpdateDialog = dynamic(() => import("@/components/common/update-dialog").then(m => ({ default: m.UpdateDialog })), { ssr: false });
+const InstallPrompt = dynamic(() => import("@/components/common/install-prompt").then(m => ({ default: m.InstallPrompt })), { ssr: false });
 
 /** 不显示应用外壳的路径（全屏独立页面） */
 const STANDALONE_PATHS = ["/login"];
