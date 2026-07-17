@@ -246,11 +246,13 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
               onClick={handlePlay}
               className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/5 md:h-12 md:w-12"
             >
-              {("coverUrl" in song && song.coverUrl) ||
+              {("cover" in song && (song as any).cover) ||
+              ("coverUrl" in song && song.coverUrl) ||
               ("album" in song && song.album?.cover) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={
+                    ("cover" in song && (song as any).cover) ||
                     ("coverUrl" in song && song.coverUrl) ||
                     ("album" in song ? song.album?.cover : undefined) ||
                     undefined
@@ -285,9 +287,11 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
               </p>
               <p className="truncate text-xs text-foreground/50">
                 {song.artist}
-                {"albumName" in song && song.albumName
-                  ? ` · ${song.albumName}`
-                  : ""}
+                {"trackType" in song && song.trackType === "live_clip" && "sessionName" in song
+                  ? ` · ${(song as any).sessionName}`
+                  : "albumName" in song && song.albumName
+                    ? ` · ${song.albumName}`
+                    : ""}
               </p>
             </button>
 

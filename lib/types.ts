@@ -299,15 +299,18 @@ function isLiveClipTrack(t: ApiSong | Track): t is LiveClipTrack {
 /**
  * 将后端 ApiSong 或 Track 转换为播放器可用的 PlayerSong
  * - ApiSong / OfficialTrack: url ← fileUrl, cover ← coverUrl, album ← albumName
- * - LiveClipTrack: url ← url, cover ← cover, album ← sessionName
+ * - LiveClipTrack: url ← url, cover ← cover, album ← "场次名 (日期)" 便于区分同歌不同场次
  */
 export function toPlayerSong(s: ApiSong | Track): PlayerSong {
   if (isLiveClipTrack(s)) {
+    const albumLabel = s.liveTime
+      ? `${s.sessionName} (${new Date(s.liveTime).toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })})`
+      : s.sessionName;
     return {
       id: s.id,
       title: s.title,
       artist: s.artist,
-      album: s.sessionName,
+      album: albumLabel,
       cover: s.cover ?? undefined,
       url: s.url,
       duration: s.duration,

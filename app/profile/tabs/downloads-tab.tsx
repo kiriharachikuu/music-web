@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Download, Music2, Play, Loader2, Trash2 } from "lucide-react";
 
-import type { DownloadListItem } from "@/lib/db/audio-cache";
+import type { DownloadListItem } from "@/lib/download";
 import { toPlayerSong } from "@/lib/types";
 import {
   listDownloads,
@@ -19,6 +19,7 @@ import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/common/confirm-dialog";
 import { resolveMediaUrl, formatDate } from "@/lib/utils";
+import { getPlatform } from "@/lib/platform/detect";
 
 /** 子模块 4：下载管理（IndexedDB 离线缓存） */
 export function DownloadsTab() {
@@ -127,7 +128,12 @@ export function DownloadsTab() {
       {downloads.length > 0 ? (
         <div className="overflow-hidden rounded-2xl border border-primary/10 bg-card/40 p-2 shadow-sm md:p-3">
           {downloads.map((item) => {
-            const cover = resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
+            // TWA: 优先使用本地封面路径, 浏览器: 使用远程URL
+            const isTWA = getPlatform().isTWA;
+            const localCoverPath = item.localCoverPath;
+            const coverUrl = isTWA && localCoverPath
+              ? `file://${localCoverPath}`
+              : resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
             const isLoadingPlay = loadingPlayId === item.songId;
             return (
               <div
@@ -136,10 +142,10 @@ export function DownloadsTab() {
               >
                 {/* 封面 */}
                 <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/5 md:h-12 md:w-12">
-                  {cover ? (
+                  {coverUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={cover}
+                      src={coverUrl}
                       alt={item.song.title}
                       className="h-full w-full object-cover"
                     />

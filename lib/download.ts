@@ -11,7 +11,7 @@ import {
   getCacheSize as getCacheSizeWeb,
   getCachedUrl as getCachedUrlWeb,
 } from "@/lib/db/audio-cache";
-import { fetchAndCacheLyric, isLyricCached } from "@/lib/db/lyric-cache";
+import { fetchAndCacheLyric, isLyricCached, fetchLyric } from "@/lib/db/lyric-cache";
 import { getPlatform } from "@/lib/platform/detect";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { setupDownloadListeners } from "@/lib/jsbridge/native-events";
@@ -59,6 +59,16 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
 
     fetchAndCacheLyric(song.id).catch(() => {});
+
+    // TWA: 同时缓存歌词到原生存储，供离线页面使用
+    (async () => {
+      try {
+        const lrc = await fetchLyric(song.id);
+        if (lrc) {
+          androidBridge.cacheLyric(song.id, lrc);
+        }
+      } catch {}
+    })();
 
     return new Promise<DownloadResult>((resolve, reject) => {
       setupDownloadListeners({
@@ -189,6 +199,7 @@ export interface DownloadListItem {
   song: ApiSong;
   size: number;
   cachedAt: number;
+  localCoverPath?: string; // TWA 本地封面路径（file:// 前缀）
 }
 
 /** 获取已下载列表（按 cachedAt 降序） */
@@ -200,6 +211,7 @@ export async function listDownloads(): Promise<DownloadListItem[]> {
         songId: item.songId,
         size: item.size,
         cachedAt: item.cachedAt,
+        localCoverPath: item.localCoverPath || undefined,
         song: {
           id: item.songId,
           title: item.title,

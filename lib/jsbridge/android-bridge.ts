@@ -64,6 +64,12 @@ export interface AndroidJSBridge {
   removeDownloadedSong(songId: string): void;
   /** 清空所有已下载歌曲 */
   clearAllDownloadedSongs(): void;
+  /** 获取本地封面文件路径（未缓存返回空字符串） */
+  getLocalCoverPath(songId: string): string;
+  /** 缓存歌词到本地文件 */
+  cacheLyric(songId: string, lyricText: string): void;
+  /** 获取本地缓存的歌词文本（返回空字符串表示未缓存） */
+  getCachedLyric(songId: string): string;
 }
 
 declare global {
@@ -387,6 +393,7 @@ export const androidBridge = {
     artist: string;
     albumName: string;
     coverUrl: string;
+    localCoverPath: string;
     fileUrl: string;
     size: number;
     cachedAt: number;
@@ -442,6 +449,48 @@ export const androidBridge = {
       bridge.clearAllDownloadedSongs();
     } catch {
       // 静默
+    }
+  },
+
+  /**
+   * 获取本地封面文件路径
+   * - 未缓存或非 TWA 环境返回空字符串
+   */
+  getLocalCoverPath(songId: string): string {
+    const bridge = getNativeBridge();
+    if (!bridge) return "";
+    try {
+      return bridge.getLocalCoverPath(songId);
+    } catch {
+      return "";
+    }
+  },
+
+  /**
+   * 缓存歌词到本地文件
+   * - 非 TWA 环境静默忽略
+   */
+  cacheLyric(songId: string, lyricText: string): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      bridge.cacheLyric(songId, lyricText);
+    } catch {
+      // 静默
+    }
+  },
+
+  /**
+   * 获取本地缓存的歌词文本
+   * - 未缓存或非 TWA 环境返回空字符串
+   */
+  getCachedLyric(songId: string): string {
+    const bridge = getNativeBridge();
+    if (!bridge) return "";
+    try {
+      return bridge.getCachedLyric(songId);
+    } catch {
+      return "";
     }
   },
 };

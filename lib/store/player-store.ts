@@ -271,13 +271,21 @@ export const usePlayerStore = create<PlayerState>()(
         }
 
         // 5. 调用引擎加载并播放
+        let coverUrl = targetSong.cover ? resolveMediaUrl(targetSong.cover) : undefined;
+        // TWA 模式：优先使用本地封面路径（离线可用）
+        if (platform.isTWA) {
+          const localCoverPath = androidBridge.getLocalCoverPath(targetSong.id);
+          if (localCoverPath) {
+            coverUrl = `file://${localCoverPath}`;
+          }
+        }
         await engine.loadAndPlay(url, {
           headers,
           startTime: 0,
           metadata: {
             title: targetSong.title,
             artist: targetSong.artist,
-            coverUrl: targetSong.cover ? resolveMediaUrl(targetSong.cover) : undefined,
+            coverUrl,
           },
         });
 

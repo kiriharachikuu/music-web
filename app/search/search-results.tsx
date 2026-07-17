@@ -153,7 +153,7 @@ export function SearchResults({
             )}
             <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
               <SongList
-                songs={liveClips as any}
+                songs={liveClips}
                 onLike={onLike}
                 likedIds={likedIds}
                 showTrackType={true}

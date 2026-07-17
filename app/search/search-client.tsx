@@ -159,6 +159,9 @@ export function SearchClient({
         if (tag) params.set("tag", tag);
         if (dateRange.startDate) params.set("startDate", dateRange.startDate);
         if (dateRange.endDate) params.set("endDate", dateRange.endDate);
+        if (category === "live_clips" || category === "live_sessions") {
+          params.set("category", category);
+        }
         const res = await api.get<SearchResult>(`/search?${params}`);
         if (!cancelled) {
           setResults(res);
