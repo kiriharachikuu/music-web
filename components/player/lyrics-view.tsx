@@ -161,6 +161,18 @@ export function LyricsView({
     };
   }, [activeIndex]);
 
+  /** 容器点击：仅非按钮区域触发切换回封面（需在所有 early return 之前，React Hooks 规则） */
+  const handleContainerClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      if (!onToggleView) return;
+      const target = e.target as HTMLElement;
+      // 如果点击的是歌词行按钮或其内部元素，不触发切换
+      if (target.closest("button")) return;
+      onToggleView();
+    },
+    [onToggleView]
+  );
+
   // 加载中状态
   if (loading) {
     return (
@@ -190,18 +202,6 @@ export function LyricsView({
       </div>
     );
   }
-
-  /** 容器点击：仅非按钮区域触发切换回封面 */
-  const handleContainerClick = React.useCallback(
-    (e: React.MouseEvent) => {
-      if (!onToggleView) return;
-      const target = e.target as HTMLElement;
-      // 如果点击的是歌词行按钮或其内部元素，不触发切换
-      if (target.closest("button")) return;
-      onToggleView();
-    },
-    [onToggleView]
-  );
 
   return (
     <div
