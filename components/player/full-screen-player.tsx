@@ -8,7 +8,7 @@ import {
   useDragControls,
   type PanInfo,
 } from "framer-motion";
-import { ChevronDown, Heart, ListMusic, Music2 } from "lucide-react";
+import { ChevronDown, Heart, ListMusic, Music2, ChevronUp } from "lucide-react";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 
 import {
@@ -158,6 +158,23 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   // ----- 队列抽屉状态 -----
   const [queueOpen, setQueueOpen] = React.useState(false);
 
+  // ----- 移动端封面/歌词视图切换 -----
+  const [showLyrics, setShowLyrics] = React.useState(false);
+  // 防连点：300ms 内不允许再次切换
+  const toggleCooldownRef = React.useRef(false);
+  const toggleView = React.useCallback(() => {
+    if (toggleCooldownRef.current) return;
+    toggleCooldownRef.current = true;
+    setShowLyrics((v) => !v);
+    setTimeout(() => {
+      toggleCooldownRef.current = false;
+    }, 300);
+  }, []);
+  // 切歌时重置到封面视图
+  React.useEffect(() => {
+    setShowLyrics(false);
+  }, [currentSong?.id]);
+
   // ----- 喜欢状态（全局 store） -----
   const likedIds = useFavoritesStore((s) => s.likedIds);
   const toggleLike = useFavoritesStore((s) => s.toggleLike);
@@ -268,7 +285,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </button>
         </header>
 
-        {/* ===== 主区：PC 左右分栏，移动端单列 ===== */}
+        {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 md:grid md:grid-cols-[0.9fr_1.1fr] md:items-stretch md:gap-10">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
           <div className="hidden flex-col items-center justify-center gap-6 md:flex">
@@ -304,14 +321,98 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
             </div>
           </div>
 
-          {/* 右：歌词 */}
-          <div className="min-h-0 flex-1 h-full">
+          {/* 右：歌词（PC 端始终可见） */}
+          <div className="hidden min-h-0 h-full md:block">
             <LyricsView
               lrc={lrc}
               currentTime={currentTime}
               onSeek={seek}
               loading={lrcLoading}
             />
+          </div>
+
+          {/* ===== 移动端：封面 ⇄ 歌词交叉淡入淡出 ===== */}
+          <div className="relative min-h-0 flex-1 md:hidden">
+            {/* 封面视图 */}
+            <div
+              className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-300 ease-out ${
+                showLyrics
+                  ? "opacity-0 pointer-events-none scale-95"
+                  : "opacity-100 delay-100"
+              }`}
+              onClick={toggleView}
+              role="button"
+              tabIndex={0}
+              aria-label="点击查看歌词"
+            >
+              {/* 封面图 */}
+              <div className="aspect-square w-[min(280px,62vw)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+                {cover ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cover}
+                    alt={currentSong.title}
+                    className="h-full w-full object-cover"
+                    draggable={false}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary/20">
+                    <Music2 className="h-14 w-14 text-white/40" />
+                  </div>
+                )}
+              </div>
+
+              {/* 歌名 + 歌手 */}
+              <div className="mt-6 text-center">
+                <div className="flex items-center justify-center gap-1.5">
+                  {currentSong.trackType === "live_clip" && currentSong.sessionId && (
+                    <span
+                      onClick={(e) => e.stopPropagation()}
+                      role="presentation"
+                    >
+                      <LiveClipBadge
+                        onClick={() =>
+                          router.push(`/live-session/${currentSong.sessionId}`)
+                        }
+                      />
+                    </span>
+                  )}
+                  <h1 className="text-lg font-bold drop-shadow-sm">
+                    {currentSong.title}
+                  </h1>
+                </div>
+                <p className="mt-1 text-sm text-white/60">
+                  {currentSong.artist}
+                </p>
+              </div>
+
+              {/* 底部上滑提示 */}
+              <motion.div
+                className="mt-8 flex flex-col items-center gap-1 text-white/30"
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <ChevronUp className="h-5 w-5" />
+                <span className="text-[11px]">点击查看歌词</span>
+              </motion.div>
+            </div>
+
+            {/* 歌词视图 */}
+            <div
+              className={`absolute inset-0 transition-all duration-300 ease-out ${
+                showLyrics
+                  ? "opacity-100 delay-100"
+                  : "opacity-0 pointer-events-none scale-105"
+              }`}
+            >
+              <LyricsView
+                lrc={lrc}
+                currentTime={currentTime}
+                onSeek={seek}
+                loading={lrcLoading}
+                onToggleView={toggleView}
+              />
+            </div>
           </div>
         </main>
 

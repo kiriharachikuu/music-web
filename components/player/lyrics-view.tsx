@@ -33,6 +33,8 @@ interface LyricsViewProps {
   onSeek: (time: number) => void;
   /** 是否正在加载歌词 */
   loading?: boolean;
+  /** 点击非歌词区域时触发（移动端切换回封面视图） */
+  onToggleView?: () => void;
 }
 
 export function LyricsView({
@@ -40,6 +42,7 @@ export function LyricsView({
   currentTime,
   onSeek,
   loading,
+  onToggleView,
 }: LyricsViewProps) {
   // 解析歌词（按 lrc 文本缓存）
   const lines = React.useMemo<LyricLine[]>(
@@ -161,7 +164,10 @@ export function LyricsView({
   // 加载中状态
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center text-white/50">
+      <div
+        className="flex h-full items-center justify-center text-white/50"
+        onClick={onToggleView}
+      >
         <p className="text-sm">歌词加载中…</p>
       </div>
     );
@@ -170,7 +176,10 @@ export function LyricsView({
   // 无歌词降级
   if (lines.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-white/50">
+      <div
+        className="flex h-full flex-col items-center justify-center gap-3 text-white/50"
+        onClick={onToggleView}
+      >
         <motion.div
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -182,9 +191,22 @@ export function LyricsView({
     );
   }
 
+  /** 容器点击：仅非按钮区域触发切换回封面 */
+  const handleContainerClick = React.useCallback(
+    (e: React.MouseEvent) => {
+      if (!onToggleView) return;
+      const target = e.target as HTMLElement;
+      // 如果点击的是歌词行按钮或其内部元素，不触发切换
+      if (target.closest("button")) return;
+      onToggleView();
+    },
+    [onToggleView]
+  );
+
   return (
     <div
       ref={containerRef}
+      onClick={handleContainerClick}
       className={cn(
         "h-full overflow-y-auto no-scrollbar px-4",
         // 上下两端 mask 渐隐（兼容 -webkit- 前缀）

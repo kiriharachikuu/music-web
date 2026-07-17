@@ -16,6 +16,27 @@ const withPWA = withPWAInit({
   register: true,
   disable: process.env.NODE_ENV === "development",
   runtimeCaching: [
+    // 页面导航（NetworkFirst → 缓存 HTML，离线时加载已访问页面）
+    {
+      urlPattern: ({ request }) => request.mode === "navigate",
+      handler: "NetworkFirst",
+      options: {
+        cacheName: "xt-page-cache",
+        networkTimeoutSeconds: 3,
+        expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 7 },
+        cacheableResponse: { statuses: [0, 200] },
+      },
+    },
+    // JS / CSS / 字体等静态资源（StaleWhileRevalidate → 即时加载 + 后台更新）
+    {
+      urlPattern: /\.(?:js|css|woff2?|ttf|otf)$/i,
+      handler: "StaleWhileRevalidate",
+      options: {
+        cacheName: "xt-static-cache",
+        expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 14 },
+        cacheableResponse: { statuses: [0, 200] },
+      },
+    },
     // 音频资源（CacheFirst，离线可播，限制缓存数量以节省空间）
     {
       urlPattern: /\.(?:mp3|flac|wav|ogg|aac|m4a)$/i,
