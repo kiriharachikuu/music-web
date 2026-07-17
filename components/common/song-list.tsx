@@ -45,7 +45,7 @@ import { useToast } from "@/components/ui/toaster";
  */
 type SongWithTrackType = ApiSong & { trackType?: TrackType };
 
-export function SongList<T extends ApiSong | Track = SongWithTrackType>({
+export const SongList = React.memo(function SongList<T extends ApiSong | Track = SongWithTrackType>({
   songs,
   showRank = false,
   startRank = 1,
@@ -73,11 +73,11 @@ export function SongList<T extends ApiSong | Track = SongWithTrackType>({
   /** 切换选中回调 */
   onToggleSelect?: (id: string) => void;
   /** 喜欢回调 */
-  onLike?: (song: T) => void;
+  onLike?: (song: ApiSong) => void;
   /** 已喜欢的歌曲 id 集合 */
   likedIds?: Set<string>;
   /** 删除回调（用于播放历史单条删除） */
-  onDelete?: (song: T) => void;
+  onDelete?: (song: ApiSong | Track) => void;
   className?: string;
   emptyText?: string;
 }) {
@@ -308,7 +308,7 @@ export function SongList<T extends ApiSong | Track = SongWithTrackType>({
               {onLike && (
                 <button
                   type="button"
-                  onClick={() => onLike(song)}
+                  onClick={() => onLike(song as unknown as ApiSong)}
                   aria-label={isLiked ? "取消喜欢" : "喜欢"}
                   className={cn(
                     "flex h-10 w-8 items-center justify-center rounded-full transition-colors md:h-8 md:w-8",
@@ -389,7 +389,7 @@ export function SongList<T extends ApiSong | Track = SongWithTrackType>({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                   {onLike && (
-                    <DropdownMenuItem onClick={() => onLike(song)}>
+                    <DropdownMenuItem onClick={() => onLike(song as unknown as ApiSong)}>
                       <Heart
                         className={cn(
                           "mr-2 h-4 w-4",
@@ -474,4 +474,4 @@ export function SongList<T extends ApiSong | Track = SongWithTrackType>({
       />
     </div>
   );
-}
+});

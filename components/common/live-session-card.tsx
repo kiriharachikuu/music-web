@@ -41,6 +41,7 @@ export function LiveSessionCard({
           {session.artist}
         </p>
         <p className="mt-0.5 truncate text-xs text-foreground/40">
+          {session.sessionNumber != null && `#${session.sessionNumber} · `}
           {formatDate(session.liveTime)}
           {session.songCount > 0 && ` · ${session.songCount} 首歌`}
         </p>

@@ -58,22 +58,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // 客户端挂载后从 localStorage 恢复 volume / playMode / queue 等
     usePlayerStore.persist.rehydrate();
 
-    // 自动播放：用户在设置中开启且存在上次播放的歌曲时，恢复播放
+    // 自动播放：用户在设置中开启且存在上次播放的歌曲时，延迟恢复播放
+    // 使用 requestIdleCallback / setTimeout 延迟到首屏渲染完成后执行，
+    // 避免阻塞初始水合和首屏展示
     if (autoPlayRestoredRef.current) return;
     autoPlayRestoredRef.current = true;
-    try {
-      const raw = localStorage.getItem("xt-music-settings");
-      const autoplay = raw ? JSON.parse(raw)?.autoplay === true : false;
-      if (autoplay) {
-        const { currentSong, play } = usePlayerStore.getState();
-        if (currentSong) {
-          // 恢复播放：重新加载 Howl 并播放（currentTime 不持久化，从头开始）
-          void play(currentSong);
+    const idleCb = typeof requestIdleCallback !== "undefined" ? requestIdleCallback : (fn: () => void) => setTimeout(fn, 200);
+    idleCb(() => {
+      try {
+        const raw = localStorage.getItem("xt-music-settings");
+        const autoplay = raw ? JSON.parse(raw)?.autoplay === true : false;
+        if (autoplay) {
+          const { currentSong, play } = usePlayerStore.getState();
+          if (currentSong) {
+            void play(currentSong);
+          }
         }
+      } catch {
+        // 忽略设置读取异常
       }
-    } catch {
-      // 忽略设置读取异常
-    }
+    });
   }, []);
 
   // 监听播放器错误，3 秒后自动清除

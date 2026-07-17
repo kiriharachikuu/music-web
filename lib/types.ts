@@ -73,6 +73,8 @@ export interface LiveSession {
   liveTime: string;
   description?: string | null;
   songCount: number;
+  /** 场次编号 */
+  sessionNumber?: number | null;
   clips: LiveClipTrack[];
 }
 

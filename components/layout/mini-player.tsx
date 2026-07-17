@@ -9,10 +9,9 @@ import { usePlayerStore, formatTime as fmt } from "@/lib/store/player-store";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 
 /**
- * 进度条（点击/拖拽定位）
- * - 填充使用 primary-600 → primary-800 渐变（progress-fill 工具类）
+ * 进度条（点击/拖拽定位）—— 使用 React.memo 避免 currentTime 变化时重渲染文字部分
  */
-function ProgressBar({
+const ProgressBar = React.memo(function ProgressBar({
   value,
   max,
   onSeek,
@@ -50,7 +49,7 @@ function ProgressBar({
       </div>
     </div>
   );
-}
+});
 
 /**
  * 底部常驻迷你播放栏

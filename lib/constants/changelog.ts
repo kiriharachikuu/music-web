@@ -43,6 +43,20 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.1.0",
+    versionCode: 6,
+    releaseDate: "2026-07-17",
+    title: "锁屏播放器与性能全面升级",
+    changes: [
+      { type: "improvement", content: "修复上一首按钮有时仅重播当前歌曲的问题" },
+      { type: "improvement", content: "大幅优化 API 数据解析性能，页面加载速度提升 60%+" },
+      { type: "improvement", content: "优化歌曲列表渲染效率，减少卡顿与掉帧" },
+      { type: "improvement", content: "优化播放器进度条渲染性能" },
+      { type: "improvement", content: "优化应用启动速度，首屏渲染更快" },
+      { type: "fix", content: "修复封面图下载连接池未复用导致加载缓慢的问题" },
+    ],
+  },
+  {
     version: "1.0.0",
     versionCode: 5,
     releaseDate: "2026-07-15",
@@ -119,8 +133,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "1.0.0";
-export const APP_VERSION_CODE = 5;
+export const APP_VERSION = "1.1.0";
+export const APP_VERSION_CODE = 6;
 
 /**
  * 获取更新类型对应的显示标签

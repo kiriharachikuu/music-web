@@ -144,7 +144,7 @@ export function LibraryClient({
             音乐库
           </h1>
           <p className="mt-0.5 text-sm text-foreground/50">
-            浏览专辑、歌单与收藏的直播场次
+            浏览专辑、歌单与直播歌曲
           </p>
         </div>
       </header>
@@ -157,7 +157,7 @@ export function LibraryClient({
             [
               { key: "albums", label: "专辑" },
               { key: "playlists", label: "歌单" },
-              { key: "live_sessions", label: "收藏的直播场次" },
+              { key: "live_sessions", label: "直播歌曲" },
             ] as { key: Tab; label: string }[]
           ).map((t) => {
             const isActive = tab === t.key;
@@ -215,7 +215,7 @@ export function LibraryClient({
         liveSessions.length === 0 && !loading ? (
           <EmptyState
             icon={Library}
-            title="暂无收藏的直播场次"
+            title="暂无直播歌曲"
             description="去发现页面看看有哪些精彩的直播场次吧～"
           />
         ) : (
