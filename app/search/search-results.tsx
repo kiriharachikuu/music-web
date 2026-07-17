@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Search, User2, Loader2 } from "lucide-react";
 
 import type {
@@ -196,11 +197,12 @@ export function ArtistCard({ artist }: ArtistCardProps) {
     >
       <div className="h-24 w-24 overflow-hidden rounded-full bg-primary/5 shadow-card md:h-28 md:w-28">
         {cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={cover}
             alt={artist.name}
-            className="h-full w-full object-cover"
+            fill
+            sizes="(max-width: 768px) 25vw, 10vw"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-primary/30">

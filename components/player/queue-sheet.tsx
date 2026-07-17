@@ -6,6 +6,7 @@ import { Music2 } from "lucide-react";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { AppImage } from "@/components/ui/app-image";
 
 /**
  * 播放队列抽屉：右侧滑出，毛玻璃背景
@@ -73,10 +74,11 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
                     {/* 封面缩略图 */}
                     <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-white/10">
                       {song.cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <AppImage
                           src={song.cover}
                           alt=""
+                          width={40}
+                          height={40}
                           className="h-full w-full object-cover"
                           draggable={false}
                         />

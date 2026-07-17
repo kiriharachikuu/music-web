@@ -95,30 +95,101 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [error, clearError]);
 
-  // 全局 "/" 快捷键：聚焦 / 跳转搜索框
+  // 全局键盘快捷键：搜索 + 播放控制
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // 仅响应无修饰键的 "/"，且当前焦点不在输入控件中
+      // 输入控件中不触发全局快捷键
+      if (isEditableTarget(e.target)) return;
+
+      // "/" 搜索快捷键
       if (
-        e.key !== "/" ||
-        e.ctrlKey ||
-        e.metaKey ||
-        e.altKey ||
-        e.shiftKey ||
-        isEditableTarget(e.target)
+        e.key === "/" &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey &&
+        !e.shiftKey
       ) {
+        e.preventDefault();
+        if (pathname === "/search") {
+          document.getElementById("search-input")?.focus();
+        } else {
+          sessionStorage.setItem("xt-focus-search", "1");
+          router.push("/search");
+        }
         return;
       }
-      e.preventDefault();
-      if (pathname === "/search") {
-        // 已在搜索页：直接聚焦
-        document.getElementById("search-input")?.focus();
-      } else {
-        // 其他页：跳转后由 SearchClient 自动聚焦
-        sessionStorage.setItem("xt-focus-search", "1");
-        router.push("/search");
+
+      // 空格：播放/暂停
+      if (e.key === " " && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const state = usePlayerStore.getState();
+        if (state.currentSong) {
+          state.toggle();
+        }
+        return;
+      }
+
+      // 箭头右：下一首
+      if (e.key === "ArrowRight" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        usePlayerStore.getState().next();
+        return;
+      }
+
+      // 箭头左：上一首
+      if (e.key === "ArrowLeft" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        usePlayerStore.getState().prev();
+        return;
+      }
+
+      // 箭头上：音量 +10%
+      if (e.key === "ArrowUp" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const state = usePlayerStore.getState();
+        state.setVolume(Math.min(1, state.volume + 0.1));
+        return;
+      }
+
+      // 箭头下：音量 -10%
+      if (e.key === "ArrowDown" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const state = usePlayerStore.getState();
+        state.setVolume(Math.max(0, state.volume - 0.1));
+        return;
+      }
+
+      // M：静音切换
+      if (
+        (e.key === "m" || e.key === "M") &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        const state = usePlayerStore.getState();
+        state.setVolume(state.volume === 0 ? 0.8 : 0);
+        return;
+      }
+
+      // F：全屏歌词
+      if (
+        (e.key === "f" || e.key === "F") &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        const state = usePlayerStore.getState();
+        if (state.isLyricPageOpen) {
+          state.closeLyricPage();
+        } else {
+          state.openLyricPage();
+        }
+        return;
       }
     };
+
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [pathname, router]);

@@ -15,6 +15,8 @@ interface AppImageProps {
   priority?: boolean;
   sizes?: string;
   fallbackIcon?: boolean;
+  style?: React.CSSProperties;
+  draggable?: boolean;
 }
 
 export function AppImage({
@@ -27,6 +29,8 @@ export function AppImage({
   priority = false,
   sizes = "(max-width: 768px) 100vw, 50vw",
   fallbackIcon = true,
+  style,
+  draggable,
 }: AppImageProps) {
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -39,6 +43,7 @@ export function AppImage({
           "flex h-full w-full items-center justify-center bg-primary/10 text-primary/40",
           className
         )}
+        style={style}
       >
         <Music2 className="h-1/2 w-1/2" />
       </div>
@@ -62,6 +67,8 @@ export function AppImage({
       onLoad={() => setLoaded(true)}
       onError={() => setError(true)}
       loading={priority ? "eager" : "lazy"}
+      style={style}
+      draggable={draggable}
     />
   );
 }

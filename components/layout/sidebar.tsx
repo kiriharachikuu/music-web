@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Info, Download } from "lucide-react";
+import { AppImage } from "@/components/ui/app-image";
 
 /**
  * PC 侧边栏（md 及以上显示）
@@ -23,11 +24,13 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:flex">
       {/* 品牌 Logo */}
       <div className="flex h-16 items-center gap-2 px-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <AppImage
           src="/icons/logo.png"
           alt="XingTone"
+          width={36}
+          height={36}
           className="h-9 w-9 rounded-xl shadow-card"
+          priority
         />
         <span className="text-lg font-semibold tracking-tight">
           XingTone
@@ -68,10 +71,12 @@ export function Sidebar() {
 
       {/* 立绘装饰 */}
       <div className="flex-1 relative overflow-hidden">
-        <img
+        <AppImage
           src="/character.png"
           alt="Character"
-          className="absolute bottom-0 right-0 h-full w-auto max-w-full object-contain object-bottom opacity-80 drop-shadow-2xl animate-fade-in"
+          fill
+          sizes="256px"
+          className="object-contain object-bottom opacity-80 drop-shadow-2xl animate-fade-in"
           style={{
             filter: "drop-shadow(0 8px 20px rgba(139, 0, 255, 0.25))",
           }}

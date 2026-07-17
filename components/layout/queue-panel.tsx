@@ -6,6 +6,7 @@ import { Music2, Play, Pause, ChevronUp, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/app-image";
 
 /**
  * PC 端右侧播放队列面板（lg 及以上显示）
@@ -82,10 +83,11 @@ export function QueuePanel() {
                 aria-label="展开播放页"
               >
                 {currentSong.cover ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <AppImage
                     src={currentSong.cover}
                     alt={currentSong.title}
+                    width={56}
+                    height={56}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -175,10 +177,11 @@ export function QueuePanel() {
                       </span>
                       <div className="h-8 w-8 shrink-0 overflow-hidden rounded bg-foreground/5">
                         {song.cover && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <AppImage
                             src={song.cover}
                             alt={song.title}
+                            width={32}
+                            height={32}
                             className="h-full w-full object-cover"
                           />
                         )}

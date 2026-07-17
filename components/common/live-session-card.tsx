@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Radio } from "lucide-react";
 
 import type { LiveSession } from "@/lib/types";
@@ -21,11 +22,12 @@ export function LiveSessionCard({
     >
       <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-primary/5 shadow-card">
         {session.cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={session.cover}
             alt={session.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-primary/30">

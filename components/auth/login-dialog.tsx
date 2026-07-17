@@ -8,6 +8,7 @@ import { API_BASE } from "@/lib/api";
 import { setToken, setUser } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import type { UserProfile } from "@/lib/types";
+import { AppImage } from "@/components/ui/app-image";
 import {
   Dialog,
   DialogContent,
@@ -69,10 +70,11 @@ export function LoginDialog() {
         <div className="relative p-6 md:p-8">
           <DialogHeader className="space-y-3 text-center">
             <div className="mx-auto flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <AppImage
                 src="/icons/logo.png"
                 alt="XingTone"
+                width={56}
+                height={56}
                 className="h-14 w-14 rounded-2xl shadow-2xl"
               />
             </div>

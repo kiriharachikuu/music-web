@@ -290,9 +290,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden md:grid md:grid-cols-[0.9fr_1.1fr] md:items-stretch md:gap-10">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
           <div className="hidden flex-col items-center gap-6 overflow-y-auto px-4 py-4 md:flex">
-            {/* mt-auto/mb-auto：内容少时垂直居中，溢出时正常滚动（避免 justify-center 导致顶部裁切） */}
             <div className="mt-auto mb-auto flex shrink-0 flex-col items-center gap-6">
-              <div className="aspect-square w-[min(420px,80%,60vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              <div className="relative aspect-square w-[min(420px,80%,60vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   <AppImage
                     src={cover}
@@ -350,7 +349,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               aria-label="点击查看歌词"
             >
               {/* 封面图：vh 约束适配横屏/矮视口 */}
-              <div className="aspect-square w-[min(280px,62vw,55vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              <div className="relative aspect-square w-[min(280px,62vw,55vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   <AppImage
                     src={cover}

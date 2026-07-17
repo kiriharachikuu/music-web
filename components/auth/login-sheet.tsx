@@ -9,6 +9,7 @@ import { setToken, setUser } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import type { UserProfile } from "@/lib/types";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { AppImage } from "@/components/ui/app-image";
 import {
   Sheet,
   SheetContent,
@@ -82,10 +83,11 @@ export function LoginSheet() {
           <div className="relative px-6 pb-6 pt-2 md:px-8 md:pb-8 max-h-[85vh] overflow-y-auto">
             <SheetHeader className="space-y-3 text-center">
               <div className="mx-auto flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <AppImage
                   src="/icons/logo.png"
                   alt="XingTone"
+                  width={56}
+                  height={56}
                   className="h-14 w-14 rounded-2xl shadow-2xl"
                 />
               </div>
@@ -121,10 +123,11 @@ export function LoginSheet() {
         <div className="relative px-8 pb-8 pt-8">
           <DialogHeader className="space-y-3 text-center">
             <div className="mx-auto flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <AppImage
                 src="/icons/logo.png"
                 alt="XingTone"
+                width={64}
+                height={64}
                 className="h-16 w-16 rounded-2xl shadow-2xl"
               />
             </div>

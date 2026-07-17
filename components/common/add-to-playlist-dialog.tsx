@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { AppImage } from "@/components/ui/app-image";
 
 export function AddToPlaylistDialog({
   songIds,
@@ -138,10 +139,11 @@ export function AddToPlaylistDialog({
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/5 text-primary/60">
                   {pl.cover ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <AppImage
                       src={pl.cover}
                       alt={pl.name}
+                      width={40}
+                      height={40}
                       className="h-full w-full rounded-md object-cover"
                     />
                   ) : (

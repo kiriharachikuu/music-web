@@ -150,28 +150,25 @@
 
 ---
 
-### P1-3：代码分割与动态导入
+### P1-3：代码分割与动态导入 ✅ 已完成
 
-**问题**：部分重型组件（如 FullScreenPlayer、SearchModal）在首屏即加载，增加首屏 JS 体积。
+**问题**：部分重型组件（如 FullScreenPlayer、QueuePanel）在首屏即加载，增加首屏 JS 体积。
 
 **实施方案**：
-1. 识别非首屏必需的重型组件
-2. 使用 `next/dynamic` 动态导入，带 loading 状态
-3. 路由级别代码分割（Next.js App Router 已内置，需确认是否充分利用）
+1. **FullScreenPlayer**：已动态导入（framer-motion + 歌词视图 + 音频缓存）
+2. **QueuePanel**：已动态导入（PC 端队列面板）
+3. **LoginSheet**：已动态导入（401 或主动触发时加载）
+4. **UpdateDialog**：已动态导入（延迟检查更新）
+5. **InstallPrompt**：已动态导入（PWA 安装提示）
+6. **AudioEngine（howler）**：已动态导入（用户首次播放时加载）
 
-**候选组件**：
-- FullScreenPlayer（全屏歌词播放器）
-- SearchModal（搜索弹窗）
-- LoginSheet（登录抽屉）
-- QueuePanel（播放队列面板）
+**验证结果**：
+- 首屏 JS 共享体积 ~102KB
+- 重型组件（FullScreenPlayer、howler、dnd-kit 等）均按需加载
 
 **预期收益**：
-- 首屏 JS 减少 10-20KB
-- TTI 提升 10-15%
-
-**验证方法**：
-- Bundle Analyzer 报告
-- Lighthouse：Performance 分数、TTI
+- 首屏 JS 减少 30-40KB（对比全量导入）
+- TTI 提升 15-20%
 
 ---
 
@@ -185,17 +182,19 @@
    - 仅 Tab 聚焦时可见
    - 对应 `main` 元素添加 `id="main-content"`
 
-2. **ARIA 标签**
-   - 播放控件添加 `aria-label`
-   - 图标按钮添加可读标签
-   - 动态内容区域添加 `aria-live`
+2. **ARIA 标签** ✅
+   - 播放控件添加 `aria-label`（播放/暂停/上一首/下一首/音量）
+   - 图标按钮添加可读标签（搜索/个人中心/队列/展开播放页）
+   - 面板添加 `aria-label`（播放队列）
+   - 动态内容区域添加 `aria-live`（待完善）
 
-3. **键盘快捷键**
+3. **键盘快捷键** ✅
+   - `/`：聚焦搜索框
    - 空格：播放/暂停
-   - 左右箭头：快进/快退
-   - 上下箭头：音量
-   - M：静音
-   - F：全屏歌词
+   - 左右箭头：上一首/下一首
+   - 上下箭头：音量 +/-
+   - M：静音切换
+   - F：全屏歌词切换
 
 4. **颜色对比度**
    - 检查所有文本与背景的对比度
@@ -422,13 +421,17 @@ export function reportWebVitals(metric: any) {
 - [x] P0-1.4: SongList 封面图片替换
 - [x] P0-1.5: PlaylistCard/AlbumCard/SongCard 封面替换
 - [x] P0-1.6: MiniPlayer/FullScreenPlayer 封面替换
+- [x] P0-1.7: 其他组件图片替换（LiveSessionCard、QueueSheet、QueuePanel、Sidebar、登录组件、搜索结果等）
 - [x] P0-2: 长列表虚拟滚动组件
 - [x] P0-3: 歌词渲染性能优化
 
 ### ✅ P1 已完成
 - [x] P1-1: Bundle Analyzer 集成
 - [x] P1-2: API 请求内存缓存层
+- [x] P1-3: 代码分割与动态导入（FullScreenPlayer、QueuePanel、LoginSheet、AudioEngine 等）
 - [x] P1-4.1: Skip to Content 链接
+- [x] P1-4.2: ARIA 标签完善
+- [x] P1-4.3: 键盘快捷键
 
 ### ✅ P2 已完成
 - [x] P2-4: prefers-reduced-motion 支持
@@ -437,13 +440,7 @@ export function reportWebVitals(metric: any) {
 
 ## 八、待优化项
 
-### ⏳ P0 待补充
-- [ ] P0-1.7: 其他组件图片替换（搜索结果、艺术家卡片等）
-
 ### ⏳ P1 待开始
-- [ ] P1-3: 代码分割与动态导入
-- [ ] P1-4.2: ARIA 标签完善
-- [ ] P1-4.3: 键盘快捷键
 - [ ] P1-4.4: 颜色对比度检查
 
 ### ⏳ P2 待开始
