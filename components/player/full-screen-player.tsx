@@ -286,38 +286,41 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 md:grid md:grid-cols-[0.9fr_1.1fr] md:items-stretch md:gap-10">
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden md:grid md:grid-cols-[0.9fr_1.1fr] md:items-stretch md:gap-10">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
-          <div className="hidden flex-col items-center justify-center gap-6 md:flex">
-            <div className="aspect-square w-[min(420px,80%)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
-              {cover ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={cover}
-                  alt={currentSong.title}
-                  className="h-full w-full object-cover"
-                  draggable={false}
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-primary/20">
-                  <Music2 className="h-16 w-16 text-white/40" />
-                </div>
-              )}
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2">
-                {currentSong.trackType === "live_clip" && currentSong.sessionId && (
-                  <LiveClipBadge
-                    onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
+          <div className="hidden flex-col items-center gap-6 overflow-y-auto px-4 py-4 md:flex">
+            {/* mt-auto/mb-auto：内容少时垂直居中，溢出时正常滚动（避免 justify-center 导致顶部裁切） */}
+            <div className="mt-auto mb-auto flex shrink-0 flex-col items-center gap-6">
+              <div className="aspect-square w-[min(420px,80%,60vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+                {cover ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cover}
+                    alt={currentSong.title}
+                    className="h-full w-full object-cover"
+                    draggable={false}
                   />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary/20">
+                    <Music2 className="h-16 w-16 text-white/40" />
+                  </div>
                 )}
-                <h1 className="text-2xl font-bold drop-shadow-sm">
-                  {currentSong.title}
-                </h1>
               </div>
-              <p className="mt-1 text-sm text-white/60">
-                {currentSong.artist}
-              </p>
+              <div className="w-full max-w-md shrink-0 px-2 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  {currentSong.trackType === "live_clip" && currentSong.sessionId && (
+                    <LiveClipBadge
+                      onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
+                    />
+                  )}
+                  <h1 className="min-w-0 truncate text-2xl font-bold drop-shadow-sm">
+                    {currentSong.title}
+                  </h1>
+                </div>
+                <p className="mt-1 truncate text-sm text-white/60">
+                  {currentSong.artist}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -335,7 +338,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           <div className="relative min-h-0 flex-1 md:hidden">
             {/* 封面视图 */}
             <div
-              className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-300 ease-out ${
+              className={`absolute inset-0 flex flex-col items-center justify-center overflow-y-auto px-4 transition-all duration-300 ease-out ${
                 showLyrics
                   ? "opacity-0 pointer-events-none scale-95"
                   : "opacity-100 delay-100"
@@ -345,8 +348,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               tabIndex={0}
               aria-label="点击查看歌词"
             >
-              {/* 封面图 */}
-              <div className="aspect-square w-[min(280px,62vw)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              {/* 封面图：vh 约束适配横屏/矮视口 */}
+              <div className="aspect-square w-[min(280px,62vw,55vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -362,8 +365,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                 )}
               </div>
 
-              {/* 歌名 + 歌手 */}
-              <div className="mt-6 text-center">
+              {/* 歌名 + 歌手：shrink-0 防止被压缩 */}
+              <div className="mt-6 w-full max-w-xs shrink-0 px-2 text-center">
                 <div className="flex items-center justify-center gap-1.5">
                   {currentSong.trackType === "live_clip" && currentSong.sessionId && (
                     <span
@@ -377,18 +380,18 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                       />
                     </span>
                   )}
-                  <h1 className="text-lg font-bold drop-shadow-sm">
+                  <h1 className="min-w-0 truncate text-lg font-bold drop-shadow-sm">
                     {currentSong.title}
                   </h1>
                 </div>
-                <p className="mt-1 text-sm text-white/60">
+                <p className="mt-1 truncate text-sm text-white/60">
                   {currentSong.artist}
                 </p>
               </div>
 
               {/* 底部上滑提示 */}
               <motion.div
-                className="mt-8 flex flex-col items-center gap-1 text-white/30"
+                className="mt-8 flex shrink-0 flex-col items-center gap-1 text-white/30"
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
