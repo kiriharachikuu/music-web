@@ -193,7 +193,7 @@ export function ArtistCard({ artist }: ArtistCardProps) {
   return (
     <Link
       href={artist.id ? `/artist/${artist.id}` : "#"}
-      className="flex shrink-0 flex-col items-center gap-2 text-center transition-transform hover:scale-105 active:scale-95"
+      className="group flex shrink-0 flex-col items-center gap-2 text-center"
     >
       <div className="relative h-24 w-24 overflow-hidden rounded-full bg-primary/5 shadow-card md:h-28 md:w-28">
         {cover ? (
@@ -202,7 +202,7 @@ export function ArtistCard({ artist }: ArtistCardProps) {
             alt={artist.name}
             fill
             sizes="(max-width: 768px) 25vw, 10vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-110"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-primary/30">
@@ -210,7 +210,7 @@ export function ArtistCard({ artist }: ArtistCardProps) {
           </div>
         )}
       </div>
-      <p className="text-sm font-medium">{artist.name}</p>
+      <p className="text-sm font-medium transition-colors group-hover:text-primary">{artist.name}</p>
       <p className="text-xs text-foreground/40">{artist.songCount} 首</p>
     </Link>
   );
