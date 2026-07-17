@@ -63,10 +63,10 @@ export function LiveSessionsClient({
         </span>
         <div>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
-            直播场次
+            歌切场次
           </h1>
           <p className="mt-0.5 text-sm text-foreground/50">
-            浏览所有精彩直播回放
+            浏览所有歌切专辑
           </p>
         </div>
       </header>
@@ -74,8 +74,8 @@ export function LiveSessionsClient({
       {items.length === 0 && !loading ? (
         <EmptyState
           icon={Radio}
-          title="暂无直播场次"
-          description="后端服务未就绪或暂无直播数据。"
+          title="暂无歌切场次"
+          description="后端服务未就绪或暂无歌切数据。"
         />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6">

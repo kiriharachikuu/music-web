@@ -112,7 +112,7 @@ export function LiveSessionDetailClient({
 
           <div className="min-w-0 flex-1 space-y-2">
             <p className="text-xs font-medium uppercase tracking-wider text-foreground/50">
-              直播回放
+              歌切专辑
             </p>
             <h1 className="text-3xl font-bold tracking-tight md:text-5xl">
               {session.title}
@@ -190,7 +190,7 @@ export function LiveSessionDetailClient({
         <EmptyState
           icon={Music2}
           title="本场暂无歌切"
-          description="该直播场次还没有任何歌切。"
+          description="该歌切专辑还没有任何曲目。"
         />
       )}
     </section>

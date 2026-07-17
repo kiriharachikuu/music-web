@@ -142,13 +142,13 @@ export function SearchResults({
           </div>
         )}
 
-      {/* 直播歌切 */}
+      {/* 歌切 */}
       {(category === "all" || category === "live_clips") &&
         liveClips.length > 0 && (
           <div>
             {category === "all" && (
               <h3 className="mb-2 text-sm font-semibold text-foreground/70">
-                直播歌切
+                歌切
               </h3>
             )}
             <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
@@ -162,13 +162,13 @@ export function SearchResults({
           </div>
         )}
 
-      {/* 直播场次 */}
+      {/* 歌切场次 */}
       {(category === "all" || category === "live_sessions") &&
         liveSessions.length > 0 && (
           <div>
             {category === "all" && (
               <h3 className="mb-2 text-sm font-semibold text-foreground/70">
-                直播场次
+                歌切场次
               </h3>
             )}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">

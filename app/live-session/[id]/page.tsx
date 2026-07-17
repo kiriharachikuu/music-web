@@ -24,8 +24,8 @@ export default async function LiveSessionDetailPage({
       <section className="animate-fade-in">
         <EmptyState
           icon={Radio}
-          title="直播场次不存在"
-          description="该直播场次可能已被删除，或链接有误。"
+          title="歌切专辑不存在"
+          description="该歌切专辑可能已被删除，或链接有误。"
         />
       </section>
     );
