@@ -101,7 +101,7 @@ export function DiscoverClient({ data: ssrData }: { data: DiscoverData | null })
           {hotArtists.length > 0 && (
             <div>
               <SectionTitle title="热门歌手" />
-              <div className="flex gap-4 overflow-x-auto px-1 pb-2 no-scrollbar md:grid md:grid-cols-6 md:gap-4 md:overflow-visible lg:grid-cols-8">
+              <div className="flex gap-4 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-5">
                 {hotArtists.map((artist) => (
                   <ArtistCard key={artist.id} artist={artist} />
                 ))}

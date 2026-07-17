@@ -195,7 +195,7 @@ export function ArtistCard({ artist }: ArtistCardProps) {
       href={artist.id ? `/artist/${artist.id}` : "#"}
       className="flex shrink-0 flex-col items-center gap-2 text-center transition-transform hover:scale-105 active:scale-95"
     >
-      <div className="h-24 w-24 overflow-hidden rounded-full bg-primary/5 shadow-card md:h-28 md:w-28">
+      <div className="relative h-24 w-24 overflow-hidden rounded-full bg-primary/5 shadow-card md:h-28 md:w-28">
         {cover ? (
           <Image
             src={cover}

@@ -291,14 +291,14 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
           <div className="hidden flex-col items-center gap-6 overflow-y-auto px-4 py-4 md:flex">
             <div className="mt-auto mb-auto flex shrink-0 flex-col items-center gap-6">
-              <div className="relative aspect-square w-[min(420px,80%,60vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              <div className="relative aspect-square w-[min(520px,85%,65vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   <AppImage
                     src={cover}
                     alt={currentSong.title}
                     fill
                     className="rounded-2xl"
-                    sizes="(min-width: 768px) 420px, 80vw"
+                    sizes="(min-width: 768px) 520px, 85vw"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/20">
@@ -349,14 +349,14 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               aria-label="点击查看歌词"
             >
               {/* 封面图：vh 约束适配横屏/矮视口 */}
-              <div className="relative aspect-square w-[min(280px,62vw,55vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              <div className="relative aspect-square w-[min(320px,70vw,60vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   <AppImage
                     src={cover}
                     alt={currentSong.title}
                     fill
                     className="rounded-2xl"
-                    sizes="(max-width: 768px) 62vw, 280px"
+                    sizes="(max-width: 768px) 70vw, 320px"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/20">
