@@ -29,6 +29,53 @@ export interface ApiSong {
   album?: Album | null;
 }
 
+export type TrackType = "official" | "live_clip";
+
+export interface BaseTrack {
+  id: string;
+  title: string;
+  artist: string;
+  cover: string | null | undefined;
+  duration: number;
+  url: string;
+  trackType: TrackType;
+}
+
+export interface OfficialTrack extends BaseTrack {
+  trackType: "official";
+  albumId?: string | null;
+  albumName?: string;
+  fileUrl: string;
+  coverUrl?: string | null;
+  lyricUrl?: string | null;
+  releaseDate: string;
+  plays: number;
+  status: "PUBLISHED" | "DRAFT";
+  tags?: Tag[];
+  album?: Album | null;
+}
+
+export interface LiveClipTrack extends BaseTrack {
+  trackType: "live_clip";
+  sessionId: string;
+  sessionName: string;
+  liveTime: string;
+  trackIndex: number;
+}
+
+export type Track = OfficialTrack | LiveClipTrack;
+
+export interface LiveSession {
+  id: string;
+  title: string;
+  cover: string | null | undefined;
+  artist: string;
+  liveTime: string;
+  description?: string | null;
+  songCount: number;
+  clips: LiveClipTrack[];
+}
+
 /** 专辑 */
 export interface Album {
   id: string;
@@ -188,6 +235,8 @@ export interface SearchResult {
   albums: Album[];
   playlists: Playlist[];
   artists: ArtistBrief[];
+  liveClips: Paginated<LiveClipTrack>;
+  liveSessions: Paginated<LiveSession>;
 }
 
 /** 歌手概要（搜索结果中） */
@@ -213,7 +262,14 @@ export interface ArtistDetail {
 }
 
 /** 搜索结果分类 Tab */
-export type SearchCategory = "all" | "songs" | "albums" | "playlists" | "artists";
+export type SearchCategory =
+  | "all"
+  | "songs"
+  | "albums"
+  | "playlists"
+  | "artists"
+  | "live_clips"
+  | "live_sessions";
 
 /**
  * 搜索排序
@@ -234,13 +290,30 @@ export interface DateRange {
 /** 播放器使用的 Song（复用 player-store 定义） */
 export type { PlayerSong };
 
+function isLiveClipTrack(t: ApiSong | Track): t is LiveClipTrack {
+  return "trackType" in t && t.trackType === "live_clip";
+}
+
 /**
- * 将后端 ApiSong 转换为播放器可用的 PlayerSong
- * - url ← fileUrl
- * - cover ← coverUrl
- * - album ← albumName
+ * 将后端 ApiSong 或 Track 转换为播放器可用的 PlayerSong
+ * - ApiSong / OfficialTrack: url ← fileUrl, cover ← coverUrl, album ← albumName
+ * - LiveClipTrack: url ← url, cover ← cover, album ← sessionName
  */
-export function toPlayerSong(s: ApiSong): PlayerSong {
+export function toPlayerSong(s: ApiSong | Track): PlayerSong {
+  if (isLiveClipTrack(s)) {
+    return {
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      album: s.sessionName,
+      cover: s.cover ?? undefined,
+      url: s.url,
+      duration: s.duration,
+      trackType: s.trackType,
+      sessionId: s.sessionId,
+      sessionName: s.sessionName,
+    };
+  }
   return {
     id: s.id,
     title: s.title,
@@ -249,10 +322,11 @@ export function toPlayerSong(s: ApiSong): PlayerSong {
     cover: s.coverUrl ?? s.album?.cover ?? undefined,
     url: s.fileUrl,
     duration: s.duration,
+    trackType: "official",
   };
 }
 
 /** 批量转换 */
-export function toPlayerSongs(list: ApiSong[]): PlayerSong[] {
+export function toPlayerSongs(list: (ApiSong | Track)[]): PlayerSong[] {
   return list.map(toPlayerSong);
 }

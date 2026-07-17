@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Play, Pause, SkipForward, ChevronUp, Music2, Volume2, VolumeX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { usePlayerStore, formatTime as fmt } from "@/lib/store/player-store";
+import { LiveClipBadge } from "@/components/common/live-clip-badge";
 
 /**
  * 进度条（点击/拖拽定位）
@@ -56,6 +58,7 @@ function ProgressBar({
  * - 移动端位于底部 Tab 栏之上（bottom-16），桌面端 bottom-0
  */
 export function MiniPlayer() {
+  const router = useRouter();
   const currentSong = usePlayerStore((s) => s.currentSong);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const currentTime = usePlayerStore((s) => s.currentTime);
@@ -94,9 +97,16 @@ export function MiniPlayer() {
           <div className="flex min-w-0 flex-1 flex-col gap-1 max-md:landscape:gap-0.5">
             <div className="flex items-baseline justify-between gap-2">
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium max-md:landscape:text-[13px]">
-                  {currentSong?.title ?? "未在播放"}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  {currentSong?.trackType === "live_clip" && currentSong.sessionId && (
+                    <LiveClipBadge
+                      onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
+                    />
+                  )}
+                  <p className="truncate text-sm font-medium max-md:landscape:text-[13px]">
+                    {currentSong?.title ?? "未在播放"}
+                  </p>
+                </div>
                 <p className="truncate text-xs text-foreground/50 max-md:landscape:text-[11px]">
                   {currentSong?.artist ?? "—"}
                 </p>

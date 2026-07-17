@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   motion,
   AnimatePresence,
@@ -8,6 +9,7 @@ import {
   type PanInfo,
 } from "framer-motion";
 import { ChevronDown, Heart, ListMusic, Music2 } from "lucide-react";
+import { LiveClipBadge } from "@/components/common/live-clip-badge";
 
 import {
   usePlayerStore,
@@ -62,6 +64,7 @@ interface FullScreenPlayerInnerProps {
 }
 
 function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
+  const router = useRouter();
   // ----- 播放器状态 -----
   const currentSong = usePlayerStore((s) => s.currentSong);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
@@ -239,9 +242,16 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </button>
           {/* 移动端：歌名 + 歌手 */}
           <div className="flex flex-1 flex-col items-center justify-center px-4 text-center md:hidden">
-            <p className="truncate text-sm font-semibold">
-              {currentSong.title}
-            </p>
+            <div className="flex items-center gap-1.5">
+              {currentSong.trackType === "live_clip" && currentSong.sessionId && (
+                <LiveClipBadge
+                  onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
+                />
+              )}
+              <p className="truncate text-sm font-semibold">
+                {currentSong.title}
+              </p>
+            </div>
             <p className="truncate text-xs text-white/60">
               {currentSong.artist}
             </p>
@@ -278,9 +288,16 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               )}
             </div>
             <div className="text-center">
-              <h1 className="text-2xl font-bold drop-shadow-sm">
-                {currentSong.title}
-              </h1>
+              <div className="flex items-center justify-center gap-2">
+                {currentSong.trackType === "live_clip" && currentSong.sessionId && (
+                  <LiveClipBadge
+                    onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
+                  />
+                )}
+                <h1 className="text-2xl font-bold drop-shadow-sm">
+                  {currentSong.title}
+                </h1>
+              </div>
               <p className="mt-1 text-sm text-white/60">
                 {currentSong.artist}
               </p>

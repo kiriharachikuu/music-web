@@ -9,6 +9,7 @@ import { getCachedAudio } from "@/lib/db/audio-cache";
 import { resolveMediaUrl } from "@/lib/utils";
 import { getPlatform } from "@/lib/platform";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
+import type { TrackType } from "@/lib/types";
 
 /**
  * 上报播放记录到后端（静默失败，不阻塞播放）
@@ -62,6 +63,9 @@ export interface Song {
   url: string;
   /** 时长（秒），可选，加载后以引擎实测为准 */
   duration?: number;
+  trackType?: TrackType;
+  sessionId?: string;
+  sessionName?: string;
 }
 
 /** 播放模式：单曲循环 / 列表循环 / 随机 / 顺序播放（播完不循环） */

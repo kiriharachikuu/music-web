@@ -8,7 +8,7 @@
  * - 提供 api.get / post / put / del 客户端方法
  * - 提供 serverFetch 供 Server Component 使用（带 revalidate + 容错）
  */
-import type { ApiResponse } from "@/lib/types";
+import type { ApiResponse, LiveSession, LiveClipTrack, Paginated } from "@/lib/types";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { resolveMediaPaths } from "@/lib/utils";
@@ -136,4 +136,31 @@ export async function serverFetch<T>(
   } finally {
     clearTimeout(timer);
   }
+}
+
+export async function getLiveSessions(
+  page?: number,
+  limit?: number
+): Promise<Paginated<LiveSession>> {
+  const params = new URLSearchParams();
+  if (page != null) params.set("page", String(page));
+  if (limit != null) params.set("limit", String(limit));
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return api.get<Paginated<LiveSession>>(`/live-sessions${query}`);
+}
+
+export async function getLiveSession(id: string): Promise<LiveSession & { clips: LiveClipTrack[] }> {
+  return api.get<LiveSession & { clips: LiveClipTrack[] }>(`/live-sessions/${id}`);
+}
+
+export async function favoriteLiveSession(id: string): Promise<void> {
+  return api.post<void>(`/user/live-sessions/${id}/favorite`);
+}
+
+export async function unfavoriteLiveSession(id: string): Promise<void> {
+  return api.del<void>(`/user/live-sessions/${id}/favorite`);
+}
+
+export async function getFavoriteLiveSessions(): Promise<LiveSession[]> {
+  return api.get<LiveSession[]>("/user/live-sessions/favorites");
 }

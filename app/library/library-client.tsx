@@ -3,14 +3,15 @@
 import * as React from "react";
 import { Library, Loader2 } from "lucide-react";
 
-import type { Album, Playlist, Paginated } from "@/lib/types";
-import { api } from "@/lib/api";
+import type { Album, Playlist, Paginated, LiveSession } from "@/lib/types";
+import { api, getFavoriteLiveSessions } from "@/lib/api";
 import { AlbumCard } from "@/components/common/album-card";
 import { PlaylistCard } from "@/components/common/playlist-card";
+import { LiveSessionCard } from "@/components/common/live-session-card";
 import { EmptyState } from "@/components/common/empty-state";
 import { cn } from "@/lib/utils";
 
-type Tab = "albums" | "playlists";
+type Tab = "albums" | "playlists" | "live_sessions";
 type Sort = "latest" | "hottest" | "name";
 
 /** 排序选项 */
@@ -37,10 +38,10 @@ export function LibraryClient({
   const [tab, setTab] = React.useState<Tab>("albums");
   const [sort, setSort] = React.useState<Sort>("latest");
 
-  // 当前展示列表（随 tab 切换内容）
   const [items, setItems] = React.useState<(Album | Playlist)[]>(
     initialAlbums?.list ?? []
   );
+  const [liveSessions, setLiveSessions] = React.useState<LiveSession[]>([]);
   const [page, setPage] = React.useState(2);
   const [hasMore, setHasMore] = React.useState(
     (initialAlbums?.list?.length ?? 0) < (initialAlbums?.total ?? 0)
@@ -51,9 +52,26 @@ export function LibraryClient({
   const sentinelRef = React.useRef<HTMLDivElement>(null);
 
   const fetchPath = tab === "albums" ? "/albums" : "/playlists";
+  const isLiveSessionsTab = tab === "live_sessions";
+
+  const reloadLiveSessions = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const sessions = await getFavoriteLiveSessions();
+      setLiveSessions(sessions ?? []);
+    } catch {
+      setLiveSessions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   /** 从第一页重新加载（tab / sort 变化时） */
   const reload = React.useCallback(async () => {
+    if (isLiveSessionsTab) {
+      await reloadLiveSessions();
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.get<Paginated<Album | Playlist>>(
@@ -70,7 +88,7 @@ export function LibraryClient({
     } finally {
       setLoading(false);
     }
-  }, [fetchPath, sort]);
+  }, [fetchPath, sort, isLiveSessionsTab, reloadLiveSessions]);
 
   // tab / sort 变化触发重新加载（跳过首帧，首帧用 SSR 数据）
   React.useEffect(() => {
@@ -83,7 +101,7 @@ export function LibraryClient({
 
   /** 加载下一页 */
   const loadMore = React.useCallback(async () => {
-    if (loading || !hasMore) return;
+    if (loading || !hasMore || isLiveSessionsTab) return;
     setLoading(true);
     try {
       const res = await api.get<Paginated<Album | Playlist>>(
@@ -98,7 +116,7 @@ export function LibraryClient({
     } finally {
       setLoading(false);
     }
-  }, [fetchPath, sort, page, hasMore, loading]);
+  }, [fetchPath, sort, page, hasMore, loading, isLiveSessionsTab]);
 
   // 无限滚动：IntersectionObserver
   React.useEffect(() => {
@@ -126,19 +144,20 @@ export function LibraryClient({
             音乐库
           </h1>
           <p className="mt-0.5 text-sm text-foreground/50">
-            浏览所有专辑与歌单
+            浏览专辑、歌单与收藏的直播场次
           </p>
         </div>
       </header>
 
       {/* 顶部：Tab + 排序 */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Tab：专辑 / 歌单（下划线式） */}
+        {/* Tab：专辑 / 歌单 / 直播场次（下划线式） */}
         <div className="flex items-center gap-6 border-b border-border sm:border-0">
           {(
             [
               { key: "albums", label: "专辑" },
               { key: "playlists", label: "歌单" },
+              { key: "live_sessions", label: "收藏的直播场次" },
             ] as { key: Tab; label: string }[]
           ).map((t) => {
             const isActive = tab === t.key;
@@ -163,34 +182,50 @@ export function LibraryClient({
           })}
         </div>
 
-        {/* 排序选项：选中实心 primary-700 白字 */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-foreground/40">排序</span>
-          <div className="flex items-center gap-1.5">
-            {SORTS.map((s) => {
-              const isActive = sort === s.key;
-              return (
-                <button
-                  key={s.key}
-                  type="button"
-                  onClick={() => setSort(s.key)}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    isActive
-                      ? "bg-primary text-white"
-                      : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
-                  )}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
+        {/* 排序选项（直播场次不显示） */}
+        {!isLiveSessionsTab && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-foreground/40">排序</span>
+            <div className="flex items-center gap-1.5">
+              {SORTS.map((s) => {
+                const isActive = sort === s.key;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setSort(s.key)}
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                      isActive
+                        ? "bg-primary text-white"
+                        : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
+                    )}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 内容网格 */}
-      {items.length === 0 && !loading ? (
+      {isLiveSessionsTab ? (
+        liveSessions.length === 0 && !loading ? (
+          <EmptyState
+            icon={Library}
+            title="暂无收藏的直播场次"
+            description="去发现页面看看有哪些精彩的直播场次吧～"
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6">
+            {liveSessions.map((session) => (
+              <LiveSessionCard key={session.id} session={session} />
+            ))}
+          </div>
+        )
+      ) : items.length === 0 && !loading ? (
         <EmptyState
           icon={Library}
           title="暂无内容"
@@ -216,7 +251,7 @@ export function LibraryClient({
           加载中...
         </div>
       )}
-      {!hasMore && items.length > 0 && (
+      {!hasMore && !isLiveSessionsTab && items.length > 0 && (
         <p className="py-4 text-center text-xs text-foreground/30">
           已经到底啦
         </p>

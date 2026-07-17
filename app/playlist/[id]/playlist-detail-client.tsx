@@ -354,6 +354,7 @@ export function PlaylistDetailClient({
               songs={songList}
               likedIds={likedIds}
               onLike={handleLike}
+              showTrackType={true}
             />
           ) : (
             /* 管理模式：拖拽排序 + 删除 */

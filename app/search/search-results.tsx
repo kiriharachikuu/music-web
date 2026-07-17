@@ -10,6 +10,7 @@ import type {
 import { SongList } from "@/components/common/song-list";
 import { AlbumCard } from "@/components/common/album-card";
 import { PlaylistCard } from "@/components/common/playlist-card";
+import { LiveSessionCard } from "@/components/common/live-session-card";
 import { EmptyState } from "@/components/common/empty-state";
 import {
   SongListSkeleton,
@@ -35,6 +36,8 @@ export function SearchResults({
   const songList = results.songs?.list ?? [];
   const albums = results.albums ?? [];
   const playlists = results.playlists ?? [];
+  const liveClips = results.liveClips?.list ?? [];
+  const liveSessions = results.liveSessions?.list ?? [];
   // 优先用后端返回的歌手；后端未返回时从歌曲结果聚合（按 artist 去重 + 统计歌曲数）
   const backendArtists = results.artists ?? [];
   const artists: ArtistBrief[] =
@@ -55,7 +58,9 @@ export function SearchResults({
     songList.length === 0 &&
     albums.length === 0 &&
     playlists.length === 0 &&
-    artists.length === 0;
+    artists.length === 0 &&
+    liveClips.length === 0 &&
+    liveSessions.length === 0;
 
   if (isEmpty) {
     return (
@@ -132,6 +137,43 @@ export function SearchResults({
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
               {artists.map((a) => (
                 <ArtistCard key={a.name} artist={a} />
+              ))}
+            </div>
+          </div>
+        )}
+
+      {/* 直播歌切 */}
+      {(category === "all" || category === "live_clips") &&
+        liveClips.length > 0 && (
+          <div>
+            {category === "all" && (
+              <h3 className="mb-2 text-sm font-semibold text-foreground/70">
+                直播歌切
+              </h3>
+            )}
+            <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
+              <SongList
+                songs={liveClips as any}
+                onLike={onLike}
+                likedIds={likedIds}
+                showTrackType={true}
+              />
+            </div>
+          </div>
+        )}
+
+      {/* 直播场次 */}
+      {(category === "all" || category === "live_sessions") &&
+        liveSessions.length > 0 && (
+          <div>
+            {category === "all" && (
+              <h3 className="mb-2 text-sm font-semibold text-foreground/70">
+                直播场次
+              </h3>
+            )}
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              {liveSessions.map((s) => (
+                <LiveSessionCard key={s.id} session={s} />
               ))}
             </div>
           </div>

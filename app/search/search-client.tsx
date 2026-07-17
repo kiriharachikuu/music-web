@@ -43,6 +43,8 @@ const CATEGORIES: { key: SearchCategory; label: string }[] = [
   { key: "albums", label: "专辑" },
   { key: "playlists", label: "歌单" },
   { key: "artists", label: "歌手" },
+  { key: "live_clips", label: "直播歌切" },
+  { key: "live_sessions", label: "直播场次" },
 ];
 
 /** 排序选项（仅歌曲维度生效） */

@@ -18,8 +18,9 @@ import {
   Loader2,
 } from "lucide-react";
 
-import type { ApiSong } from "@/lib/types";
+import type { ApiSong, Track, TrackType } from "@/lib/types";
 import { toPlayerSong } from "@/lib/types";
+import { LiveClipBadge } from "@/components/common/live-clip-badge";
 import { usePlayerStore, formatTime } from "@/lib/store/player-store";
 import {
   DropdownMenu,
@@ -42,11 +43,14 @@ import { useToast } from "@/components/ui/toaster";
  * - 支持多选（用于个人中心"我喜欢的音乐"批量管理）
  * - 操作按钮：播放/暂停、喜欢、添加到队列
  */
-export function SongList({
+type SongWithTrackType = ApiSong & { trackType?: TrackType };
+
+export function SongList<T extends ApiSong | Track = SongWithTrackType>({
   songs,
   showRank = false,
   startRank = 1,
   selectable = false,
+  showTrackType = false,
   selectedIds,
   onToggleSelect,
   onLike,
@@ -55,23 +59,25 @@ export function SongList({
   className,
   emptyText,
 }: {
-  songs: ApiSong[];
+  songs: T[];
   /** 是否显示排名序号（排行榜用） */
   showRank?: boolean;
   /** 排名起始值（分页/分榜时偏移） */
   startRank?: number;
   /** 是否启用多选 */
   selectable?: boolean;
+  /** 是否显示曲目类型标签（LIVE 等） */
+  showTrackType?: boolean;
   /** 已选中的歌曲 id 集合 */
   selectedIds?: Set<string>;
   /** 切换选中回调 */
   onToggleSelect?: (id: string) => void;
   /** 喜欢回调 */
-  onLike?: (song: ApiSong) => void;
+  onLike?: (song: T) => void;
   /** 已喜欢的歌曲 id 集合 */
   likedIds?: Set<string>;
   /** 删除回调（用于播放历史单条删除） */
-  onDelete?: (song: ApiSong) => void;
+  onDelete?: (song: T) => void;
   className?: string;
   emptyText?: string;
 }) {
@@ -115,7 +121,7 @@ export function SongList({
   }, []);
 
   /** 触发下载某首歌曲，更新下载态并 toast 反馈 */
-  const handleDownload = async (song: ApiSong) => {
+  const handleDownload = async (song: T) => {
     if (downloadingIds.has(song.id)) return;
     // 已下载则不重复下载，提示已在本地
     if (downloadedIds.has(song.id)) {
@@ -124,7 +130,7 @@ export function SongList({
     }
     setDownloadingIds((prev) => new Set(prev).add(song.id));
     try {
-      const result = await downloadSong(song);
+      const result = await downloadSong(song as ApiSong);
       setDownloadedIds((prev) => new Set(prev).add(song.id));
       if (result.newlyDownloaded) {
         toast.success("下载完成", { description: song.title });
@@ -240,10 +246,15 @@ export function SongList({
               onClick={handlePlay}
               className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/5 md:h-12 md:w-12"
             >
-              {song.coverUrl || (song.album?.cover && song.album.cover) ? (
+              {("coverUrl" in song && song.coverUrl) ||
+              ("album" in song && song.album?.cover) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={song.coverUrl || song.album?.cover || undefined}
+                  src={
+                    ("coverUrl" in song && song.coverUrl) ||
+                    ("album" in song ? song.album?.cover : undefined) ||
+                    undefined
+                  }
                   alt={song.title}
                   loading="lazy"
                   className="h-full w-full object-cover"
@@ -263,20 +274,25 @@ export function SongList({
             >
               <p
                 className={cn(
-                  "truncate text-sm font-medium",
+                  "flex items-center gap-1.5 truncate text-sm font-medium",
                   isActive && "text-primary dark:text-primary/60"
                 )}
               >
-                {song.title}
+                {showTrackType &&
+                  "trackType" in song &&
+                  song.trackType === "live_clip" && <LiveClipBadge />}
+                <span className="truncate">{song.title}</span>
               </p>
               <p className="truncate text-xs text-foreground/50">
                 {song.artist}
-                {song.albumName ? ` · ${song.albumName}` : ""}
+                {"albumName" in song && song.albumName
+                  ? ` · ${song.albumName}`
+                  : ""}
               </p>
             </button>
 
             {/* 播放数（若有，仅排行榜等场景展示） */}
-            {song.plays > 0 && (
+            {"plays" in song && song.plays > 0 && (
               <span className="hidden shrink-0 text-xs text-foreground/40 sm:inline">
                 {formatPlays(song.plays)}
               </span>
@@ -430,7 +446,7 @@ export function SongList({
                     <Plus className="mr-2 h-4 w-4" />
                     添加到歌单
                   </DropdownMenuItem>
-                  {song.albumId && (
+                  {"albumId" in song && song.albumId && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>

@@ -21,7 +21,7 @@ export function MobileTabBar() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 flex flex-col border-t border-primary/10 bg-white/90 backdrop-blur-xl dark:bg-gray-900/80 md:hidden">
       <div className="flex h-14 items-stretch landscape:h-12">
-        {navItems.map((item) => {
+        {navItems.filter((item) => !item.mobileHidden).map((item) => {
           const active = isActive(item.href);
           const Icon = item.icon;
           return (

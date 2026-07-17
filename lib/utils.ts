@@ -23,6 +23,18 @@ export function formatDate(input?: string | Date | null): string {
   return `${y}-${m}-${day}`;
 }
 
+export function formatDateTime(input?: string | Date | null): string {
+  if (!input) return "";
+  const d = typeof input === "string" ? new Date(input) : input;
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${y}-${m}-${day} ${h}:${min}`;
+}
+
 /**
  * formatTotalDuration —— 格式化总时长（秒）为人类可读文本
  * - < 1 分钟：不到 1 分钟
