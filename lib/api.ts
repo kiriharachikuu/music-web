@@ -164,3 +164,16 @@ export async function unfavoriteLiveSession(id: string): Promise<void> {
 export async function getFavoriteLiveSessions(): Promise<LiveSession[]> {
   return api.get<LiveSession[]>("/user/live-sessions/favorites");
 }
+
+// 歌切收藏
+export async function favoriteLiveClip(id: string): Promise<{ favorited: boolean }> {
+  return api.post<{ favorited: boolean }>(`/user/live-clips/${id}/favorite`);
+}
+
+export async function unfavoriteLiveClip(id: string): Promise<{ favorited: boolean }> {
+  return api.del<{ favorited: boolean }>(`/user/live-clips/${id}/favorite`);
+}
+
+export async function getFavoriteLiveClipIds(): Promise<string[]> {
+  return api.get<string[]>("/user/live-clips/favorites");
+}

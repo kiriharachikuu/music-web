@@ -2,13 +2,15 @@
 
 import { create } from "zustand";
 
-import { api, getFavoriteLiveSessions, favoriteLiveSession, unfavoriteLiveSession } from "@/lib/api";
+import { api, getFavoriteLiveSessions, favoriteLiveSession, unfavoriteLiveSession, favoriteLiveClip, unfavoriteLiveClip, getFavoriteLiveClipIds } from "@/lib/api";
 
 interface FavoritesState {
   likedIds: Set<string>;
   loaded: boolean;
   likedSessionIds: Set<string>;
   loadingSessions: boolean;
+  likedClipIds: Set<string>;
+  loadingClips: boolean;
   initLikedIds: (ids: string[]) => void;
   isLiked: (songId: string) => boolean;
   toggleLike: (songId: string) => Promise<void>;
@@ -18,6 +20,9 @@ interface FavoritesState {
   loadFavoriteSessionsFromServer: () => Promise<void>;
   toggleFavoriteSession: (sessionId: string) => Promise<void>;
   isSessionLiked: (sessionId: string) => boolean;
+  loadFavoriteClipsFromServer: () => Promise<void>;
+  toggleFavoriteClip: (clipId: string) => Promise<void>;
+  isClipLiked: (clipId: string) => boolean;
 }
 
 export const useFavoritesStore = create<FavoritesState>((set, get) => ({
@@ -25,6 +30,8 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   loaded: false,
   likedSessionIds: new Set(),
   loadingSessions: false,
+  likedClipIds: new Set(),
+  loadingClips: false,
 
   initLikedIds: (ids: string[]) => {
     set({ likedIds: new Set(ids), loaded: true });
@@ -128,4 +135,43 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   },
 
   isSessionLiked: (sessionId: string) => get().likedSessionIds.has(sessionId),
+
+  loadFavoriteClipsFromServer: async () => {
+    set({ loadingClips: true });
+    try {
+      const ids = await getFavoriteLiveClipIds();
+      set({ likedClipIds: new Set(ids), loadingClips: false });
+    } catch {
+      set({ likedClipIds: new Set(), loadingClips: false });
+    }
+  },
+
+  toggleFavoriteClip: async (clipId: string) => {
+    const state = get();
+    const isLiked = state.likedClipIds.has(clipId);
+
+    set((prev) => {
+      const next = new Set(prev.likedClipIds);
+      if (isLiked) next.delete(clipId);
+      else next.add(clipId);
+      return { likedClipIds: next };
+    });
+
+    try {
+      if (isLiked) {
+        await unfavoriteLiveClip(clipId);
+      } else {
+        await favoriteLiveClip(clipId);
+      }
+    } catch {
+      set((prev) => {
+        const next = new Set(prev.likedClipIds);
+        if (isLiked) next.add(clipId);
+        else next.delete(clipId);
+        return { likedClipIds: next };
+      });
+    }
+  },
+
+  isClipLiked: (clipId: string) => get().likedClipIds.has(clipId),
 }));

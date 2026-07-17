@@ -22,20 +22,29 @@ export function LiveSessionDetailClient({
   const play = usePlayerStore((s) => s.play);
   const setPlayMode = usePlayerStore((s) => s.setPlayMode);
   const openLogin = useAuthStore((s) => s.openLogin);
-  const likedIds = useFavoritesStore((s) => s.likedIds);
+  const likedClipIds = useFavoritesStore((s) => s.likedClipIds);
   const isSessionLiked = useFavoritesStore((s) => s.isSessionLiked);
   const toggleFavoriteSession = useFavoritesStore((s) => s.toggleFavoriteSession);
   const loadFavoriteSessionsFromServer = useFavoritesStore(
     (s) => s.loadFavoriteSessionsFromServer
   );
+  const toggleFavoriteClip = useFavoritesStore((s) => s.toggleFavoriteClip);
+  const loadFavoriteClipsFromServer = useFavoritesStore(
+    (s) => s.loadFavoriteClipsFromServer
+  );
   const [favLoading, setFavLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (!getToken()) return;
-    const loading = useFavoritesStore.getState().loadingSessions;
+    const loadingSessions = useFavoritesStore.getState().loadingSessions;
     const sessionIds = useFavoritesStore.getState().likedSessionIds;
-    if (!loading && sessionIds.size === 0) {
+    if (!loadingSessions && sessionIds.size === 0) {
       void loadFavoriteSessionsFromServer();
+    }
+    const loadingClips = useFavoritesStore.getState().loadingClips;
+    const clipIds = useFavoritesStore.getState().likedClipIds;
+    if (!loadingClips && clipIds.size === 0) {
+      void loadFavoriteClipsFromServer();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -183,7 +192,14 @@ export function LiveSessionDetailClient({
           <SongList
             songs={clips}
             showTrackType={true}
-            likedIds={likedIds}
+            likedIds={likedClipIds}
+            onLike={(song) => {
+              if (!getToken()) {
+                openLogin();
+                return;
+              }
+              void toggleFavoriteClip(song.id);
+            }}
           />
         </div>
       ) : (
