@@ -231,7 +231,7 @@ export function LyricsView({
               aria-current={isActive ? "true" : undefined}
               aria-label={`跳转到 ${formatLabelTime(line.time)}`}
               className={cn(
-                "group relative max-w-full cursor-pointer rounded-lg px-2 transition-all duration-350 ease-out",
+                "group relative max-w-full cursor-pointer rounded-lg px-2 text-center transition-all duration-350 ease-out",
                 isActive
                   ? "text-white scale-110"
                   : "text-white/70 hover:text-white"
@@ -281,14 +281,14 @@ function LyricLineContent({
         <span className="lyrics-flash pointer-events-none absolute inset-0 -z-10 rounded-lg bg-primary/30" />
       )}
       {/* 原文：空行用占位符避免高度塌陷 */}
-      <span className="block text-lg font-semibold leading-relaxed drop-shadow-sm md:text-2xl md:leading-relaxed">
+      <span className="block text-center text-lg font-semibold leading-relaxed drop-shadow-sm md:text-2xl md:leading-relaxed">
         {line.text || "···"}
       </span>
       {/* 译文：双语歌词，比原文小，颜色 primary-300 */}
       {line.translation && (
         <span
           className={cn(
-            "mt-1 block text-sm font-normal md:text-base",
+            "mt-1 block text-center text-sm font-normal md:text-base",
             isActive ? "text-primary/60" : "text-white/50"
           )}
         >

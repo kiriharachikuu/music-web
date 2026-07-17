@@ -287,18 +287,18 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden md:grid md:grid-cols-[0.9fr_1.1fr] md:items-stretch md:gap-10">
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden md:grid md:grid-cols-[1fr_1fr] md:items-stretch md:gap-10">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
           <div className="hidden flex-col items-center gap-6 overflow-y-auto px-4 py-4 md:flex">
             <div className="mt-auto mb-auto flex shrink-0 flex-col items-center gap-6">
-              <div className="relative aspect-square w-[min(520px,85%,65vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              <div className="relative aspect-square w-[min(680px,95%,75vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   <AppImage
                     src={cover}
                     alt={currentSong.title}
                     fill
                     className="rounded-2xl"
-                    sizes="(min-width: 768px) 520px, 85vw"
+                    sizes="(min-width: 768px) 680px, 95vw"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/20">
@@ -349,14 +349,14 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               aria-label="点击查看歌词"
             >
               {/* 封面图：vh 约束适配横屏/矮视口 */}
-              <div className="relative aspect-square w-[min(320px,70vw,60vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              <div className="relative aspect-square w-[min(360px,75vw,65vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   <AppImage
                     src={cover}
                     alt={currentSong.title}
                     fill
                     className="rounded-2xl"
-                    sizes="(max-width: 768px) 70vw, 320px"
+                    sizes="(max-width: 768px) 75vw, 360px"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/20">
