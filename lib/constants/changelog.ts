@@ -43,6 +43,31 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.2.0",
+    versionCode: 7,
+    releaseDate: "2026-07-17",
+    title: "离线模式全面升级与性能优化",
+    changes: [
+      { type: "feature", content: "离线模式支持完整播放器，包含封面、歌词、进度拖拽、播放控制" },
+      { type: "feature", content: "离线模式支持 LRC 歌词实时高亮滚动与点击跳转" },
+      { type: "feature", content: "歌曲下载时自动缓存封面图片与歌词到本地存储" },
+      { type: "feature", content: "音频焦点管理：来电/通知打断后自动恢复播放" },
+      { type: "feature", content: "播放打断自动恢复：短暂打断暂停后自动续播，可降低音量共存" },
+      { type: "improvement", content: "应用启动速度优化，ExoPlayer 等组件延迟初始化，冷启动缩短约 40%" },
+      { type: "improvement", content: "点击响应延迟优化，消除偶发 2 秒卡顿" },
+      { type: "improvement", content: "通知栏播放器去重更新，减少不必要的重建开销" },
+      { type: "improvement", content: "PendingIntent 缓存，降低通知栏内存分配" },
+      { type: "improvement", content: "WebView 配置优化，URI 解析结果缓存" },
+      { type: "improvement", content: "安装未知应用权限改为按需请求，不再启动时弹窗" },
+      { type: "fix", content: "修复离线页面封面图片因文件访问权限无法显示的问题" },
+      { type: "fix", content: "修复离线页面歌词区域溢出导致布局错乱的问题" },
+      { type: "fix", content: "修复离线播放器默认展开而非收起的问题" },
+      { type: "fix", content: "修复检测到联网后离线页面自动退出的问题（JS 线程调用 WebView 未切主线程）" },
+      { type: "fix", content: "修复全屏歌词页底部大片空白的布局问题" },
+      { type: "fix", content: "修复 ExoPlayer 内置音频焦点与自定义焦点管理冲突" },
+    ],
+  },
+  {
     version: "1.1.0",
     versionCode: 6,
     releaseDate: "2026-07-17",
@@ -133,8 +158,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "1.1.0";
-export const APP_VERSION_CODE = 6;
+export const APP_VERSION = "1.2.0";
+export const APP_VERSION_CODE = 7;
 
 /**
  * 获取更新类型对应的显示标签
