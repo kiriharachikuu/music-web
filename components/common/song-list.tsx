@@ -34,6 +34,7 @@ import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog"
 import { SwipeableRow } from "@/components/common/swipeable-row";
 import { downloadSong, listDownloads, isDownloadAvailable } from "@/lib/download";
 import { useToast } from "@/components/ui/toaster";
+import { AppImage } from "@/components/ui/app-image";
 
 /**
  * 通用歌曲列表
@@ -249,8 +250,7 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
               {("cover" in song && (song as any).cover) ||
               ("coverUrl" in song && song.coverUrl) ||
               ("album" in song && song.album?.cover) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <AppImage
                   src={
                     ("cover" in song && (song as any).cover) ||
                     ("coverUrl" in song && song.coverUrl) ||
@@ -258,8 +258,9 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                     undefined
                   }
                   alt={song.title}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
+                  fill
+                  className="rounded-lg"
+                  sizes="48px"
                 />
               ) : (
                 <span className="flex h-full w-full items-center justify-center text-primary/40">

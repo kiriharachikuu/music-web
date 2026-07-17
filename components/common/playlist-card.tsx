@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Play, ListMusic } from "lucide-react";
 
 import type { Playlist } from "@/lib/types";
@@ -31,12 +32,12 @@ export function PlaylistCard({
       {/* 封面容器 */}
       <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-primary/5 shadow-card">
         {playlist.cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={playlist.cover}
             alt={playlist.name}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 md:group-hover:scale-105"
+            fill
+            className="object-cover transition-transform duration-500 md:group-hover:scale-105"
+            sizes="(max-width: 768px) 50vw, 25vw"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-primary/30">

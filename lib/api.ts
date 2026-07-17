@@ -7,6 +7,7 @@
  * - 401 在客户端弹出登录弹窗（不跳转页面），由 auth-store 控制
  * - 提供 api.get / post / put / del 客户端方法
  * - 提供 serverFetch 供 Server Component 使用（带 revalidate + 容错）
+ * - GET 请求内存缓存（默认 30s），避免快速导航重复请求
  */
 import type { ApiResponse, LiveSession, LiveClipTrack, Paginated } from "@/lib/types";
 import { getToken, clearAuth } from "@/lib/auth";
@@ -20,6 +21,51 @@ export const API_BASE =
 /** 后端管理后台地址（个人中心管理员入口跳转用） */
 export const ADMIN_URL =
   process.env.NEXT_PUBLIC_ADMIN_URL || "http://localhost:3001";
+
+/** 内存缓存：url -> { data, timestamp } */
+const cache = new Map<string, { data: unknown; timestamp: number }>();
+/** 默认缓存 TTL：30 秒 */
+const DEFAULT_CACHE_TTL = 30 * 1000;
+
+/** 清除缓存：不传 pattern 则全部清除，传 pattern 则清除匹配的 */
+export function invalidateCache(pattern?: string) {
+  if (typeof window === "undefined") return;
+  if (!pattern) {
+    cache.clear();
+    return;
+  }
+  for (const key of cache.keys()) {
+    if (key.includes(pattern)) {
+      cache.delete(key);
+    }
+  }
+}
+
+/**
+ * 带缓存的 GET 请求
+ * - 仅客户端生效（SSR 有自己的 revalidate 机制）
+ * - 默认缓存 30 秒，可通过 init.cacheTtlMs 自定义
+ */
+async function cachedGet<T>(
+  path: string,
+  init?: RequestInit & { cacheTtlMs?: number; skipCache?: boolean }
+): Promise<T> {
+  if (typeof window === "undefined" || init?.skipCache) {
+    return request<T>("GET", path, undefined, init);
+  }
+
+  const cacheKey = path;
+  const cached = cache.get(cacheKey);
+  const ttl = init?.cacheTtlMs ?? DEFAULT_CACHE_TTL;
+
+  if (cached && Date.now() - cached.timestamp < ttl) {
+    return cached.data as T;
+  }
+
+  const data = await request<T>("GET", path, undefined, init);
+  cache.set(cacheKey, { data, timestamp: Date.now() });
+  return data;
+}
 
 /**
  * 客户端 / 服务端通用请求方法
@@ -92,16 +138,24 @@ async function request<T>(
 
 /** 客户端 API 实例 */
 export const api = {
-  get: <T>(path: string, init?: RequestInit) =>
-    request<T>("GET", path, undefined, init),
-  post: <T>(path: string, body?: unknown, init?: RequestInit) =>
-    request<T>("POST", path, body, init),
-  put: <T>(path: string, body?: unknown, init?: RequestInit) =>
-    request<T>("PUT", path, body, init),
-  patch: <T>(path: string, body?: unknown, init?: RequestInit) =>
-    request<T>("PATCH", path, body, init),
-  del: <T>(path: string, init?: RequestInit) =>
-    request<T>("DELETE", path, undefined, init),
+  get: <T>(path: string, init?: RequestInit & { cacheTtlMs?: number; skipCache?: boolean }) =>
+    cachedGet<T>(path, init),
+  post: <T>(path: string, body?: unknown, init?: RequestInit) => {
+    invalidateCache(path);
+    return request<T>("POST", path, body, init);
+  },
+  put: <T>(path: string, body?: unknown, init?: RequestInit) => {
+    invalidateCache(path);
+    return request<T>("PUT", path, body, init);
+  },
+  patch: <T>(path: string, body?: unknown, init?: RequestInit) => {
+    invalidateCache(path);
+    return request<T>("PATCH", path, body, init);
+  },
+  del: <T>(path: string, init?: RequestInit) => {
+    invalidateCache(path);
+    return request<T>("DELETE", path, undefined, init);
+  },
 };
 
 /**

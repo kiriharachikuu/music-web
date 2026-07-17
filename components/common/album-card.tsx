@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Disc3 } from "lucide-react";
 
 import type { Album } from "@/lib/types";
@@ -26,11 +27,12 @@ export function AlbumCard({
     >
       <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-primary/5 shadow-card">
         {album.cover ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={album.cover}
             alt={album.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 50vw, 25vw"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-primary/30">

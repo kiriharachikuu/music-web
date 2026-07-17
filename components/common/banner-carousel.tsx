@@ -8,6 +8,7 @@ import type { Banner } from "@/lib/types";
 import { toPlayerSong } from "@/lib/types";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/app-image";
 
 /**
  * 顶部 Banner 轮播
@@ -98,13 +99,12 @@ export function BannerCarousel({
         {banners.map((b) => {
           const inner = (
             <div className="relative h-36 w-full shrink-0 md:h-64">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <AppImage
                 src={b.imageUrl}
                 alt={b.title}
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-cover"
+                fill
+                className="rounded-xl md:rounded-2xl"
+                sizes="100vw"
               />
               {/* 渐变遮罩，增强文字可读性 */}
               <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />

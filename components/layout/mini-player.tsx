@@ -7,6 +7,7 @@ import { Play, Pause, SkipForward, ChevronUp, Music2, Volume2, VolumeX } from "l
 import { Button } from "@/components/ui/button";
 import { usePlayerStore, formatTime as fmt } from "@/lib/store/player-store";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
+import { AppImage } from "@/components/ui/app-image";
 
 /**
  * 进度条（点击/拖拽定位）—— 使用 React.memo 避免 currentTime 变化时重渲染文字部分
@@ -76,14 +77,12 @@ export function MiniPlayer() {
           {/* 封面 */}
           <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/10 md:h-14 md:w-14 max-md:landscape:h-10 max-md:landscape:w-10">
             {currentSong?.cover ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <AppImage
                 src={currentSong.cover}
                 alt={currentSong.title}
-                className="h-full w-full object-cover"
-                loading="lazy"
-                decoding="async"
-                style={{ contain: "strict" }}
+                fill
+                className="rounded-lg"
+                sizes="56px"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-primary/60">

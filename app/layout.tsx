@@ -80,6 +80,13 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: colorThemeInitScript }} />
       </head>
       <body className="min-h-full bg-background text-foreground">
+        {/* 无障碍：跳转至主内容 */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white focus:shadow-lg"
+        >
+          跳转到主要内容
+        </a>
         {/* next-themes：attribute=class 切换 .dark，suppressHydrationWarning 已在 <html> 声明 */}
         <ThemeProvider
           attribute="class"

@@ -10,7 +10,6 @@ import {
   findActiveLineIndex,
   type LyricLine,
 } from "@/lib/lrc-parser";
-
 /**
  * XingTone —— 全屏歌词列表组件
  *
@@ -192,12 +191,9 @@ export function LyricsView({
         className="flex h-full flex-col items-center justify-center gap-3 text-white/50"
         onClick={onToggleView}
       >
-        <motion.div
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        >
+        <div className="lyrics-pulse">
           <Music2 className="h-10 w-10" />
-        </motion.div>
+        </div>
         <p className="text-sm">暂无歌词</p>
       </div>
     );
@@ -214,8 +210,8 @@ export function LyricsView({
         "[-webkit-mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]"
       )}
     >
-      {/* 上下留白让首尾行能滚到容器中心 */}
-      <div className="flex min-h-full flex-col items-center justify-center gap-6 py-16 md:py-20 text-center">
+      {/* 上下留白让首尾行能滚到容器中心（PC 端顶部留白更大，确保首行可滚动到视觉中心） */}
+      <div className="flex min-h-full flex-col items-center justify-center gap-4 py-16 md:pt-60 md:pb-20 text-center">
         {lines.map((line, i) => {
           const isActive = i === activeIndex;
           const isClicked = i === clickedIndex;
@@ -225,65 +221,87 @@ export function LyricsView({
             ? 1
             : Math.max(0.25, 0.6 - distance * 0.08);
           return (
-            <motion.button
+            <button
               key={i}
               ref={(el) => {
                 lineRefs.current[i] = el;
               }}
               type="button"
               onClick={() => handleSeek(i, line.time)}
-              animate={{ scale: isActive ? 1.1 : 1, opacity }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
               aria-current={isActive ? "true" : undefined}
               aria-label={`跳转到 ${formatLabelTime(line.time)}`}
               className={cn(
-                "group relative max-w-full cursor-pointer rounded-lg px-2 transition-colors",
+                "group relative max-w-full cursor-pointer rounded-lg px-2 transition-all duration-350 ease-out",
                 isActive
-                  ? "text-white"
+                  ? "text-white scale-110"
                   : "text-white/70 hover:text-white"
               )}
-              style={
-                isActive
+              style={{
+                opacity,
+                transitionDuration: "350ms",
+                transitionTimingFunction: "ease-out",
+                ...(isActive
                   ? { textShadow: "0 0 24px rgba(139,0,255,0.6)" }
-                  : undefined
-              }
+                  : undefined),
+              }}
             >
-              {/* 点击闪光反馈层 */}
-              {isClicked && (
+              {/* 当前行的 scale 动画用 Framer Motion，其他行用 CSS */}
+              {isActive ? (
                 <motion.span
-                  className="pointer-events-none absolute inset-0 -z-10 rounded-lg bg-primary/30"
-                  initial={{ opacity: 0.8, scale: 0.9 }}
-                  animate={{ opacity: 0, scale: 1.15 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                />
-              )}
-              {/* 原文：空行用占位符避免高度塌陷 */}
-              <span className="block text-lg font-semibold leading-relaxed drop-shadow-sm md:text-2xl md:leading-relaxed">
-                {line.text || "···"}
-              </span>
-              {/* 译文：双语歌词，比原文小，颜色 primary-300 */}
-              {line.translation && (
-                <span
-                  className={cn(
-                    "mt-1 block text-sm font-normal md:text-base",
-                    isActive ? "text-primary/60" : "text-white/50"
-                  )}
+                  className="block"
+                  animate={{ scale: 1.1 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
                 >
-                  {line.translation}
-                </span>
+                  <LyricLineContent line={line} isActive={isActive} isClicked={isClicked} />
+                </motion.span>
+              ) : (
+                <LyricLineContent line={line} isActive={isActive} isClicked={isClicked} />
               )}
-              {/* 悬停可点击提示（非当前行） */}
-              {!isActive && (
-                <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-                  点击跳转
-                </span>
-              )}
-            </motion.button>
+            </button>
           );
         })}
       </div>
     </div>
+  );
+}
+
+function LyricLineContent({
+  line,
+  isActive,
+  isClicked,
+}: {
+  line: LyricLine;
+  isActive: boolean;
+  isClicked: boolean;
+}) {
+  return (
+    <>
+      {/* 点击闪光反馈层 */}
+      {isClicked && (
+        <span className="lyrics-flash pointer-events-none absolute inset-0 -z-10 rounded-lg bg-primary/30" />
+      )}
+      {/* 原文：空行用占位符避免高度塌陷 */}
+      <span className="block text-lg font-semibold leading-relaxed drop-shadow-sm md:text-2xl md:leading-relaxed">
+        {line.text || "···"}
+      </span>
+      {/* 译文：双语歌词，比原文小，颜色 primary-300 */}
+      {line.translation && (
+        <span
+          className={cn(
+            "mt-1 block text-sm font-normal md:text-base",
+            isActive ? "text-primary/60" : "text-white/50"
+          )}
+        >
+          {line.translation}
+        </span>
+      )}
+      {/* 悬停可点击提示（非当前行） */}
+      {!isActive && (
+        <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+          点击跳转
+        </span>
+      )}
+    </>
   );
 }
 

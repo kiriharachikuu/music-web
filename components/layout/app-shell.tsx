@@ -152,8 +152,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="md:pl-64">
         <TopNav />
         <main
+          id="main-content"
           className={cn(
-            "mx-auto max-w-[1400px] px-4 pb-44 md:px-6 md:pb-32 max-md:landscape:pb-36",
+            "mx-auto max-w-[1400px] px-4 pb-44 md:px-[6.5rem] md:pb-32 max-md:landscape:pb-36",
             isMobileSearch && isMobile
               ? "pt-0"
               : "pt-[calc(var(--safe-area-top,0px)+5rem)] md:pt-[calc(var(--safe-area-top,0px)+5.5rem)]"

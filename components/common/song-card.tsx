@@ -6,6 +6,7 @@ import type { ApiSong } from "@/lib/types";
 import { toPlayerSong } from "@/lib/types";
 import { usePlayerStore, formatTime } from "@/lib/store/player-store";
 import { cn } from "@/lib/utils";
+import { AppImage } from "@/components/ui/app-image";
 
 /**
  * 单曲卡片
@@ -48,12 +49,12 @@ export function SongCard({
         className="relative block aspect-square w-full overflow-hidden rounded-xl bg-primary/5 text-left shadow-card transition-transform duration-300 active:scale-95 md:hover:-translate-y-1"
       >
         {song.coverUrl || (song.album?.cover && song.album.cover) ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <AppImage
             src={song.coverUrl || song.album?.cover || undefined}
             alt={song.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 md:group-hover:scale-105"
+            fill
+            className="transition-transform duration-500 md:group-hover:scale-105"
+            sizes="(max-width: 768px) 40vw, 20vw"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-primary/30">

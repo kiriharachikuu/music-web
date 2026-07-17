@@ -1,4 +1,9 @@
 import withPWAInit from "next-pwa";
+import withBundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzerConfig = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 /**
  * next-pwa 集成
@@ -83,6 +88,14 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
+  },
   experimental: {
     // 优化大型包的导入，减少 tree-shaking 后的包体积
     optimizePackageImports: ["lucide-react", "@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu"],
@@ -105,7 +118,7 @@ const nextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+export default withBundleAnalyzerConfig(withPWA(nextConfig));
 
 /*
  * PWA 验收提醒（spec 8.13）：

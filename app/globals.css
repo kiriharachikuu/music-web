@@ -313,4 +313,47 @@
       padding-bottom: 0.5rem !important;
     }
   }
+
+  /* 歌词闪光动画（替代 Framer Motion，减少 JS 开销） */
+  .lyrics-flash {
+    animation: lyrics-flash 0.4s ease-out forwards;
+  }
+
+  @keyframes lyrics-flash {
+    0% {
+      opacity: 0.8;
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.15);
+    }
+  }
+
+  /* 无歌词状态呼吸动画（替代 Framer Motion） */
+  .lyrics-pulse {
+    animation: lyrics-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes lyrics-pulse {
+    0%, 100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  /* 减弱动态效果：尊重用户系统设置 */
+  @media (prefers-reduced-motion: reduce) {
+    .lyrics-flash,
+    .lyrics-pulse {
+      animation: none !important;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
