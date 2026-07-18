@@ -283,7 +283,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden md:grid md:grid-cols-[1.15fr_0.85fr] md:items-stretch md:gap-10 md:px-6">
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[1.15fr_0.85fr] md:items-stretch md:gap-10 md:px-6 md:overflow-y-auto">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
           <div className="hidden flex-col items-center gap-6 overflow-y-auto px-4 py-4 md:flex">
             <div className="mt-auto mb-auto flex shrink-0 flex-col items-center gap-6">
@@ -321,7 +321,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </div>
 
           {/* 右：歌词（PC 端始终可见） */}
-          <div className="hidden min-h-0 h-full md:block">
+          <div className="hidden min-h-0 h-full md:block w-full">
             <LyricsView
               lrc={lrc}
               currentTime={currentTime}

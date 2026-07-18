@@ -192,13 +192,13 @@ export function LyricsView({
       onClick={handleContainerClick}
       className={cn(
         "h-full overflow-y-auto no-scrollbar px-4",
-        // 上下两端 mask 渐隐（兼容 -webkit- 前缀）
-        "[mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]",
-        "[-webkit-mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]"
+        // 上下两端 mask 渐隐（兼容 -webkit- 前缀），更平滑的渐变
+        "[mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)]",
+        "[-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)]"
       )}
     >
       {/* 上下留白让首尾行能滚到容器中心（PC 端顶部留白更大，确保首行可滚动到视觉中心） */}
-      <div className="flex min-h-full flex-col items-center justify-center gap-4 py-16 md:pt-60 md:pb-20 text-center">
+      <div className="flex min-h-full flex-col items-center justify-center gap-4 py-16 md:pt-60 md:pb-20 max-w-3xl mx-auto">
         {lines.map((line, i) => {
           const isActive = i === activeIndex;
           const isClicked = i === clickedIndex;
@@ -218,10 +218,10 @@ export function LyricsView({
               aria-current={isActive ? "true" : undefined}
               aria-label={`跳转到 ${formatLabelTime(line.time)}`}
               className={cn(
-                "group relative max-w-full cursor-pointer rounded-lg px-2 text-center transition-all duration-350 ease-out",
+                "group relative max-w-full cursor-pointer rounded-lg border-0 bg-transparent px-4 py-2 text-center transition-all duration-350 ease-out outline-none",
                 isActive
-                  ? "text-white scale-110"
-                  : "text-white/70 hover:text-white"
+                  ? "text-white scale-110 bg-white/10"
+                  : "text-white/70 hover:text-white hover:bg-white/5"
               )}
               style={{
                 opacity,
