@@ -57,7 +57,7 @@ export function FullScreenControls({
           : "列表循环";
 
   return (
-    <footer className="shrink-0 px-4 pb-6 pt-2 md:px-8 md:pb-8">
+    <footer className="shrink-0 px-4 pb-4 pt-2 md:px-8 md:pb-6">
       {/* 进度条 + 时间 */}
       <div className="mb-3 flex items-center gap-3">
         <span className="w-12 shrink-0 text-right font-mono text-xs text-white/60">

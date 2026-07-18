@@ -171,10 +171,6 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       toggleCooldownRef.current = false;
     }, 300);
   }, []);
-  // 切歌时重置到封面视图
-  React.useEffect(() => {
-    setShowLyrics(false);
-  }, [currentSong?.id]);
 
   // ----- 喜欢状态（全局 store） -----
   const likedIds = useFavoritesStore((s) => s.likedIds);
@@ -238,7 +234,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       </div>
 
       {/* ===== 内容层 z-10 ===== */}
-      <div className="relative z-10 flex h-full flex-col safe-area-inset">
+      <div className="relative z-10 flex h-full flex-col pt-safe pl-safe pr-safe">
         {/* 顶部下拉手柄条（仅此区域可启动拖拽关闭） */}
         <div
           onPointerDown={(e) => dragControls.start(e.nativeEvent)}
@@ -287,18 +283,18 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
-        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden md:grid md:grid-cols-[1fr_1fr] md:items-stretch md:gap-10">
+        <main className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden md:grid md:grid-cols-[1.15fr_0.85fr] md:items-stretch md:gap-10 md:px-6">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
           <div className="hidden flex-col items-center gap-6 overflow-y-auto px-4 py-4 md:flex">
             <div className="mt-auto mb-auto flex shrink-0 flex-col items-center gap-6">
-              <div className="relative aspect-square w-[min(680px,95%,75vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              <div className="relative aspect-square w-[min(780px,100%,80vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   <AppImage
                     src={cover}
                     alt={currentSong.title}
                     fill
                     className="rounded-2xl"
-                    sizes="(min-width: 768px) 680px, 95vw"
+                    sizes="(min-width: 768px) 780px, 100vw"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/20">
@@ -420,7 +416,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </main>
 
         {/* ===== 底部控制区 ===== */}
-        <div className="shrink-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-10 pb-2">
+        <div className="shrink-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-10 pb-safe">
           <FullScreenControls
             isPlaying={isPlaying}
             currentTime={currentTime}

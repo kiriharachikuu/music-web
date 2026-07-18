@@ -133,31 +133,18 @@ export function LyricsView({
     const container = containerRef.current;
     const activeEl = lineRefs.current[activeIndex];
     if (!container || !activeEl) return;
-    
+
     const target =
       activeEl.offsetTop -
       container.clientHeight / 2 +
       activeEl.clientHeight / 2;
-    
-    // 使用 requestAnimationFrame 优化滚动性能
-    let rafId: number;
-    const animateScroll = () => {
-      // 用户滚动时中止自动跟随
+
+    const rafId = requestAnimationFrame(() => {
       if (userScrollingRef.current) return;
-      const current = container.scrollTop;
-      const diff = target - current;
-      if (Math.abs(diff) < 1) {
-        container.scrollTop = target;
-        return;
-      }
-      container.scrollTop = current + diff * 0.2;
-      rafId = requestAnimationFrame(animateScroll);
-    };
-    
-    animateScroll();
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-    };
+      container.scrollTo({ top: target, behavior: "smooth" });
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [activeIndex]);
 
   /** 容器点击：仅非按钮区域触发切换回封面（需在所有 early return 之前，React Hooks 规则） */
