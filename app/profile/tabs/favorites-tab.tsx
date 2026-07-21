@@ -13,7 +13,7 @@ import {
 
 import type { ApiSong } from "@/lib/types";
 import { toPlayerSong, toPlayerSongs } from "@/lib/types";
-import { api } from "@/lib/api";
+import { api, getFavoriteLiveClips } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -24,7 +24,7 @@ import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
 import { Button } from "@/components/ui/button";
 
-/** 子模块 1：我喜欢的音乐 */
+/** 子模块 1：我喜欢的音乐（歌曲 + 歌切） */
 export function FavoritesTab() {
   const [songs, setSongs] = React.useState<ApiSong[] | null>(null);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
@@ -36,6 +36,11 @@ export function FavoritesTab() {
   const likedIds = useFavoritesStore((s) => s.likedIds);
   const toggleLike = useFavoritesStore((s) => s.toggleLike);
   const initLikedIds = useFavoritesStore((s) => s.initLikedIds);
+  const likedClipIds = useFavoritesStore((s) => s.likedClipIds);
+  const toggleFavoriteClip = useFavoritesStore((s) => s.toggleFavoriteClip);
+  const loadFavoriteClipsFromServer = useFavoritesStore(
+    (s) => s.loadFavoriteClipsFromServer
+  );
 
   React.useEffect(() => {
     void load();
@@ -43,12 +48,32 @@ export function FavoritesTab() {
 
   const load = async () => {
     try {
-      const data = await api.get<{ list: { songId: string; song: ApiSong }[]; total: number }>(
-        "/user/favorites"
-      );
-      const list = data?.list ?? [];
-      setSongs(list.map((f) => f.song));
-      initLikedIds(list.map((f) => f.songId));
+      // 并行加载歌曲收藏和歌切收藏
+      const [songData, clips] = await Promise.all([
+        api.get<{ list: { songId: string; song: ApiSong }[]; total: number }>(
+          "/user/favorites"
+        ),
+        getFavoriteLiveClips<any>(),
+      ]);
+
+      const songList = (songData?.list ?? []).map((f) => f.song);
+      // 将歌切映射为 ApiSong 格式
+      const clipList: ApiSong[] = (clips ?? []).map((c) => ({
+        id: c.id,
+        title: c.title,
+        artist: c.artist,
+        duration: c.duration,
+        fileUrl: c.fileUrl,
+        coverUrl: c.coverUrl ?? undefined,
+        releaseDate: "",
+        plays: 0,
+        status: "PUBLISHED" as const,
+        trackType: "live_clip" as const,
+      }));
+
+      setSongs([...songList, ...clipList]);
+      initLikedIds(songList.map((f) => f.id));
+      void loadFavoriteClipsFromServer();
     } catch {
       setSongs([]);
     }
@@ -60,7 +85,11 @@ export function FavoritesTab() {
       openLogin();
       return;
     }
-    void toggleLike(song.id);
+    if (song.trackType === "live_clip") {
+      void toggleFavoriteClip(song.id);
+    } else {
+      void toggleLike(song.id);
+    }
     void load();
   };
 
@@ -93,10 +122,16 @@ export function FavoritesTab() {
 
   /** 取消喜欢选中 */
   const removeSelected = async () => {
-    if (selected.size === 0) return;
+    if (selected.size === 0 || !songs) return;
     try {
       await Promise.all(
-        Array.from(selected).map((id) => api.del(`/user/favorites/${id}`))
+        Array.from(selected).map((id) => {
+          const song = songs.find((s) => s.id === id);
+          if (song?.trackType === "live_clip") {
+            return api.del(`/user/live-clips/${id}/favorite`);
+          }
+          return api.del(`/user/favorites/${id}`);
+        })
       );
       setSelected(new Set());
       void load();
@@ -190,8 +225,9 @@ export function FavoritesTab() {
             selectable={manageMode}
             selectedIds={selected}
             onToggleSelect={toggleSelect}
-            likedIds={likedIds}
+            likedIds={new Set([...likedIds, ...likedClipIds])}
             onLike={handleLike}
+            showTrackType={true}
             emptyText="还没有喜欢的歌曲"
           />
         </div>
@@ -205,7 +241,21 @@ export function FavoritesTab() {
 
       {/* 批量加入歌单弹窗 */}
       <AddToPlaylistDialog
-        songIds={Array.from(selected)}
+        songIds={
+          songs
+            ? Array.from(selected).filter(
+                (id) => !songs.find((s) => s.id === id)?.trackType ||
+                  songs.find((s) => s.id === id)?.trackType !== "live_clip"
+              )
+            : []
+        }
+        clipIds={
+          songs
+            ? Array.from(selected).filter((id) =>
+                songs.find((s) => s.id === id)?.trackType === "live_clip"
+              )
+            : []
+        }
         open={playlistDialogOpen}
         onOpenChange={(v) => {
           setPlaylistDialogOpen(v);

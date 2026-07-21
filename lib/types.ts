@@ -117,13 +117,24 @@ export interface Playlist {
 export interface PlaylistSongItem {
   id: string;
   playlistId: string;
-  songId: string;
+  songId?: string | null;
+  clipId?: string | null;
   sort: number;
   createdAt: string;
   /** 后端 include: { album: true } 在 song 上附带关联专辑 */
-  song: ApiSong & {
+  song?: (ApiSong & {
     album?: { id: string; name: string; artist: string; cover?: string | null } | null;
-  };
+  }) | null;
+  /** 直播歌切数据（clipId 条目时存在） */
+  clip?: {
+    id: string;
+    title: string;
+    artist: string;
+    duration: number;
+    fileUrl: string;
+    coverUrl?: string | null;
+    session?: { id: string; title: string };
+  } | null;
 }
 
 /** 歌单详情（GET /api/playlists/:id，含创建者与歌曲列表） */

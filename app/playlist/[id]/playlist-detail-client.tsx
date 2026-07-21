@@ -62,6 +62,11 @@ export function PlaylistDetailClient({
   const likedIds = useFavoritesStore((s) => s.likedIds);
   const toggleLike = useFavoritesStore((s) => s.toggleLike);
   const loadLikedFromServer = useFavoritesStore((s) => s.loadFromServer);
+  const likedClipIds = useFavoritesStore((s) => s.likedClipIds);
+  const toggleFavoriteClip = useFavoritesStore((s) => s.toggleFavoriteClip);
+  const loadFavoriteClipsFromServer = useFavoritesStore(
+    (s) => s.loadFavoriteClipsFromServer
+  );
   const isMobile = useIsMobile();
   const toast = useToast();
   const [favorited, setFavorited] = React.useState(false);
@@ -89,13 +94,29 @@ export function PlaylistDetailClient({
     return false;
   }, [playlist.user]);
 
-  // 从 playlistSongs 映射出歌曲数组，按 sort 升序
+  // 从 playlistSongs 映射出歌曲/歌切数组，按 sort 升序
   React.useEffect(() => {
     const songs = (playlist.playlistSongs ?? [])
       .slice()
       .sort((a, b) => a.sort - b.sort)
-      .map((ps) => {
-        const { album, ...rest } = ps.song;
+      .map((ps): ApiSong => {
+        if (ps.clip) {
+          // 歌切条目：映射为 ApiSong 格式，标记 trackType
+          return {
+            id: ps.clip.id,
+            title: ps.clip.title,
+            artist: ps.clip.artist,
+            duration: ps.clip.duration,
+            fileUrl: ps.clip.fileUrl,
+            coverUrl: ps.clip.coverUrl ?? undefined,
+            releaseDate: "",
+            plays: 0,
+            status: "PUBLISHED",
+            trackType: "live_clip",
+          };
+        }
+        // 歌曲条目
+        const { album, ...rest } = ps.song!;
         return {
           ...rest,
           albumName: rest.albumName ?? album?.name ?? undefined,
@@ -113,12 +134,15 @@ export function PlaylistDetailClient({
       .catch(() => {});
   }, [playlist.id]);
 
-  // 加载喜欢的歌曲列表（仅加载一次）
+  // 加载喜欢的歌曲/歌切列表（仅加载一次）
   React.useEffect(() => {
     if (!getToken()) return;
-    const loaded = useFavoritesStore.getState().loaded;
-    if (!loaded) {
+    const state = useFavoritesStore.getState();
+    if (!state.loaded) {
       void loadLikedFromServer();
+    }
+    if (state.likedClipIds.size === 0) {
+      void loadFavoriteClipsFromServer();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -129,7 +153,11 @@ export function PlaylistDetailClient({
       openLogin();
       return;
     }
-    void toggleLike(song.id);
+    if (song.trackType === "live_clip") {
+      void toggleFavoriteClip(song.id);
+    } else {
+      void toggleLike(song.id);
+    }
   };
 
   // 切换收藏
@@ -352,7 +380,7 @@ export function PlaylistDetailClient({
           {!manageMode ? (
             <SongList
               songs={songList}
-              likedIds={likedIds}
+              likedIds={new Set([...likedIds, ...likedClipIds])}
               onLike={handleLike}
               showTrackType={true}
             />

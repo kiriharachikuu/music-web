@@ -231,3 +231,8 @@ export async function unfavoriteLiveClip(id: string): Promise<{ favorited: boole
 export async function getFavoriteLiveClipIds(): Promise<string[]> {
   return api.get<string[]>("/user/live-clips/favorites");
 }
+
+/** 获取已收藏的歌切完整数据列表 */
+export async function getFavoriteLiveClips<T = unknown>(): Promise<T[]> {
+  return api.get<T[]>("/user/live-clips/favorites/list");
+}
