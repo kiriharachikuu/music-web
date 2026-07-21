@@ -29,6 +29,10 @@ export interface ApiSong {
   album?: Album | null;
   /** 曲目类型：official=官方歌曲, live_clip=直播歌切 */
   trackType?: TrackType;
+  /** 直播歌切所属场次 ID（仅 trackType === "live_clip" 时存在） */
+  sessionId?: string;
+  /** 直播歌切所属场次名称（仅 trackType === "live_clip" 时存在，用于列表展示） */
+  sessionName?: string;
 }
 
 export type TrackType = "official" | "live_clip";

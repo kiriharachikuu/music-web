@@ -309,6 +309,11 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
                   </p>
                   <p className="truncate text-xs text-foreground/50">
                     {song.artist}
+                    {"trackType" in song && song.trackType === "live_clip" && "sessionName" in song
+                      ? ` · ${(song as any).sessionName}`
+                      : "albumName" in song && song.albumName
+                        ? ` · ${song.albumName}`
+                        : ""}
                   </p>
                 </button>
 

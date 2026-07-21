@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, ListMusic, User } from "lucide-react";
+import { Search, ListMusic, User, ArrowLeft } from "lucide-react";
 
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -87,6 +87,30 @@ export function TopNav() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  // 判断是否为一级导航页（首页/发现/排行榜/直播场次列表/资料库等），这些页面不需要返回按钮
+  // 详情页（/album/xxx、/artist/xxx、/playlist/xxx、/live-session/xxx）显示返回按钮
+  const isTopLevel = React.useMemo(() => {
+    const topLevelPaths = [
+      "/",
+      "/rankings",
+      "/live-sessions",
+      "/library",
+      "/search",
+      "/profile",
+      "/download",
+      "/about",
+    ];
+    return topLevelPaths.includes(pathname);
+  }, [pathname]);
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  };
+
   const handleAvatarClick = () => {
     if (isLoggedIn) {
       router.push("/profile");
@@ -107,6 +131,18 @@ export function TopNav() {
       <div className="h-[var(--safe-area-top,0px)]" />
       <div className="flex h-14 w-full items-center gap-3 px-4 max-md:landscape:h-11 md:px-6">
         <div className="flex flex-1 items-center gap-3">
+          {/* PC 端返回按钮：仅在非一级页面显示 */}
+          {!isTopLevel && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleBack}
+              aria-label="返回"
+              className="hidden h-9 w-9 text-foreground/70 hover:text-foreground md:inline-flex"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
           <Link href="/search" className="flex-1 md:hidden">
             <div className="flex h-10 w-full items-center gap-2 rounded-full border border-border bg-foreground/5 px-4 text-sm text-foreground/50">
               <Search className="h-4 w-4" />

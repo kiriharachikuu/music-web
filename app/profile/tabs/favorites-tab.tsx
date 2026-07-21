@@ -57,7 +57,7 @@ export function FavoritesTab() {
       ]);
 
       const songList = (songData?.list ?? []).map((f) => f.song);
-      // 将歌切映射为 ApiSong 格式
+      // 将歌切映射为 ApiSong 格式，附带 session 数据用于展示所属直播合集
       const clipList: ApiSong[] = (clips ?? []).map((c) => ({
         id: c.id,
         title: c.title,
@@ -69,6 +69,8 @@ export function FavoritesTab() {
         plays: 0,
         status: "PUBLISHED" as const,
         trackType: "live_clip" as const,
+        sessionId: c.session?.id,
+        sessionName: c.session?.title,
       }));
 
       setSongs([...songList, ...clipList]);

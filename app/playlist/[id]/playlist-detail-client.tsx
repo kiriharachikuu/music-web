@@ -101,7 +101,7 @@ export function PlaylistDetailClient({
       .sort((a, b) => a.sort - b.sort)
       .map((ps): ApiSong => {
         if (ps.clip) {
-          // 歌切条目：映射为 ApiSong 格式，标记 trackType
+          // 歌切条目：映射为 ApiSong 格式，标记 trackType，附带 session 数据用于展示所属直播合集
           return {
             id: ps.clip.id,
             title: ps.clip.title,
@@ -113,6 +113,8 @@ export function PlaylistDetailClient({
             plays: 0,
             status: "PUBLISHED",
             trackType: "live_clip",
+            sessionId: ps.clip.session?.id,
+            sessionName: ps.clip.session?.title,
           };
         }
         // 歌曲条目
