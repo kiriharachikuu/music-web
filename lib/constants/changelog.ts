@@ -43,6 +43,28 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.3.0",
+    versionCode: 8,
+    releaseDate: "2026-07-22",
+    title: "安全加固、EDITOR 角色与多项优化",
+    changes: [
+      { type: "feature", content: "后台用户管理支持 EDITOR 角色（可管理歌曲/专辑/歌单/歌手/直播，不可管理用户/系统设置）" },
+      { type: "feature", content: "PC 端详情页（专辑/歌手/歌单/直播场次等）新增返回按钮" },
+      { type: "feature", content: "直播歌切在所有列表中展示所属直播合集名称" },
+      { type: "feature", content: "后台新增孤立上传文件自动清理（每天凌晨 3 点，未保存文件 24 小时后自动删除）" },
+      { type: "fix", content: "修复生产环境 JWT 密钥为空或默认值时静默启动的安全隐患" },
+      { type: "fix", content: "移除 JWT 策略中硬编码的回退密钥" },
+      { type: "fix", content: "修复收藏/取消收藏操作的 TOCTOU 竞态条件，改为事务内执行" },
+      { type: "fix", content: "生产环境异常过滤器不再泄露堆栈和内部错误信息" },
+      { type: "fix", content: "修复并发下载时 Promise 永不 resolve 的问题" },
+      { type: "fix", content: "修复播放器 toggle 乐观更新与 onPlay 事件的竞争问题" },
+      { type: "fix", content: "修复 Howler 引擎复用 preload 实例时 onLoad 回调重复触发" },
+      { type: "fix", content: "修复歌手识别功能无法正确拆分 & 符号分隔的多歌手问题" },
+      { type: "fix", content: "修复全屏歌词页滚动定位不准确、高亮行被裁切的问题" },
+      { type: "improvement", content: "搜索日志清理改为 1% 概率触发，降低高频搜索的性能开销" },
+    ],
+  },
+  {
     version: "1.2.0",
     versionCode: 7,
     releaseDate: "2026-07-17",
@@ -158,8 +180,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "1.2.0";
-export const APP_VERSION_CODE = 7;
+export const APP_VERSION = "1.3.0";
+export const APP_VERSION_CODE = 8;
 
 /**
  * 获取更新类型对应的显示标签
