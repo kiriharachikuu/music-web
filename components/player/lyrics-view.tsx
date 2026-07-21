@@ -34,6 +34,8 @@ interface LyricsViewProps {
   loading?: boolean;
   /** 点击非歌词区域时触发（移动端切换回封面视图） */
   onToggleView?: () => void;
+  /** 是否已完成进入动画，完成后才启用 smooth 滚动，避免与抽屉动画抢资源 */
+  animate?: boolean;
 }
 
 export function LyricsView({
@@ -42,17 +44,25 @@ export function LyricsView({
   onSeek,
   loading,
   onToggleView,
+  animate = true,
 }: LyricsViewProps) {
   // 解析歌词（按 lrc 文本缓存）
   const lines = React.useMemo<LyricLine[]>(
     () => (lrc ? parseLRC(lrc) : []),
     [lrc]
   );
-  // 当前行索引（按 lines + currentTime 缓存）
-  const activeIndex = React.useMemo(
-    () => findActiveLineIndex(lines, currentTime),
-    [lines, currentTime]
-  );
+  // 当前行索引：仅在真正变化时更新，避免每 200ms 全量重渲染
+  const [activeIndex, setActiveIndex] = React.useState(-1);
+  const activeIndexRef = React.useRef(-1);
+
+  React.useEffect(() => {
+    if (!animate) return;
+    const idx = findActiveLineIndex(lines, currentTime);
+    if (idx !== activeIndexRef.current) {
+      activeIndexRef.current = idx;
+      setActiveIndex(idx);
+    }
+  }, [lines, currentTime, animate]);
 
   const containerRef = React.useRef<HTMLDivElement>(null);
   const lineRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
@@ -134,18 +144,24 @@ export function LyricsView({
     const activeEl = lineRefs.current[activeIndex];
     if (!container || !activeEl) return;
 
+    const containerRect = container.getBoundingClientRect();
+    const elRect = activeEl.getBoundingClientRect();
     const target =
-      activeEl.offsetTop -
+      container.scrollTop +
+      (elRect.top - containerRect.top) -
       container.clientHeight / 2 +
-      activeEl.clientHeight / 2;
+      elRect.height / 2;
 
     const rafId = requestAnimationFrame(() => {
       if (userScrollingRef.current) return;
-      container.scrollTo({ top: target, behavior: "smooth" });
+      container.scrollTo({
+        top: target,
+        behavior: animate ? "smooth" : "auto",
+      });
     });
 
     return () => cancelAnimationFrame(rafId);
-  }, [activeIndex]);
+  }, [activeIndex, animate]);
 
   /** 容器点击：仅非按钮区域触发切换回封面（需在所有 early return 之前，React Hooks 规则） */
   const handleContainerClick = React.useCallback(
@@ -190,23 +206,25 @@ export function LyricsView({
     <div
       ref={containerRef}
       onClick={handleContainerClick}
+      style={{
+        willChange: "transform",
+        transform: "translateZ(0)",
+        contain: "paint layout",
+      }}
       className={cn(
-        "h-full overflow-y-auto no-scrollbar px-4",
-        // 上下两端 mask 渐隐（兼容 -webkit- 前缀），更平滑的渐变
+        "relative h-full overflow-y-auto no-scrollbar px-4",
         "[mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)]",
         "[-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_15%,black_85%,transparent_100%)]"
       )}
     >
-      {/* 上下留白让首尾行能滚到容器中心（PC 端顶部留白更大，确保首行可滚动到视觉中心） */}
-      <div className="flex min-h-full flex-col items-center justify-center gap-4 py-16 md:pt-60 md:pb-20 max-w-3xl mx-auto">
+      <div className="flex flex-col items-center gap-3 py-[50vh] max-w-3xl mx-auto md:items-start md:mx-0 md:max-w-none">
         {lines.map((line, i) => {
           const isActive = i === activeIndex;
           const isClicked = i === clickedIndex;
           const distance = Math.abs(i - activeIndex);
-          // 当前行 1，非当前行按距离衰减（最低 0.25）
           const opacity = isActive
             ? 1
-            : Math.max(0.25, 0.6 - distance * 0.08);
+            : Math.max(0.25, 0.65 - distance * 0.05);
           return (
             <button
               key={i}
@@ -218,32 +236,24 @@ export function LyricsView({
               aria-current={isActive ? "true" : undefined}
               aria-label={`跳转到 ${formatLabelTime(line.time)}`}
               className={cn(
-                "group relative max-w-full cursor-pointer rounded-lg border-0 bg-transparent px-4 py-2 text-center transition-all duration-350 ease-out outline-none",
+                "group relative max-w-full cursor-pointer rounded-lg border-0 bg-transparent px-4 py-1.5 text-center transition-all duration-300 ease-out outline-none md:text-left",
                 isActive
-                  ? "text-white scale-110 bg-white/10"
-                  : "text-white/70 hover:text-white hover:bg-white/5"
+                  ? "text-white [transform:scale(1.1)]"
+                  : "text-white/70 hover:text-white"
               )}
               style={{
                 opacity,
-                transitionDuration: "350ms",
-                transitionTimingFunction: "ease-out",
                 ...(isActive
-                  ? { textShadow: "0 0 24px rgba(139,0,255,0.6)" }
+                  ? {
+                      textShadow:
+                        "0 0 22px rgba(139,0,255,0.45), 0 0 8px rgba(255,255,255,0.18)",
+                    }
                   : undefined),
               }}
             >
-              {/* 当前行的 scale 动画用 Framer Motion，其他行用 CSS */}
-              {isActive ? (
-                <motion.span
-                  className="block"
-                  animate={{ scale: 1.1 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                >
-                  <LyricLineContent line={line} isActive={isActive} isClicked={isClicked} />
-                </motion.span>
-              ) : (
+              <span className="block origin-center md:origin-left">
                 <LyricLineContent line={line} isActive={isActive} isClicked={isClicked} />
-              )}
+              </span>
             </button>
           );
         })}
@@ -268,14 +278,19 @@ function LyricLineContent({
         <span className="lyrics-flash pointer-events-none absolute inset-0 -z-10 rounded-lg bg-primary/30" />
       )}
       {/* 原文：空行用占位符避免高度塌陷 */}
-      <span className="block text-center text-lg font-semibold leading-relaxed drop-shadow-sm md:text-2xl md:leading-relaxed">
+      <span
+        className={cn(
+          "block text-center text-lg font-semibold leading-relaxed drop-shadow-sm md:text-left md:text-2xl md:leading-relaxed",
+          isActive && "font-bold"
+        )}
+      >
         {line.text || "···"}
       </span>
       {/* 译文：双语歌词，比原文小，颜色 primary-300 */}
       {line.translation && (
         <span
           className={cn(
-            "mt-1 block text-center text-sm font-normal md:text-base",
+            "mt-1 block text-center text-sm font-normal md:text-left md:text-base",
             isActive ? "text-primary/60" : "text-white/50"
           )}
         >
@@ -284,7 +299,7 @@ function LyricLineContent({
       )}
       {/* 悬停可点击提示（非当前行） */}
       {!isActive && (
-        <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+        <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 md:left-4 md:translate-x-0">
           点击跳转
         </span>
       )}

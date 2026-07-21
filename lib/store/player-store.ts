@@ -95,9 +95,10 @@ interface PlayerState {
   prev: () => void;
   seek: (time: number) => void;
   setQueue: (queue: Song[], startIndex?: number) => void;
-  addToQueue: (song: Song) => void;
-  /** 下一首播放：将歌曲插入到当前播放位置之后 */
-  playNext: (song: Song) => void;
+  /** 加入队列末尾，返回是否成功（已在队列中则返回 false） */
+  addToQueue: (song: Song) => boolean;
+  /** 下一首播放：将歌曲插入到当前播放位置之后，返回是否成功（已在队列中则返回 false） */
+  playNext: (song: Song) => boolean;
   /** 批量加入队列末尾 */
   addManyToQueue: (songs: Song[]) => void;
   /** 批量下一首播放：将多首歌插入到当前播放位置之后 */
@@ -310,8 +311,9 @@ export const usePlayerStore = create<PlayerState>()(
           get().pause();
         } else {
           if (engine) {
+            // 不乐观设置 isPlaying：依赖引擎 onPlay 事件同步状态，
+            // 避免浏览器自动播放策略拦截时 UI 显示正在播放但实际无声音
             engine.play();
-            set({ isPlaying: true });
           } else {
             void get().play(currentSong);
           }
@@ -366,14 +368,19 @@ export const usePlayerStore = create<PlayerState>()(
 
       addToQueue: (song) => {
         const { queue } = get();
+        // 去重：已在队列中则不重复添加
+        if (queue.some((s) => s.id === song.id)) return false;
         set({ queue: [...queue, song] });
+        return true;
       },
 
       /** 下一首播放：将歌曲插入到当前播放位置之后 */
       playNext: (song) => {
-        const { queue, currentIndex } = get();
-        // 去重：如果歌曲已在队列中，先移除
+        const { queue } = get();
+        // 去重：如果歌曲已在队列中，先移除（避免重复）
         const filtered = queue.filter((s) => s.id !== song.id);
+        // 如果原队列中已存在该歌曲（且不是当前在播放的），视为"已在队列中"提示
+        const wasInQueue = queue.length !== filtered.length;
         // 找到当前歌曲在过滤后队列中的位置
         const curSong = get().currentSong;
         const curIdx = curSong ? filtered.findIndex((s) => s.id === curSong.id) : -1;
@@ -383,6 +390,8 @@ export const usePlayerStore = create<PlayerState>()(
         // 更新 currentIndex 以保持当前歌曲不变
         const newCurIdx = curSong ? newQueue.findIndex((s) => s.id === curSong.id) : 0;
         set({ queue: newQueue, currentIndex: newCurIdx >= 0 ? newCurIdx : 0 });
+        // 如果原来不在队列中（新增），返回 true；如果已在队列中（被移动），返回 false
+        return !wasInQueue;
       },
 
       addManyToQueue: (songs) => {

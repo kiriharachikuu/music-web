@@ -66,7 +66,11 @@ interface DownloadListeners {
   onComplete?: (songId: string, size: number) => void;
   onError?: (songId: string, msg: string) => void;
 }
-let downloadListeners: DownloadListeners = {};
+/**
+ * 下载回调按 songId 维护，避免并发下载时后注册者覆盖前者导致
+ * 前一个 Promise 永不 resolve（内存泄漏 + 界面卡死）
+ */
+const downloadListenersMap = new Map<string, DownloadListeners>();
 
 /**
  * 在 window 上注册 __nativePlayerEvents 对象（幂等，仅注册一次）
@@ -153,14 +157,16 @@ function ensureNativeEventsRegistered(): void {
     },
     onDownloadComplete(songId: string, size: number): void {
       try {
-        downloadListeners.onComplete?.(songId, size);
+        const listeners = downloadListenersMap.get(songId);
+        listeners?.onComplete?.(songId, size);
       } catch {
         // 容错
       }
     },
     onDownloadError(songId: string, msg: string): void {
       try {
-        downloadListeners.onError?.(songId, msg);
+        const listeners = downloadListenersMap.get(songId);
+        listeners?.onError?.(songId, msg);
       } catch {
         // 容错
       }
@@ -191,10 +197,20 @@ export function setupApkInstallListeners(listeners: ApkInstallListeners): void {
 
 /**
  * 注册下载结果回调（供 download.ts 使用，独立于 AudioEngine 事件流）
+ * - 按 songId 维护，支持并发下载各自独立的回调
+ * - 调用 removeDownloadListeners(songId) 在 Promise 完成后清理，避免内存泄漏
  */
-export function setupDownloadListeners(listeners: DownloadListeners): void {
+export function setupDownloadListeners(
+  songId: string,
+  listeners: DownloadListeners,
+): void {
   ensureNativeEventsRegistered();
-  downloadListeners = listeners;
+  downloadListenersMap.set(songId, listeners);
+}
+
+/** 移除指定歌曲的下载回调（Promise 完成/失败后调用） */
+export function removeDownloadListeners(songId: string): void {
+  downloadListenersMap.delete(songId);
 }
 
 /**

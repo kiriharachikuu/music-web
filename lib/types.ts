@@ -27,6 +27,8 @@ export interface ApiSong {
   tags?: Tag[];
   /** 关联专辑数据（后端 include 返回） */
   album?: Album | null;
+  /** 曲目类型：official=官方歌曲, live_clip=直播歌切 */
+  trackType?: TrackType;
 }
 
 export type TrackType = "official" | "live_clip";

@@ -14,7 +14,7 @@ import {
 import { fetchAndCacheLyric, isLyricCached, fetchLyric } from "@/lib/db/lyric-cache";
 import { getPlatform } from "@/lib/platform/detect";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
-import { setupDownloadListeners } from "@/lib/jsbridge/native-events";
+import { setupDownloadListeners, removeDownloadListeners } from "@/lib/jsbridge/native-events";
 
 /**
  * XingTone —— 下载触发器
@@ -71,16 +71,15 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     })();
 
     return new Promise<DownloadResult>((resolve, reject) => {
-      setupDownloadListeners({
+      // 按 songId 注册回调，支持并发下载；Promise 完成后移除避免内存泄漏
+      setupDownloadListeners(song.id, {
         onComplete: (sid, size) => {
-          if (sid === song.id) {
-            resolve({ cached: true, newlyDownloaded: true, size });
-          }
+          removeDownloadListeners(sid);
+          resolve({ cached: true, newlyDownloaded: true, size });
         },
         onError: (sid, msg) => {
-          if (sid === song.id) {
-            reject(new Error(msg || "下载失败"));
-          }
+          removeDownloadListeners(sid);
+          reject(new Error(msg || "下载失败"));
         },
       });
       androidBridge.downloadSong(song.id, url, headers, {

@@ -78,6 +78,9 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
   const [addToPlaylistSongIds, setAddToPlaylistSongIds] = React.useState<
     string[]
   >([]);
+  const [addToPlaylistClipIds, setAddToPlaylistClipIds] = React.useState<
+    string[]
+  >([]);
   const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
   const [downloadedIds, setDownloadedIds] = React.useState<Set<string>>(
     new Set()
@@ -345,14 +348,28 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
                       <DropdownMenuItem
-                        onClick={() => playNext(toPlayerSong(song))}
+                        onClick={() => {
+                          const added = playNext(toPlayerSong(song));
+                          if (added) {
+                            toast.success("将作为下一首播放", { description: song.title });
+                          } else {
+                            toast.show("已在播放队列中", { description: song.title });
+                          }
+                        }}
                         className="gap-2"
                       >
                         <ListStart className="h-4 w-4" />
                         下一首播放
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => addToQueue(toPlayerSong(song))}
+                        onClick={() => {
+                          const added = addToQueue(toPlayerSong(song));
+                          if (added) {
+                            toast.success("已添加到播放队列", { description: song.title });
+                          } else {
+                            toast.show("已在播放队列中", { description: song.title });
+                          }
+                        }}
                         className="gap-2"
                       >
                         <Plus className="h-4 w-4" />
@@ -360,7 +377,13 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
-                          setAddToPlaylistSongIds([song.id]);
+                          if (song.trackType === "live_clip") {
+                            setAddToPlaylistSongIds([]);
+                            setAddToPlaylistClipIds([song.id]);
+                          } else {
+                            setAddToPlaylistSongIds([song.id]);
+                            setAddToPlaylistClipIds([]);
+                          }
                           setPlaylistDialogOpen(true);
                         }}
                         className="gap-2"
@@ -421,7 +444,8 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
       <AddToPlaylistDialog
         open={playlistDialogOpen}
         onOpenChange={setPlaylistDialogOpen}
-        songIds={addToPlaylistSongIds}
+        songIds={addToPlaylistSongIds.length > 0 ? addToPlaylistSongIds : undefined}
+        clipIds={addToPlaylistClipIds.length > 0 ? addToPlaylistClipIds : undefined}
       />
     </div>
   );

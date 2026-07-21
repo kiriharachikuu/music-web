@@ -28,10 +28,12 @@ import { AppImage } from "@/components/ui/app-image";
 
 export function AddToPlaylistDialog({
   songIds,
+  clipIds,
   open,
   onOpenChange,
 }: {
-  songIds: string[];
+  songIds?: string[];
+  clipIds?: string[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -55,11 +57,16 @@ export function AddToPlaylistDialog({
       .finally(() => setLoading(false));
   }, [open]);
 
+  const hasItems = (songIds?.length ?? 0) > 0 || (clipIds?.length ?? 0) > 0;
+
   const handleAdd = async (playlistId: string) => {
-    if (songIds.length === 0) return;
+    if (!hasItems) return;
     setAddingId(playlistId);
     try {
-      await api.post(`/user/playlists/${playlistId}/songs`, { songIds });
+      await api.post(`/user/playlists/${playlistId}/songs`, {
+        songIds: songIds?.length ? songIds : undefined,
+        clipIds: clipIds?.length ? clipIds : undefined,
+      });
       setAddedIds((prev) => new Set(prev).add(playlistId));
       setTimeout(() => onOpenChange(false), 300);
     } catch {
@@ -70,13 +77,16 @@ export function AddToPlaylistDialog({
   };
 
   const handleCreateAndAdd = async () => {
-    if (songIds.length === 0 || !newPlaylistName.trim()) return;
+    if (!hasItems || !newPlaylistName.trim()) return;
     setCreating(true);
     try {
       const pl = await api.post<Playlist>("/user/playlists", {
         name: newPlaylistName.trim(),
       });
-      await api.post(`/user/playlists/${pl.id}/songs`, { songIds });
+      await api.post(`/user/playlists/${pl.id}/songs`, {
+        songIds: songIds?.length ? songIds : undefined,
+        clipIds: clipIds?.length ? clipIds : undefined,
+      });
       setPlaylists((prev) => [pl, ...prev]);
       setAddedIds((prev) => new Set(prev).add(pl.id));
       setNewPlaylistName("");
@@ -187,7 +197,7 @@ export function AddToPlaylistDialog({
                 添加到歌单
               </SheetTitle>
               <SheetDescription className="text-sm text-foreground/50">
-                选择一个歌单，将{songIds.length > 1 ? ` ${songIds.length} 首歌曲 ` : "歌曲"}添加进去
+                选择一个歌单，将{(songIds?.length ?? clipIds?.length ?? 0) > 1 ? ` ${songIds?.length ?? clipIds?.length} 首` : ""}歌曲添加进去
               </SheetDescription>
             </SheetHeader>
             <div className="mt-6 space-y-4">{content}</div>
@@ -206,7 +216,7 @@ export function AddToPlaylistDialog({
             添加到歌单
           </DialogTitle>
           <DialogDescription>
-            选择一个歌单，将{songIds.length > 1 ? ` ${songIds.length} 首歌曲 ` : "歌曲"}添加进去
+            选择一个歌单，将{(songIds?.length ?? clipIds?.length ?? 0) > 1 ? ` ${songIds?.length ?? clipIds?.length} 首` : ""}歌曲添加进去
           </DialogDescription>
         </DialogHeader>
         {content}

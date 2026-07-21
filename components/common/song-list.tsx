@@ -91,6 +91,9 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
   const [addToPlaylistSongIds, setAddToPlaylistSongIds] = React.useState<
     string[]
   >([]);
+  const [addToPlaylistClipIds, setAddToPlaylistClipIds] = React.useState<
+    string[]
+  >([]);
   const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
   // 下载状态：已缓存 id 集合 + 正在下载 id 集合
   const [downloadedIds, setDownloadedIds] = React.useState<Set<string>>(
@@ -366,7 +369,14 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
               })()}
               <button
                 type="button"
-                onClick={() => addToQueue(toPlayerSong(song))}
+                onClick={() => {
+                  const added = addToQueue(toPlayerSong(song));
+                  if (added) {
+                    toast.success("已添加到播放队列", { description: song.title });
+                  } else {
+                    toast.show("已在播放队列中", { description: song.title });
+                  }
+                }}
                 aria-label="添加到队列"
                 className="hidden h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-primary/10 hover:text-primary group-hover:opacity-100 dark:hover:text-primary/60 md:flex"
               >
@@ -430,13 +440,27 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
-                    onClick={() => addToQueue(toPlayerSong(song))}
+                    onClick={() => {
+                      const added = addToQueue(toPlayerSong(song));
+                      if (added) {
+                        toast.success("已添加到播放队列", { description: song.title });
+                      } else {
+                        toast.show("已在播放队列中", { description: song.title });
+                      }
+                    }}
                   >
                     <ListMusic className="mr-2 h-4 w-4" />
                     添加到队列
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => playNext(toPlayerSong(song))}
+                    onClick={() => {
+                      const added = playNext(toPlayerSong(song));
+                      if (added) {
+                        toast.success("将作为下一首播放", { description: song.title });
+                      } else {
+                        toast.show("已在播放队列中", { description: song.title });
+                      }
+                    }}
                   >
                     <ListStart className="mr-2 h-4 w-4" />
                     下一首播放
@@ -444,7 +468,13 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => {
-                      setAddToPlaylistSongIds([song.id]);
+                      if (song.trackType === "live_clip") {
+                        setAddToPlaylistSongIds([]);
+                        setAddToPlaylistClipIds([song.id]);
+                      } else {
+                        setAddToPlaylistSongIds([song.id]);
+                        setAddToPlaylistClipIds([]);
+                      }
                       setPlaylistDialogOpen(true);
                     }}
                   >
@@ -473,7 +503,8 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
         );
       })}
       <AddToPlaylistDialog
-        songIds={addToPlaylistSongIds}
+        songIds={addToPlaylistSongIds.length > 0 ? addToPlaylistSongIds : undefined}
+        clipIds={addToPlaylistClipIds.length > 0 ? addToPlaylistClipIds : undefined}
         open={playlistDialogOpen}
         onOpenChange={setPlaylistDialogOpen}
       />

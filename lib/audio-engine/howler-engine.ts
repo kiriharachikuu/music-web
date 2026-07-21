@@ -163,18 +163,24 @@ export function createHowlerEngine(
 
       // 尝试复用预加载实例
       const preloaded = tryConsumePreload(url);
+      // 标记是否已为 load 事件注册过回调，避免复用预加载实例时 onLoad 重复触发
+      let loadHandlerRegistered = false;
       if (preloaded) {
         howl = preloaded;
         if (howl.duration() > 0) {
           currentDuration = howl.duration();
           events?.onLoad(currentDuration);
+          // 已加载完成，后续 howl.on("load") 不会再触发，无需注册
+          loadHandlerRegistered = true;
         } else {
+          // 预加载实例尚未加载完成，用 once 处理首次 load 事件
           howl.once("load", () => {
             if (howl) {
               currentDuration = howl.duration() || 0;
               events?.onLoad(currentDuration);
             }
           });
+          loadHandlerRegistered = true;
         }
         howl.volume(currentVolume);
         howl.seek(opts?.startTime ?? 0);
@@ -187,11 +193,14 @@ export function createHowlerEngine(
         });
       }
 
-      howl.on("load", () => {
-        if (!howl) return;
-        currentDuration = howl.duration() || 0;
-        events?.onLoad(currentDuration);
-      });
+      // 仅在未注册过 load 回调时注册（新建实例的情况）
+      if (!loadHandlerRegistered) {
+        howl.on("load", () => {
+          if (!howl) return;
+          currentDuration = howl.duration() || 0;
+          events?.onLoad(currentDuration);
+        });
+      }
       howl.on("end", () => {
         events?.onEnd();
       });

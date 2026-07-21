@@ -158,6 +158,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
   // ----- 队列抽屉状态 -----
   const [queueOpen, setQueueOpen] = React.useState(false);
+  const [entered, setEntered] = React.useState(false);
 
   // ----- 移动端封面/歌词视图切换 -----
   const [showLyrics, setShowLyrics] = React.useState(false);
@@ -175,11 +176,34 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   // ----- 喜欢状态（全局 store） -----
   const likedIds = useFavoritesStore((s) => s.likedIds);
   const toggleLike = useFavoritesStore((s) => s.toggleLike);
-  const isFavorite = currentSong ? likedIds.has(currentSong.id) : false;
+  const likedClipIds = useFavoritesStore((s) => s.likedClipIds);
+  const toggleFavoriteClip = useFavoritesStore((s) => s.toggleFavoriteClip);
+  const loadFavoriteClipsFromServer = useFavoritesStore(
+    (s) => s.loadFavoriteClipsFromServer
+  );
+
+  // 根据 trackType 判断当前曲目是歌曲还是直播歌切
+  const isClip = currentSong?.trackType === "live_clip";
+  const isFavorite = currentSong
+    ? isClip
+      ? likedClipIds.has(currentSong.id)
+      : likedIds.has(currentSong.id)
+    : false;
+
+  // 首次播放歌切时懒加载歌切收藏列表
+  React.useEffect(() => {
+    if (isClip && likedClipIds.size === 0) {
+      void loadFavoriteClipsFromServer();
+    }
+  }, [isClip, likedClipIds.size, loadFavoriteClipsFromServer]);
 
   const toggleFavorite = async () => {
     if (!currentSong) return;
-    await toggleLike(currentSong.id);
+    if (isClip) {
+      await toggleFavoriteClip(currentSong.id);
+    } else {
+      await toggleLike(currentSong.id);
+    }
   };
 
   // ----- 拖拽关闭判断 -----
@@ -211,7 +235,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
-      transition={{ type: "spring", damping: 32, stiffness: 320 }}
+      transition={{ type: "tween", duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+      onAnimationComplete={() => setEntered(true)}
+      style={{ willChange: "transform" }}
       // 拖拽关闭：仅 dragControls 启动，禁用默认 dragListener
       drag="y"
       dragControls={dragControls}
@@ -222,7 +248,14 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       onDragEnd={handleDragEnd}
     >
       {/* ===== 背景层 z-0 ===== */}
-      <div className="absolute inset-0 z-0">
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          willChange: "transform",
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+        }}
+      >
         <div
           className="h-full w-full"
           style={{
@@ -234,7 +267,14 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       </div>
 
       {/* ===== 内容层 z-10 ===== */}
-      <div className="relative z-10 flex h-full flex-col pt-safe pl-safe pr-safe">
+      <div
+        className="relative z-10 flex h-full flex-col pt-safe pl-safe pr-safe"
+        style={{
+          willChange: "transform",
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+        }}
+      >
         {/* 顶部下拉手柄条（仅此区域可启动拖拽关闭） */}
         <div
           onPointerDown={(e) => dragControls.start(e.nativeEvent)}
@@ -283,18 +323,18 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[1.15fr_0.85fr] md:items-stretch md:gap-10 md:px-6 md:overflow-y-auto">
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[1.2fr_0.8fr] md:items-stretch md:gap-2 md:px-16 md:overflow-y-auto">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
-          <div className="hidden flex-col items-center gap-6 overflow-y-auto px-4 py-4 md:flex">
-            <div className="mt-auto mb-auto flex shrink-0 flex-col items-center gap-6">
-              <div className="relative aspect-square w-[min(780px,100%,80vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+          <div className="hidden flex-col justify-center overflow-y-auto py-6 md:flex md:px-20">
+            <div className="flex flex-col items-start gap-5">
+              <div className="relative aspect-square w-[min(520px,100%,40vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
                 {cover ? (
                   <AppImage
                     src={cover}
                     alt={currentSong.title}
                     fill
                     className="rounded-2xl"
-                    sizes="(min-width: 768px) 780px, 100vw"
+                    sizes="(min-width: 768px) 520px, 100vw"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/20">
@@ -302,8 +342,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                   </div>
                 )}
               </div>
-              <div className="w-full max-w-md shrink-0 px-2 text-center">
-                <div className="flex items-center justify-center gap-2">
+              <div className="w-full max-w-md text-left">
+                <div className="flex items-center gap-2">
                   {currentSong.trackType === "live_clip" && currentSong.sessionId && (
                     <LiveClipBadge
                       onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
@@ -327,6 +367,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               currentTime={currentTime}
               onSeek={seek}
               loading={lrcLoading}
+              animate={entered}
             />
           </div>
 
@@ -410,6 +451,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                 onSeek={seek}
                 loading={lrcLoading}
                 onToggleView={toggleView}
+                animate={entered}
               />
             </div>
           </div>
