@@ -46,6 +46,8 @@ export interface AndroidJSBridge {
   getCacheSizeMB(): string;
   /** 设置临时缓存大小（MB），自动限制在 50~5000 范围内 */
   setCacheSizeMB(mb: string): void;
+  /** 获取跨目录的总缓存大小（MB），包括：OkHttp缓存、下载歌曲、封面、歌词 */
+  getTotalCacheSizeMB(): string;
   /** 获取锁屏/通知栏播放器开关状态（"true"/"false"），默认开启 */
   isLockScreenPlayerEnabled(): string;
   /** 设置锁屏/通知栏播放器开关状态（"true"/"false"） */
@@ -302,6 +304,23 @@ export const androidBridge = {
       bridge.setCacheSizeMB(String(Math.max(50, Math.min(5000, Math.floor(mb)))));
     } catch {
       // 静默
+    }
+  },
+
+  /**
+   * 获取跨目录的总缓存大小（MB）
+   * - 包括：OkHttp缓存、下载歌曲、封面、歌词
+   * - 非 TWA 环境返回 0
+   */
+  getTotalCacheSizeMB(): number {
+    const bridge = getNativeBridge();
+    if (!bridge) return 0;
+    try {
+      const val = bridge.getTotalCacheSizeMB();
+      const num = parseInt(val, 10);
+      return isNaN(num) ? 0 : num;
+    } catch {
+      return 0;
     }
   },
 
