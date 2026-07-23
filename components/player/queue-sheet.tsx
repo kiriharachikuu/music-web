@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 import { Music2 } from "lucide-react";
 
 import { usePlayerStore } from "@/lib/store/player-store";
@@ -56,23 +57,40 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
             {queue.map((song, i) => {
               const isCurrent = i === currentIndex;
               return (
-                <li key={`${song.id}-${i}`} ref={(el) => { itemRefs.current[i] = el; }}>
-                  <button
+                <motion.li
+                  key={`${song.id}-${i}`}
+                  ref={(el) => { itemRefs.current[i] = el; }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                >
+                  <motion.button
                     type="button"
                     onClick={() => play(song, queue)}
                     className={cn(
-                      "flex w-full items-center gap-3 px-5 py-2.5 text-left transition-colors hover:bg-white/5 active:bg-white/10",
+                      "flex w-full items-center gap-3 px-5 py-2.5 text-left",
                       isCurrent && "bg-white/5"
                     )}
+                    whileHover={{ x: 4, backgroundColor: "rgba(255,255,255,0.05)" }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     {/* 当前播放左侧标记条 */}
-                    <span className="w-1 shrink-0 self-stretch">
+                    <motion.span className="w-1 shrink-0 self-stretch">
                       {isCurrent && (
-                        <span className="block h-full w-1 rounded-full bg-primary" />
+                        <motion.span
+                          className="block h-full w-1 rounded-full bg-primary"
+                          initial={{ scaleY: 0 }}
+                          animate={{ scaleY: 1 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        />
                       )}
-                    </span>
+                    </motion.span>
                     {/* 封面缩略图 */}
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-white/10">
+                    <motion.div
+                      className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/10"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.2 }}
+                    >
                       {song.cover ? (
                         <AppImage
                           src={song.cover}
@@ -87,23 +105,52 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
                           <Music2 className="h-4 w-4 text-white/40" />
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                     {/* 歌名 + 歌手 */}
                     <div className="min-w-0 flex-1">
-                      <p
+                      <motion.p
                         className={cn(
                           "truncate text-sm",
-                          isCurrent ? "text-primary/60" : "text-white"
+                          isCurrent ? "text-primary" : "text-white"
                         )}
+                        animate={{
+                          opacity: isCurrent ? 1 : 0.8,
+                        }}
                       >
                         {song.title}
-                      </p>
+                      </motion.p>
                       <p className="truncate text-xs text-white/50">
                         {song.artist}
                       </p>
                     </div>
-                  </button>
-                </li>
+                    {/* 当前播放指示图标 */}
+                    {isCurrent && (
+                      <motion.div
+                        className="flex h-10 items-center justify-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        <div className="flex gap-0.5">
+                          <motion.div
+                            className="h-4 w-1 rounded-full bg-primary"
+                            animate={{ height: [8, 16, 8] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
+                          />
+                          <motion.div
+                            className="h-4 w-1 rounded-full bg-primary"
+                            animate={{ height: [8, 16, 8] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: 0.15 }}
+                          />
+                          <motion.div
+                            className="h-4 w-1 rounded-full bg-primary"
+                            animate={{ height: [8, 16, 8] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: 0.3 }}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </motion.button>
+                </motion.li>
               );
             })}
             {queue.length === 0 && (

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Play, Pause, SkipForward, ChevronUp, Music2, Volume2, VolumeX } from "lucide-react";
 
@@ -32,22 +33,29 @@ const ProgressBar = React.memo(function ProgressBar({
     onSeek(ratio * max);
   };
 
+  // 外层触摸层：py-4 扩大可点击区域至 ~38px（满足移动端拖动需求），
+  // -my-4 负边距抵消视觉高度变化，使布局高度仍为细轨道高度
   return (
-    // 外层触摸层：py-4 扩大可点击区域至 ~38px（满足移动端拖动需求），
-    // -my-4 负边距抵消视觉高度变化，使布局高度仍为细轨道高度
     <div
       onClick={(e) => seekToClientX(e.clientX)}
       className="group relative w-full cursor-pointer py-4 -my-4"
     >
-      <div
+      <motion.div
         ref={ref}
-        className="relative h-1.5 w-full rounded-full bg-primary/20"
+        className="relative h-1 w-full rounded-full bg-white/10"
       >
-        <div
-          className="absolute inset-y-0 left-0 rounded-full progress-fill"
-          style={{ width: `${pct}%` }}
+        <motion.div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{
+            width: `${pct}%`,
+            background: "linear-gradient(90deg, rgba(168,85,247,1) 0%, rgba(139,92,246,1) 100%)",
+          }}
+          animate={{
+            boxShadow: "0 0 6px rgba(139,92,246,0.4)",
+          }}
+          transition={{ duration: 0.1 }}
         />
-      </div>
+      </motion.div>
     </div>
   );
 });
@@ -75,7 +83,18 @@ export function MiniPlayer() {
       <div className="mx-auto border-t border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60">
         <div className="flex items-center gap-3 px-3 py-2 md:gap-4 md:px-6 md:py-3 max-md:landscape:py-1.5">
           {/* 封面 */}
-          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/10 md:h-14 md:w-14 max-md:landscape:h-10 max-md:landscape:w-10">
+          <motion.div
+            className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/10 md:h-14 md:w-14 max-md:landscape:h-10 max-md:landscape:w-10"
+            animate={{
+              scale: isPlaying ? [1, 1.02, 1] : 1,
+            }}
+            transition={{
+              duration: isPlaying ? 4 : 0,
+              repeat: isPlaying ? Infinity : 0,
+              ease: "linear",
+            }}
+            whileHover={{ scale: 1.05 }}
+          >
             {currentSong?.cover ? (
               <AppImage
                 src={currentSong.cover}
@@ -89,7 +108,7 @@ export function MiniPlayer() {
                 <Music2 className="h-5 w-5" />
               </div>
             )}
-          </div>
+          </motion.div>
 
           {/* 歌名 / 歌手 + 进度条 */}
           <div className="flex min-w-0 flex-1 flex-col gap-1 max-md:landscape:gap-0.5">
@@ -123,27 +142,43 @@ export function MiniPlayer() {
 
           {/* 控制按钮 */}
           <div className="flex shrink-0 items-center gap-1 md:gap-2">
-            <Button
+            <motion.button
               onClick={toggle}
-              size="icon"
+              type="button"
               aria-label={isPlaying ? "暂停" : "播放"}
-              className="h-9 w-9 rounded-full bg-primary text-white shadow-card hover:bg-primary/90 active:bg-primary/95 md:h-10 md:w-10 max-md:landscape:h-8 max-md:landscape:w-8"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow-card md:h-10 md:w-10 max-md:landscape:h-8 max-md:landscape:w-8"
+              whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(139,92,246,0.4)" }}
+              whileTap={{ scale: 0.95 }}
+              animate={{
+                boxShadow: isPlaying
+                  ? [
+                      "0 0 0 0 rgba(139,92,246,0.3)",
+                      "0 0 0 10px rgba(139,92,246,0)",
+                    ]
+                  : "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+              transition={{
+                duration: isPlaying ? 1.5 : 0.3,
+                repeat: isPlaying ? Infinity : 0,
+                ease: "easeOut",
+              }}
             >
               {isPlaying ? (
                 <Pause className="h-4 w-4 md:h-5 md:w-5 max-md:landscape:h-3.5 max-md:landscape:w-3.5" />
               ) : (
                 <Play className="h-4 w-4 translate-x-[1px] md:h-5 md:w-5 max-md:landscape:h-3.5 max-md:landscape:w-3.5" />
               )}
-            </Button>
-            <Button
+            </motion.button>
+            <motion.button
               onClick={next}
-              variant="ghost"
-              size="icon"
+              type="button"
               aria-label="下一首"
-              className="hidden text-foreground/70 hover:text-foreground sm:inline-flex"
+              className="hidden flex h-9 w-9 items-center justify-center text-foreground/70 hover:text-foreground sm:inline-flex"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
               <SkipForward className="h-5 w-5" />
-            </Button>
+            </motion.button>
             {/* PC端音量控制 */}
             <div className="hidden items-center gap-2 md:flex">
               <button

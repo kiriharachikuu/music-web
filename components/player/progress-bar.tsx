@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/store/player-store";
@@ -118,20 +119,34 @@ export function ProgressBar({ value, max, onSeek }: ProgressBarProps) {
       className="group relative flex h-6 w-full cursor-pointer touch-none items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {/* 轨道 */}
-      <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/20" />
+      <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/15" />
       {/* 已播放填充：主题渐变 */}
-      <div
-        className="absolute left-0 h-1.5 rounded-full progress-fill"
-        style={{ width: `${pct}%` }}
+      <motion.div
+        className="absolute left-0 h-1.5 rounded-full"
+        style={{
+          width: `${pct}%`,
+          background: "linear-gradient(90deg, rgba(168,85,247,1) 0%, rgba(139,92,246,1) 50%, rgba(124,58,237,1) 100%)",
+        }}
+        animate={{
+          boxShadow: dragging
+            ? "0 0 10px rgba(139,92,246,0.6)"
+            : "0 0 5px rgba(139,92,246,0.3)",
+        }}
       />
       {/* 拖拽圆点：白边 + 主题色实心 */}
-      <div
+      <motion.div
         className={cn(
-          "absolute h-4 w-4 rounded-full border-2 border-white bg-primary shadow-md transition-transform",
-          "group-hover:scale-110",
-          dragging && "scale-125"
+          "absolute h-4 w-4 rounded-full border-2 border-white bg-primary shadow-md",
+          "group-hover:scale-110"
         )}
         style={{ left: `calc(${pct}% - 8px)` }}
+        animate={{
+          scale: dragging ? 1.3 : 1,
+          boxShadow: dragging
+            ? "0 0 20px rgba(139,92,246,0.8), 0 0 40px rgba(139,92,246,0.4)"
+            : "0 0 8px rgba(139,92,246,0.4)",
+        }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
       />
     </div>
   );

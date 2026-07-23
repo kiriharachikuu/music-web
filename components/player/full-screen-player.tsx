@@ -313,14 +313,16 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
         {/* 顶部信息栏：关闭按钮 + 移动端歌名歌手 + 队列按钮 */}
         <header className="flex shrink-0 items-center justify-between px-4 py-3 md:px-8">
-          <button
+          <motion.button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-white/70 transition-colors hover:text-white"
+            className="rounded-full p-2.5 text-white/60 transition-all hover:text-white hover:bg-white/10 active:scale-95"
             aria-label="收起播放页"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <ChevronDown className="h-6 w-6" />
-          </button>
+            <ChevronDown className="h-5 w-5" />
+          </motion.button>
           {/* 移动端：歌名 + 歌手 */}
           <div className="flex flex-1 flex-col items-center justify-center px-4 text-center md:hidden">
             <div className="flex items-center gap-1.5">
@@ -339,14 +341,16 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </div>
           {/* PC 端占位让两侧按钮对称 */}
           <div className="hidden flex-1 md:block" />
-          <button
+          <motion.button
             type="button"
             onClick={() => setQueueOpen(true)}
-            className="rounded-full p-2 text-white/70 transition-colors hover:text-white"
+            className="rounded-full p-2.5 text-white/60 transition-all hover:text-white hover:bg-white/10 active:scale-95"
             aria-label="播放队列"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             <ListMusic className="h-5 w-5" />
-          </button>
+          </motion.button>
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
@@ -354,8 +358,21 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
           <div className="hidden flex-col justify-center overflow-y-auto py-6 md:flex md:px-20">
             <div className="flex flex-col items-start gap-5">
-              <div className="relative aspect-square w-[min(520px,100%,40vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
-                {cover ? (
+              <motion.div
+              className="relative aspect-square w-[min(520px,100%,40vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10"
+              animate={{
+                boxShadow: isPlaying
+                  ? "0 0 60px rgba(139,0,255,0.25), 0 0 20px rgba(139,0,255,0.1), 0 25px 50px -12px rgba(0,0,0,0.5)"
+                  : "0 25px 50px -12px rgba(0,0,0,0.5)",
+              }}
+              transition={{ duration: 0.5 }}
+            >
+              {cover ? (
+                <motion.div
+                  animate={{ scale: isPlaying ? 1.02 : 1 }}
+                  transition={{ duration: 8, repeat: isPlaying ? Infinity : 0, ease: "linear" }}
+                  className="absolute inset-0"
+                >
                   <AppImage
                     src={cover}
                     alt={currentSong.title}
@@ -363,12 +380,13 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                     className="rounded-2xl"
                     sizes="(min-width: 768px) 520px, 100vw"
                   />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-primary/20">
-                    <Music2 className="h-16 w-16 text-white/40" />
-                  </div>
-                )}
-              </div>
+                </motion.div>
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-primary/20">
+                  <Music2 className="h-16 w-16 text-white/40" />
+                </div>
+              )}
+            </motion.div>
               <div className="w-full max-w-md text-left">
                 <div className="flex items-center gap-2">
                   {currentSong.trackType === "live_clip" && currentSong.sessionId && (
@@ -413,21 +431,35 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               aria-label="点击查看歌词"
             >
               {/* 封面图：vh 约束适配横屏/矮视口 */}
-              <div className="relative aspect-square w-[min(360px,75vw,65vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+              <motion.div
+                className="relative aspect-square w-[min(360px,75vw,65vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10"
+                animate={{
+                  boxShadow: isPlaying
+                    ? "0 0 40px rgba(139,0,255,0.2), 0 0 15px rgba(139,0,255,0.08), 0 20px 40px -10px rgba(0,0,0,0.4)"
+                    : "0 20px 40px -10px rgba(0,0,0,0.4)",
+                }}
+                transition={{ duration: 0.5 }}
+              >
                 {cover ? (
-                  <AppImage
-                    src={cover}
-                    alt={currentSong.title}
-                    fill
-                    className="rounded-2xl"
-                    sizes="(max-width: 768px) 75vw, 360px"
-                  />
+                  <motion.div
+                    animate={{ scale: isPlaying ? 1.02 : 1 }}
+                    transition={{ duration: 8, repeat: isPlaying ? Infinity : 0, ease: "linear" }}
+                    className="absolute inset-0"
+                  >
+                    <AppImage
+                      src={cover}
+                      alt={currentSong.title}
+                      fill
+                      className="rounded-2xl"
+                      sizes="(max-width: 768px) 75vw, 360px"
+                    />
+                  </motion.div>
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary/20">
                     <Music2 className="h-14 w-14 text-white/40" />
                   </div>
                 )}
-              </div>
+              </motion.div>
 
               {/* 歌名 + 歌手：shrink-0 防止被压缩 */}
               <div className="mt-6 w-full max-w-xs shrink-0 px-2 text-center">
@@ -486,10 +518,6 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
         {/* ===== 底部控制区 ===== */}
         <div className="shrink-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-10 pb-safe">
-          {/* 移动端：音质选择器 */}
-          <div className="md:hidden px-4 pb-3 flex justify-center">
-            <QualitySelector />
-          </div>
           <FullScreenControls
             isPlaying={isPlaying}
             currentTime={currentTime}

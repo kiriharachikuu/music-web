@@ -226,7 +226,7 @@ export function LyricsView({
             ? 1
             : Math.max(0.25, 0.65 - distance * 0.05);
           return (
-            <button
+            <motion.button
               key={i}
               ref={(el) => {
                 lineRefs.current[i] = el;
@@ -236,9 +236,9 @@ export function LyricsView({
               aria-current={isActive ? "true" : undefined}
               aria-label={`跳转到 ${formatLabelTime(line.time)}`}
               className={cn(
-                "group relative max-w-full cursor-pointer rounded-lg border-0 bg-transparent px-4 py-1.5 text-center transition-all duration-300 ease-out outline-none md:text-left",
+                "group relative max-w-full cursor-pointer rounded-lg border-0 bg-transparent px-4 py-2 text-center outline-none md:text-left",
                 isActive
-                  ? "text-white [transform:scale(1.1)]"
+                  ? "text-white"
                   : "text-white/70 hover:text-white"
               )}
               style={{
@@ -250,11 +250,17 @@ export function LyricsView({
                     }
                   : undefined),
               }}
+              animate={{
+                scale: isActive ? 1.1 : 1,
+              }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              whileHover={{ scale: isActive ? 1.1 : 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               <span className="block origin-center md:origin-left">
                 <LyricLineContent line={line} isActive={isActive} isClicked={isClicked} />
               </span>
-            </button>
+            </motion.button>
           );
         })}
       </div>
@@ -275,33 +281,52 @@ function LyricLineContent({
     <>
       {/* 点击闪光反馈层 */}
       {isClicked && (
-        <span className="lyrics-flash pointer-events-none absolute inset-0 -z-10 rounded-lg bg-primary/30" />
+        <motion.span
+          className="pointer-events-none absolute inset-0 -z-10 rounded-lg"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: [0, 0.5, 0], scale: [0.8, 1.1, 1.2] }}
+          transition={{ duration: 0.4 }}
+          style={{
+            background: "radial-gradient(circle, rgba(139,92,246,0.5) 0%, rgba(139,92,246,0) 70%)",
+          }}
+        />
       )}
       {/* 原文：空行用占位符避免高度塌陷 */}
-      <span
+      <motion.span
         className={cn(
           "block text-center text-lg font-semibold leading-relaxed drop-shadow-sm md:text-left md:text-2xl md:leading-relaxed",
           isActive && "font-bold"
         )}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
       >
         {line.text || "···"}
-      </span>
+      </motion.span>
       {/* 译文：双语歌词，比原文小，颜色 primary-300 */}
       {line.translation && (
-        <span
+        <motion.span
           className={cn(
             "mt-1 block text-center text-sm font-normal md:text-left md:text-base",
             isActive ? "text-primary/60" : "text-white/50"
           )}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
         >
           {line.translation}
-        </span>
+        </motion.span>
       )}
       {/* 悬停可点击提示（非当前行） */}
       {!isActive && (
-        <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 md:left-4 md:translate-x-0">
+        <motion.span
+          className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60 backdrop-blur-sm md:left-4 md:translate-x-0"
+          initial={{ opacity: 0, y: 5 }}
+          whileHover={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
           点击跳转
-        </span>
+        </motion.span>
       )}
     </>
   );
