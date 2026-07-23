@@ -8,10 +8,9 @@ import {
   useDragControls,
   type PanInfo,
 } from "framer-motion";
-import { ChevronDown, Heart, ListMusic, Music2, ChevronUp, Info, Share2 } from "lucide-react";
+import { ChevronDown, Heart, ListMusic, Music2, ChevronUp } from "lucide-react";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 import { AppImage } from "@/components/ui/app-image";
-import { cn } from "@/lib/utils";
 
 import {
   usePlayerStore,
@@ -31,6 +30,25 @@ import {
 } from "@/lib/media-session";
 import { getSongQualities } from "@/lib/api";
 
+/**
+ * XingTone —— 全屏歌词播放页（Apple Music 级视觉体验）
+ *
+ * 设计要点：
+ * 1. 触发：mini-player 展开按钮 → playerStore.openLyricPage()
+ *    本组件由 isLyricPageOpen 控制 AnimatePresence，从底部上滑展开 / 下滑收起
+ * 2. 背景：currentSong.cover 大图 blur-3xl + scale-125 铺满，叠加径向渐变蒙层
+ *    - 暗色：rgba(139,0,255,0.35) 中心 → rgba(0,0,0,0.75) 边缘
+ *    - 亮色：紫色透明度降至 0.2
+ * 3. 歌词：<LyricsView />，逐行高亮 + 紫色辉光 + 自动滚动 + 点击跳转
+ * 4. 控制：自定义进度条（点击/拖拽） + 上一首/播放/下一首 + 循环模式 + 队列
+ * 5. 队列：右侧 Sheet 抽屉，毛玻璃 bg-black/40 + backdrop-blur-xl
+ * 6. 拖拽关闭：仅顶部手柄区域可启动拖拽（dragControls），避免与歌词滚动冲突
+ *    向下拖拽 > 120px 或速度 > 500 → closeLyricPage()
+ * 7. Media Session：currentSong 变化时设置元数据 + 锁屏控件
+ * 8. 响应式：移动端单列（歌词 + 底部控制），PC 左右分栏（左封面 + 右歌词）
+ */
+
+/** 全屏播放页入口：由 isLyricPageOpen 控制 AnimatePresence */
 export function FullScreenPlayer() {
   const isOpen = usePlayerStore((s) => s.isLyricPageOpen);
   const close = usePlayerStore((s) => s.closeLyricPage);
@@ -42,26 +60,33 @@ export function FullScreenPlayer() {
   );
 }
 
+// ===== 全屏播放页主体 =====
+
 interface FullScreenPlayerInnerProps {
   onClose: () => void;
 }
 
 function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   const router = useRouter();
+  // ----- 播放器状态 -----
   const currentSong = usePlayerStore((s) => s.currentSong);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
   const playMode = usePlayerStore((s) => s.playMode);
 
+  // ----- 播放器操作 -----
   const toggle = usePlayerStore((s) => s.toggle);
   const next = usePlayerStore((s) => s.next);
   const prev = usePlayerStore((s) => s.prev);
   const seek = usePlayerStore((s) => s.seek);
   const setPlayMode = usePlayerStore((s) => s.setPlayMode);
 
+  // 拖拽控制：仅顶部手柄区域可启动拖拽，避免与歌词滚动冲突
   const dragControls = useDragControls();
 
+  // ----- 主题判断（暗色 vs 亮色，影响背景蒙层透明度）-----
+  // 用 MutationObserver 监听 <html> 的 class 变化，避免 hydration mismatch
   const [isDark, setIsDark] = React.useState(true);
   React.useEffect(() => {
     const root = document.documentElement;
@@ -72,6 +97,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     return () => observer.disconnect();
   }, []);
 
+  // ----- 拉取 LRC 歌词 -----
   const [lrc, setLrc] = React.useState<string | null>(null);
   const [lrcLoading, setLrcLoading] = React.useState(false);
   React.useEffect(() => {
@@ -102,6 +128,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     };
   }, [currentSong?.id]);
 
+  // ----- Media Session 集成 -----
+  // 元数据 + 播放状态 + 位置（锁屏进度条）
   React.useEffect(() => {
     setMediaSessionMetadata(currentSong);
     setMediaSessionPlaybackState(isPlaying);
@@ -113,6 +141,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     }
   }, [currentSong, isPlaying, duration, currentTime]);
 
+  // 操作处理器：play / pause / prev / next / seekto
+  // 依赖项只放稳定的 store actions（zustand 引用稳定），无需重新注册
   React.useEffect(() => {
     const cleanup = setupMediaSessionHandlers({
       play: () => {
@@ -128,6 +158,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     return cleanup;
   }, [toggle, prev, next, seek]);
 
+  // ----- 加载音质列表 -----
   const setAvailableQualities = usePlayerStore((s) => s.setAvailableQualities);
   const loadPreferredQuality = usePlayerStore((s) => s.loadPreferredQuality);
   React.useEffect(() => {
@@ -147,14 +178,18 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     };
   }, [currentSong?.id, setAvailableQualities]);
 
+  // 加载用户偏好音质
   React.useEffect(() => {
     void loadPreferredQuality();
   }, []);
 
+  // ----- 队列抽屉状态 -----
   const [queueOpen, setQueueOpen] = React.useState(false);
   const [entered, setEntered] = React.useState(false);
 
+  // ----- 移动端封面/歌词视图切换 -----
   const [showLyrics, setShowLyrics] = React.useState(false);
+  // 防连点：300ms 内不允许再次切换
   const toggleCooldownRef = React.useRef(false);
   const toggleView = React.useCallback(() => {
     if (toggleCooldownRef.current) return;
@@ -165,6 +200,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     }, 300);
   }, []);
 
+  // ----- 喜欢状态（全局 store） -----
   const likedIds = useFavoritesStore((s) => s.likedIds);
   const toggleLike = useFavoritesStore((s) => s.toggleLike);
   const likedClipIds = useFavoritesStore((s) => s.likedClipIds);
@@ -173,6 +209,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     (s) => s.loadFavoriteClipsFromServer
   );
 
+  // 根据 trackType 判断当前曲目是歌曲还是直播歌切
   const isClip = currentSong?.trackType === "live_clip";
   const isFavorite = currentSong
     ? isClip
@@ -180,6 +217,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       : likedIds.has(currentSong.id)
     : false;
 
+  // 首次播放歌切时懒加载歌切收藏列表
   React.useEffect(() => {
     if (isClip && likedClipIds.size === 0) {
       void loadFavoriteClipsFromServer();
@@ -195,6 +233,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     }
   };
 
+  // ----- 拖拽关闭判断 -----
   const handleDragEnd = (
     _e: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
@@ -204,6 +243,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     }
   };
 
+  // ----- 循环模式切换：list → single → sequential → shuffle → list -----
   const cyclePlayMode = () => {
     const order: PlayMode[] = ["list", "single", "sequential", "shuffle"];
     const idx = order.indexOf(playMode);
@@ -211,6 +251,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     setPlayMode(nextMode);
   };
 
+  // 无歌曲不渲染
   if (!currentSong) return null;
 
   const cover = currentSong.cover;
@@ -224,6 +265,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       transition={{ type: "tween", duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
       onAnimationComplete={() => setEntered(true)}
       style={{ willChange: "transform" }}
+      // 拖拽关闭：仅 dragControls 启动，禁用默认 dragListener
       drag="y"
       dragControls={dragControls}
       dragListener={false}
@@ -232,6 +274,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       dragMomentum={false}
       onDragEnd={handleDragEnd}
     >
+      {/* ===== 背景层 z-0 ===== */}
       <div
         className="absolute inset-0 z-0"
         style={{
@@ -244,12 +287,13 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           className="h-full w-full"
           style={{
             background: `radial-gradient(ellipse at center, rgba(139,0,255,${
-              isDark ? 0.35 : 0.25
-            }) 0%, rgba(0,0,0,0.9) 100%)`,
+              isDark ? 0.45 : 0.3
+            }) 0%, rgba(0,0,0,0.85) 100%)`,
           }}
         />
       </div>
 
+      {/* ===== 内容层 z-10 ===== */}
       <div
         className="relative z-10 flex h-full flex-col pt-safe pl-safe pr-safe"
         style={{
@@ -258,24 +302,26 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           backfaceVisibility: "hidden",
         }}
       >
+        {/* 顶部下拉手柄条（仅此区域可启动拖拽关闭） */}
         <div
           onPointerDown={(e) => dragControls.start(e.nativeEvent)}
-          className="flex shrink-0 cursor-grab justify-center py-3 active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab justify-center py-4 active:cursor-grabbing"
           aria-label="下拉关闭"
         >
-          <div className="h-1 w-10 rounded-full bg-white/20" />
+          <div className="h-1.5 w-12 rounded-full bg-white/30" />
         </div>
 
-        <header className="flex shrink-0 items-center justify-between px-4 py-2 md:px-8">
+        {/* 顶部信息栏：关闭按钮 + 移动端歌名歌手 + 队列按钮 */}
+        <header className="flex shrink-0 items-center justify-between px-4 py-3 md:px-8">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-white/60 transition-colors hover:text-white hover:bg-white/10"
+            className="rounded-full p-2 text-white/70 transition-colors hover:text-white"
             aria-label="收起播放页"
           >
-            <ChevronDown className="h-5 w-5" />
+            <ChevronDown className="h-6 w-6" />
           </button>
-
+          {/* 移动端：歌名 + 歌手 */}
           <div className="flex flex-1 flex-col items-center justify-center px-4 text-center md:hidden">
             <div className="flex items-center gap-1.5">
               {currentSong.trackType === "live_clip" && currentSong.sessionId && (
@@ -287,160 +333,74 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                 {currentSong.title}
               </p>
             </div>
-            <p className="truncate text-xs text-white/50">
+            <p className="truncate text-xs text-white/60">
               {currentSong.artist}
             </p>
           </div>
-
+          {/* PC 端占位让两侧按钮对称 */}
           <div className="hidden flex-1 md:block" />
-
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              className="rounded-full p-2 text-white/60 transition-colors hover:text-white hover:bg-white/10"
-              aria-label="分享"
-            >
-              <Share2 className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setQueueOpen(true)}
-              className="rounded-full p-2 text-white/60 transition-colors hover:text-white hover:bg-white/10"
-              aria-label="播放队列"
-            >
-              <ListMusic className="h-5 w-5" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setQueueOpen(true)}
+            className="rounded-full p-2 text-white/70 transition-colors hover:text-white"
+            aria-label="播放队列"
+          >
+            <ListMusic className="h-5 w-5" />
+          </button>
         </header>
 
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[1fr_1fr] md:items-center md:gap-4 md:px-8 md:overflow-y-auto">
-          <div className="hidden flex-col items-center justify-center overflow-y-auto py-4 md:flex md:px-8">
-            <div className="relative">
-              <motion.div
-                className="relative aspect-square w-[min(450px,90%,38vh)] rounded-2xl overflow-hidden"
-                animate={{ rotate: isPlaying ? 360 : 0 }}
-                transition={{
-                  duration: 20,
-                  repeat: isPlaying ? Infinity : 0,
-                  ease: "linear",
-                }}
-              >
-                <div className="absolute inset-0 rounded-2xl border-8 border-gray-900 shadow-2xl">
-                  <div className="absolute inset-0 rounded-xl overflow-hidden">
-                    {cover ? (
-                      <AppImage
-                        src={cover}
-                        alt={currentSong.title}
-                        fill
-                        className="rounded-xl"
-                        sizes="(min-width: 768px) 450px, 90vw"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-900/50 to-purple-700/30">
-                        <Music2 className="h-16 w-16 text-white/40" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-gray-800 border-4 border-gray-900 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-white/30" />
-                </div>
-              </motion.div>
-
-              <div className="absolute -bottom-2 -right-2 w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center shadow-lg">
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] font-bold text-white">{isPlaying ? 'ON' : 'OFF'}</span>
-                  <span className="text-[8px] text-white/70">AIR</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 w-full max-w-md text-center">
-              <div className="flex items-center justify-center gap-2">
-                {currentSong.trackType === "live_clip" && currentSong.sessionId && (
-                  <LiveClipBadge
-                    onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
+        {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[1.2fr_0.8fr] md:items-stretch md:gap-2 md:px-16 md:overflow-y-auto">
+          {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
+          <div className="hidden flex-col justify-center overflow-y-auto py-6 md:flex md:px-20">
+            <div className="flex flex-col items-start gap-5">
+              <div className="relative aspect-square w-[min(520px,100%,40vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+                {cover ? (
+                  <AppImage
+                    src={cover}
+                    alt={currentSong.title}
+                    fill
+                    className="rounded-2xl"
+                    sizes="(min-width: 768px) 520px, 100vw"
                   />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary/20">
+                    <Music2 className="h-16 w-16 text-white/40" />
+                  </div>
                 )}
-                <h1 className="min-w-0 truncate text-2xl font-bold text-white">
-                  {currentSong.title}
-                </h1>
               </div>
-              <p className="mt-1.5 truncate text-lg text-white/70">
-                {currentSong.artist}
-              </p>
-              {currentSong.album && (
-                <p className="mt-1 truncate text-sm text-white/40">
-                  {currentSong.album}
-                </p>
-              )}
-
-              <div className="mt-4 flex items-center justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={toggleFavorite}
-                  className={cn(
-                    "flex items-center gap-1.5 px-4 py-2 rounded-full transition-all duration-200",
-                    isFavorite
-                      ? "bg-primary/20 text-primary"
-                      : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-                  )}
-                  aria-label={isFavorite ? "取消喜欢" : "喜欢"}
-                >
-                  <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
-                  <span className="text-sm font-medium">
-                    {isFavorite ? "已喜欢" : "喜欢"}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-all duration-200"
-                  aria-label="更多"
-                >
-                  <Info className="h-4 w-4" />
-                  <span className="text-sm font-medium">更多</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="hidden min-h-0 h-full md:block">
-            <div className="h-full flex flex-col">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+              <div className="w-full max-w-md text-left">
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {}}
-                    className="text-sm font-medium text-primary px-3 py-1.5 rounded-lg bg-primary/10"
-                  >
-                    歌词
-                  </button>
-                  <button
-                    onClick={() => {}}
-                    className="text-sm font-medium text-white/50 hover:text-white/80 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    百科
-                  </button>
-                  <button
-                    onClick={() => {}}
-                    className="text-sm font-medium text-white/50 hover:text-white/80 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
-                  >
-                    相似推荐
-                  </button>
+                  {currentSong.trackType === "live_clip" && currentSong.sessionId && (
+                    <LiveClipBadge
+                      onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
+                    />
+                  )}
+                  <h1 className="min-w-0 truncate text-2xl font-bold drop-shadow-sm">
+                    {currentSong.title}
+                  </h1>
                 </div>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <LyricsView
-                  lrc={lrc}
-                  currentTime={currentTime}
-                  onSeek={seek}
-                  loading={lrcLoading}
-                  animate={entered}
-                />
+                <p className="mt-1 truncate text-sm text-white/60">
+                  {currentSong.artist}
+                </p>
               </div>
             </div>
           </div>
 
+          {/* 右：歌词（PC 端始终可见） */}
+          <div className="hidden min-h-0 h-full md:block w-full">
+            <LyricsView
+              lrc={lrc}
+              currentTime={currentTime}
+              onSeek={seek}
+              loading={lrcLoading}
+              animate={entered}
+            />
+          </div>
+
+          {/* ===== 移动端：封面 ⇄ 歌词交叉淡入淡出 ===== */}
           <div className="relative min-h-0 flex-1 md:hidden">
+            {/* 封面视图 */}
             <div
               className={`absolute inset-0 flex flex-col items-center justify-center overflow-y-auto px-4 transition-all duration-300 ease-out ${
                 showLyrics
@@ -452,37 +412,24 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               tabIndex={0}
               aria-label="点击查看歌词"
             >
-              <motion.div
-                className="relative aspect-square w-[min(340px,70vw,60vh)] rounded-2xl overflow-hidden shrink-0"
-                animate={{ rotate: isPlaying ? 360 : 0 }}
-                transition={{
-                  duration: 20,
-                  repeat: isPlaying ? Infinity : 0,
-                  ease: "linear",
-                }}
-              >
-                <div className="absolute inset-0 rounded-2xl border-6 border-gray-900">
-                  <div className="absolute inset-0 rounded-xl overflow-hidden">
-                    {cover ? (
-                      <AppImage
-                        src={cover}
-                        alt={currentSong.title}
-                        fill
-                        className="rounded-xl"
-                        sizes="(max-width: 768px) 70vw, 340px"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-900/50 to-purple-700/30">
-                        <Music2 className="h-14 w-14 text-white/40" />
-                      </div>
-                    )}
+              {/* 封面图：vh 约束适配横屏/矮视口 */}
+              <div className="relative aspect-square w-[min(360px,75vw,65vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10">
+                {cover ? (
+                  <AppImage
+                    src={cover}
+                    alt={currentSong.title}
+                    fill
+                    className="rounded-2xl"
+                    sizes="(max-width: 768px) 75vw, 360px"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary/20">
+                    <Music2 className="h-14 w-14 text-white/40" />
                   </div>
-                </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-800 border-3 border-gray-900 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
-                </div>
-              </motion.div>
+                )}
+              </div>
 
+              {/* 歌名 + 歌手：shrink-0 防止被压缩 */}
               <div className="mt-6 w-full max-w-xs shrink-0 px-2 text-center">
                 <div className="flex items-center justify-center gap-1.5">
                   {currentSong.trackType === "live_clip" && currentSong.sessionId && (
@@ -497,17 +444,18 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                       />
                     </span>
                   )}
-                  <h1 className="min-w-0 truncate text-xl font-bold text-white">
+                  <h1 className="min-w-0 truncate text-lg font-bold drop-shadow-sm">
                     {currentSong.title}
                   </h1>
                 </div>
-                <p className="mt-1.5 truncate text-base text-white/70">
+                <p className="mt-1 truncate text-sm text-white/60">
                   {currentSong.artist}
                 </p>
               </div>
 
+              {/* 底部上滑提示 */}
               <motion.div
-                className="mt-6 flex shrink-0 flex-col items-center gap-1 text-white/30"
+                className="mt-8 flex shrink-0 flex-col items-center gap-1 text-white/30"
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
@@ -516,6 +464,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               </motion.div>
             </div>
 
+            {/* 歌词视图 */}
             <div
               className={`absolute inset-0 transition-all duration-300 ease-out ${
                 showLyrics
@@ -535,7 +484,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </div>
         </main>
 
-        <div className="shrink-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-8 pb-safe">
+        {/* ===== 底部控制区 ===== */}
+        <div className="shrink-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-10 pb-safe">
+          {/* 移动端：音质选择器 */}
           <div className="md:hidden px-4 pb-3 flex justify-center">
             <QualitySelector />
           </div>
@@ -555,6 +506,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </div>
       </div>
 
+      {/* ===== 播放队列抽屉 ===== */}
       <QueueSheet open={queueOpen} onOpenChange={setQueueOpen} />
     </motion.div>
   );
