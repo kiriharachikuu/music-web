@@ -16,11 +16,6 @@ import { cn } from "@/lib/utils";
 import { ProgressBar } from "./progress-bar";
 import { QualitySelector } from "./quality-selector";
 
-/**
- * 全屏播放页底部控制区：进度条 + 控制按钮
- * - 进度条 + 当前时间 / 总时长
- * - 循环模式 / 上一首 / 播放-暂停 / 下一首 / 喜欢音乐 / 音质选择
- */
 export interface FullScreenControlsProps {
   isPlaying: boolean;
   currentTime: number;
@@ -59,8 +54,11 @@ export function FullScreenControls({
 
   return (
     <footer className="shrink-0 px-4 pb-4 pt-2 md:px-8 md:pb-6">
-      {/* 进度条 + 时间 */}
-      <div className="mb-3 flex items-center gap-3">
+      <div className="mb-3 hidden justify-center md:flex">
+        <QualitySelector />
+      </div>
+
+      <div className="mb-5 flex items-center gap-3">
         <span className="w-12 shrink-0 text-right font-mono text-xs text-white/60">
           {formatTime(currentTime)}
         </span>
@@ -70,24 +68,17 @@ export function FullScreenControls({
         </span>
       </div>
 
-      {/* 音质选择器（桌面端，控制按钮上方居中） */}
-      <div className="mb-3 hidden justify-center md:flex">
-        <QualitySelector />
-      </div>
-
-      {/* 控制按钮 */}
-      <div className="flex items-center justify-center gap-5 md:gap-10">
-        {/* 循环模式：激活态变 primary-500 */}
+      <div className="flex items-center justify-center gap-6 md:gap-8">
         <button
           type="button"
           onClick={onCyclePlayMode}
           className={cn(
-            "rounded-full p-2 transition-colors",
+            "group relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
             playMode === "list"
-              ? "text-white/70 hover:text-white"
+              ? "text-white/60 hover:text-white hover:bg-white/10"
               : playMode === "sequential"
-                ? "text-amber-400"
-                : "text-primary"
+                ? "text-amber-400 hover:bg-amber-400/20"
+                : "text-primary hover:bg-primary/20"
           )}
           aria-label={playModeLabel}
         >
@@ -98,23 +89,27 @@ export function FullScreenControls({
           ) : (
             <Repeat className="h-5 w-5" />
           )}
+          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] text-white/40 opacity-0 transition-opacity group-hover:opacity-100">
+            {playModeLabel}
+          </span>
         </button>
 
-        {/* 上一首 */}
         <button
           type="button"
           onClick={onPrev}
-          className="rounded-full p-2 text-white/80 transition-colors hover:text-white"
+          className="group relative flex h-11 w-11 items-center justify-center rounded-full text-white/70 transition-all duration-200 hover:text-white hover:bg-white/10"
           aria-label="上一首"
         >
-          <SkipBack className="h-7 w-7" fill="currentColor" />
+          <SkipBack className="h-6 w-6" fill="currentColor" />
+          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] text-white/40 opacity-0 transition-opacity group-hover:opacity-100">
+            上一首
+          </span>
         </button>
 
-        {/* 主播放按钮：白色圆形实心，图标 primary-700 */}
         <button
           type="button"
           onClick={onToggle}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xl transition-transform hover:scale-105 active:scale-95"
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all duration-200 hover:scale-105 hover:shadow-[0_10px_40px_rgba(0,0,0,0.4)] active:scale-95"
           aria-label={isPlaying ? "暂停" : "播放"}
         >
           {isPlaying ? (
@@ -127,29 +122,33 @@ export function FullScreenControls({
           )}
         </button>
 
-        {/* 下一首 */}
         <button
           type="button"
           onClick={onNext}
-          className="rounded-full p-2 text-white/80 transition-colors hover:text-white"
+          className="group relative flex h-11 w-11 items-center justify-center rounded-full text-white/70 transition-all duration-200 hover:text-white hover:bg-white/10"
           aria-label="下一首"
         >
-          <SkipForward className="h-7 w-7" fill="currentColor" />
+          <SkipForward className="h-6 w-6" fill="currentColor" />
+          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] text-white/40 opacity-0 transition-opacity group-hover:opacity-100">
+            下一首
+          </span>
         </button>
 
-        {/* 喜欢音乐 */}
         <button
           type="button"
           onClick={onToggleFavorite}
           className={cn(
-            "rounded-full p-2 transition-colors",
+            "group relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
             isFavorite
-              ? "text-primary"
-              : "text-white/70 hover:text-white"
+              ? "text-primary hover:bg-primary/20"
+              : "text-white/60 hover:text-white hover:bg-white/10"
           )}
           aria-label={isFavorite ? "取消喜欢" : "喜欢"}
         >
           <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
+          <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] text-white/40 opacity-0 transition-opacity group-hover:opacity-100">
+            {isFavorite ? "取消喜欢" : "喜欢"}
+          </span>
         </button>
       </div>
     </footer>
