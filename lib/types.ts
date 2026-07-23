@@ -290,13 +290,29 @@ export type SearchCategory =
   | "live_clips"
   | "live_sessions";
 
-/**
- * 搜索排序
+/** 搜索排序
  * - latest：按发布时间最新（请求映射为 sort=time）
  * - oldest：按发布时间最早（请求映射为 sort=time_asc）
  * - relevance：按相关度
  */
 export type SearchSort = "latest" | "oldest" | "relevance";
+
+/** 音质级别 */
+export type QualityLevel = "high" | "medium" | "low" | "default";
+
+/** 音质选项 */
+export interface QualityOption {
+  level: QualityLevel;
+  quality: string;
+  bitrate: number;
+  fileUrl: string;
+  fileSize: number;
+}
+
+/** 用户音质偏好 */
+export interface QualityPreference {
+  preferredQuality: "HIGH" | "MEDIUM" | "LOW";
+}
 
 /** 日期范围过滤 */
 export interface DateRange {

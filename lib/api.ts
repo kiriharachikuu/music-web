@@ -236,3 +236,15 @@ export async function getFavoriteLiveClipIds(): Promise<string[]> {
 export async function getFavoriteLiveClips<T = unknown>(): Promise<T[]> {
   return api.get<T[]>("/user/live-clips/favorites/list");
 }
+
+export async function getSongQualities(songId: string): Promise<{ level: string; quality: string; bitrate: number; fileUrl: string; fileSize: number }[]> {
+  return api.get<{ level: string; quality: string; bitrate: number; fileUrl: string; fileSize: number }[]>(`/songs/${songId}/qualities`);
+}
+
+export async function getQualityPreference(): Promise<{ preferredQuality: string }> {
+  return api.get<{ preferredQuality: string }>("/user/preferences/quality");
+}
+
+export async function setQualityPreference(quality: "HIGH" | "MEDIUM" | "LOW"): Promise<{ preferredQuality: string }> {
+  return api.put<{ preferredQuality: string }>("/user/preferences/quality", { quality });
+}

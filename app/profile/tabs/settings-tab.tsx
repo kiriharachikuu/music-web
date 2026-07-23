@@ -26,6 +26,7 @@ import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { getPlatform } from "@/lib/platform";
 import { useColorThemeStore, type ColorTheme } from "@/lib/store/color-theme-store";
 import { ChangePasswordDialog } from "./change-password-dialog";
+import { getQualityPreference, setQualityPreference } from "@/lib/api";
 
 /** localStorage key */
 const DOWNLOADS_KEY = "xt-music-downloads";
@@ -33,12 +34,12 @@ const SETTINGS_KEY = "xt-music-settings";
 
 /** 用户偏好设置（音质 / 自动播放） */
 interface UserSettings {
-  quality: "standard" | "high" | "lossless";
+  quality: "low" | "medium" | "high";
   autoplay: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
-  quality: "standard",
+  quality: "medium",
   autoplay: false,
 };
 
@@ -78,7 +79,18 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
     } catch {
       /* ignore */
     }
+    void loadQualityPreference();
   }, []);
+
+  const loadQualityPreference = async () => {
+    try {
+      const result = await getQualityPreference();
+      const quality = result.preferredQuality.toLowerCase() as "low" | "medium" | "high";
+      setSettings((s) => ({ ...s, quality }));
+    } catch {
+      /* ignore - keep default */
+    }
+  };
 
   const update = (patch: Partial<UserSettings>) => {
     const next = { ...settings, ...patch };
@@ -87,6 +99,17 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
     } catch {
       /* ignore */
+    }
+  };
+
+  const handleQualityChange = async (quality: "low" | "medium" | "high") => {
+    try {
+      await setQualityPreference(quality.toUpperCase() as "LOW" | "MEDIUM" | "HIGH");
+      update({ quality });
+      const labels: Record<string, string> = { low: "低音质", medium: "中等音质", high: "高音质" };
+      toast.success(`播放音质已设置为 ${labels[quality]}`);
+    } catch {
+      toast.error("设置失败");
     }
   };
 
@@ -328,15 +351,15 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
         </div>
       </div>
 
-      {/* 音质选择（占位：当前单文件架构，多码率切换即将支持） */}
+      {/* 音质选择 */}
       <div>
         <SettingsRow icon={Music2} title="播放音质">
-          <div className="flex items-center gap-1.5 opacity-50">
+          <div className="flex items-center gap-1.5">
             {(
               [
-                { key: "standard", label: "标准" },
-                { key: "high", label: "高清" },
-                { key: "lossless", label: "无损" },
+                { key: "low" as const, label: "低音质", desc: "128kbps" },
+                { key: "medium" as const, label: "中等音质", desc: "192kbps" },
+                { key: "high" as const, label: "高音质", desc: "320kbps" },
               ] as const
             ).map((q) => {
               const isActive = settings.quality === q.key;
@@ -344,14 +367,15 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                 <button
                   key={q.key}
                   type="button"
-                  disabled
-                  aria-disabled="true"
+                  onClick={() => handleQualityChange(q.key)}
+                  aria-pressed={isActive}
                   className={cn(
-                    "cursor-not-allowed rounded-full px-3 py-1.5 text-xs font-medium",
+                    "rounded-full px-3 py-1.5 text-xs font-medium transition-all",
                     isActive
                       ? "bg-primary text-white"
-                      : "bg-foreground/5 text-foreground/50"
+                      : "bg-foreground/5 text-foreground/70 hover:bg-foreground/10"
                   )}
+                  title={q.desc}
                 >
                   {q.label}
                 </button>
@@ -360,7 +384,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
           </div>
         </SettingsRow>
         <p className="mt-1.5 px-4 text-[11px] text-foreground/40">
-          多码率切换即将支持
+          选择默认播放音质，播放时可在播放器中临时切换
         </p>
       </div>
 

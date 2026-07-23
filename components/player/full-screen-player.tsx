@@ -21,12 +21,14 @@ import { getCachedLyric, fetchAndCacheLyric } from "@/lib/db/lyric-cache";
 import { LyricsView } from "./lyrics-view";
 import { QueueSheet } from "./queue-sheet";
 import { FullScreenControls } from "./full-screen-controls";
+import { QualitySelector } from "./quality-selector";
 import {
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
   setMediaSessionPositionState,
   setupMediaSessionHandlers,
 } from "@/lib/media-session";
+import { getSongQualities } from "@/lib/api";
 
 /**
  * XingTone —— 全屏歌词播放页（Apple Music 级视觉体验）
@@ -155,6 +157,31 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     });
     return cleanup;
   }, [toggle, prev, next, seek]);
+
+  // ----- 加载音质列表 -----
+  const setAvailableQualities = usePlayerStore((s) => s.setAvailableQualities);
+  const loadPreferredQuality = usePlayerStore((s) => s.loadPreferredQuality);
+  React.useEffect(() => {
+    if (!currentSong) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const qualities = await getSongQualities(currentSong.id);
+        if (cancelled) return;
+        setAvailableQualities(qualities as { level: "high" | "medium" | "low" | "default"; quality: string; bitrate: number; fileUrl: string; fileSize: number }[]);
+      } catch {
+        setAvailableQualities([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSong?.id, setAvailableQualities]);
+
+  // 加载用户偏好音质
+  React.useEffect(() => {
+    void loadPreferredQuality();
+  }, []);
 
   // ----- 队列抽屉状态 -----
   const [queueOpen, setQueueOpen] = React.useState(false);
@@ -459,6 +486,10 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
         {/* ===== 底部控制区 ===== */}
         <div className="shrink-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-10 pb-safe">
+          {/* 移动端：音质选择器 */}
+          <div className="md:hidden px-4 pb-3 flex justify-center">
+            <QualitySelector />
+          </div>
           <FullScreenControls
             isPlaying={isPlaying}
             currentTime={currentTime}

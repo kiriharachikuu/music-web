@@ -14,11 +14,12 @@ import {
 import { formatTime, type PlayMode } from "@/lib/store/player-store";
 import { cn } from "@/lib/utils";
 import { ProgressBar } from "./progress-bar";
+import { QualitySelector } from "./quality-selector";
 
 /**
  * 全屏播放页底部控制区：进度条 + 控制按钮
  * - 进度条 + 当前时间 / 总时长
- * - 循环模式 / 上一首 / 播放-暂停 / 下一首 / 喜欢音乐
+ * - 循环模式 / 上一首 / 播放-暂停 / 下一首 / 喜欢音乐 / 音质选择
  */
 export interface FullScreenControlsProps {
   isPlaying: boolean;
@@ -70,8 +71,10 @@ export function FullScreenControls({
       </div>
 
       {/* 控制按钮 */}
-      <div className="flex items-center justify-center gap-5 md:gap-10">
-        {/* 循环模式：激活态变 primary-500 */}
+      <div className="flex items-center justify-between gap-5 md:gap-10">
+        {/* 左侧控制：循环模式 / 上一首 / 播放-暂停 / 下一首 / 喜欢音乐 */}
+        <div className="flex items-center gap-5 md:gap-10">
+          {/* 循环模式：激活态变 primary-500 */}
         <button
           type="button"
           onClick={onCyclePlayMode}
@@ -132,19 +135,25 @@ export function FullScreenControls({
         </button>
 
         {/* 喜欢音乐 */}
-        <button
-          type="button"
-          onClick={onToggleFavorite}
-          className={cn(
-            "rounded-full p-2 transition-colors",
-            isFavorite
-              ? "text-primary"
-              : "text-white/70 hover:text-white"
-          )}
-          aria-label={isFavorite ? "取消喜欢" : "喜欢"}
-        >
-          <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
-        </button>
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            className={cn(
+              "rounded-full p-2 transition-colors",
+              isFavorite
+                ? "text-primary"
+                : "text-white/70 hover:text-white"
+            )}
+            aria-label={isFavorite ? "取消喜欢" : "喜欢"}
+          >
+            <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
+          </button>
+        </div>
+
+        {/* 右侧：音质选择 */}
+        <div className="hidden md:block">
+          <QualitySelector />
+        </div>
       </div>
     </footer>
   );

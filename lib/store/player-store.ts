@@ -9,7 +9,7 @@ import { getCachedAudio } from "@/lib/db/audio-cache";
 import { resolveMediaUrl } from "@/lib/utils";
 import { getPlatform } from "@/lib/platform";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
-import type { TrackType } from "@/lib/types";
+import type { TrackType, QualityOption } from "@/lib/types";
 
 /**
  * 上报播放记录到后端（静默失败，不阻塞播放）
@@ -87,6 +87,16 @@ interface PlayerState {
   /** 播放器错误信息（UI 层监听并显示 Toast），null 表示无错误 */
   error: string | null;
 
+  // ----- 音质相关状态 -----
+  /** 当前播放的音质级别 */
+  currentQuality: string;
+  /** 当前歌曲的可用音质列表 */
+  availableQualities: QualityOption[];
+  /** 用户偏好的音质级别 */
+  preferredQuality: string;
+  /** 是否正在切换音质 */
+  isSwitchingQuality: boolean;
+
   // ----- 操作 -----
   play: (song?: Song, queue?: Song[]) => Promise<void>;
   pause: () => void;
@@ -113,6 +123,16 @@ interface PlayerState {
   toggleQueue: () => void;
   /** 清除错误状态 */
   clearError: () => void;
+
+  // ----- 音质相关操作 -----
+  /** 设置当前歌曲的可用音质列表 */
+  setAvailableQualities: (qualities: QualityOption[]) => void;
+  /** 设置用户偏好音质 */
+  setPreferredQuality: (quality: string) => void;
+  /** 切换音质 */
+  switchQuality: (level: string) => Promise<void>;
+  /** 加载用户偏好音质 */
+  loadPreferredQuality: () => Promise<void>;
 }
 
 // ===== 引擎实例管理（模块作用域，非响应式） =====
@@ -167,6 +187,12 @@ export const usePlayerStore = create<PlayerState>()(
       isLyricPageOpen: false,
       isQueueOpen: false,
       error: null,
+
+      // 音质相关初始状态
+      currentQuality: "medium",
+      availableQualities: [],
+      preferredQuality: "medium",
+      isSwitchingQuality: false,
 
       // 播放：可传入新歌曲与队列；不传则播放队列当前位置
       play: async (song, queue) => {
@@ -430,6 +456,61 @@ export const usePlayerStore = create<PlayerState>()(
       setQueueOpen: (open) => set({ isQueueOpen: open }),
       toggleQueue: () => set((s) => ({ isQueueOpen: !s.isQueueOpen })),
       clearError: () => set({ error: null }),
+
+      // ----- 音质相关操作 -----
+      setAvailableQualities: (qualities) => {
+        set({ availableQualities: qualities });
+      },
+
+      setPreferredQuality: (quality) => {
+        set({ preferredQuality: quality });
+      },
+
+      switchQuality: async (level) => {
+        const state = get();
+        const currentSong = state.currentSong;
+        if (!currentSong || !engine) return;
+
+        const quality = state.availableQualities.find((q) => q.level === level);
+        if (!quality) return;
+
+        const currentTime = state.currentTime;
+
+        set({ isSwitchingQuality: true, isPlaying: false });
+        engine.pause();
+
+        try {
+          const url = resolveMediaUrl(quality.fileUrl);
+          const token = getToken();
+          const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+          await engine.loadAndPlay(url, {
+            headers,
+            startTime: currentTime,
+            metadata: {
+              title: currentSong.title,
+              artist: currentSong.artist,
+              coverUrl: currentSong.cover ? resolveMediaUrl(currentSong.cover) : undefined,
+            },
+          });
+
+          set({ currentQuality: level });
+        } catch {
+          set({ error: "切换音质失败" });
+        } finally {
+          set({ isSwitchingQuality: false });
+        }
+      },
+
+      loadPreferredQuality: async () => {
+        try {
+          const { getQualityPreference } = await import("@/lib/api");
+          const result = await getQualityPreference();
+          set({ preferredQuality: result.preferredQuality.toLowerCase() });
+        } catch {
+          set({ preferredQuality: "medium" });
+        }
+      },
     }),
     {
       name: "xt-music-player",
