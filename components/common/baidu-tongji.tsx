@@ -19,20 +19,19 @@ export function BaiduTongji() {
   }, [pathname, searchParams]);
 
   return (
-    <Script
-      id="baidu-tongji"
-      strategy="afterInteractive"
-      dangerouslySetInnerHTML={{
-        __html: `
-          var _hmt = _hmt || [];
-          (function() {
-            var hm = document.createElement("script");
-            hm.src = "https://hm.baidu.com/hm.js?df915bf8e74365f954cd86475ceee6f8";
-            var s = document.getElementsByTagName("script")[0]; 
-            s.parentNode.insertBefore(hm, s);
-          })();
-        `,
-      }}
-    />
+    <>
+      <Script
+        id="baidu-tongji-init"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `var _hmt = _hmt || [];`,
+        }}
+      />
+      <Script
+        id="baidu-tongji-script"
+        strategy="afterInteractive"
+        src="https://hm.baidu.com/hm.js?df915bf8e74365f954cd86475ceee6f8"
+      />
+    </>
   );
 }
