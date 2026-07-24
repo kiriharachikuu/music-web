@@ -318,6 +318,27 @@ export const usePlayerStore = create<PlayerState>()(
 
         // 6. 上报播放记录（静默，不阻塞播放）
         void reportPlayHistory(targetSong.id);
+
+        // 7. 重置音质状态并异步加载音质列表
+        set({ currentQuality: "default", availableQualities: [] });
+        (async () => {
+          try {
+            const { getSongQualities } = await import("@/lib/api");
+            const qualities = await getSongQualities(targetSong.id);
+            set({ availableQualities: qualities as QualityOption[] });
+
+            // 如果用户有偏好音质且当前歌曲有该音质，自动切换
+            const preferred = get().preferredQuality;
+            if (preferred && preferred !== "default") {
+              const match = qualities.find((q) => q.level === preferred);
+              if (match && match.level !== "default") {
+                await get().switchQuality(preferred);
+              }
+            }
+          } catch {
+            set({ availableQualities: [] });
+          }
+        })();
       },
 
       pause: () => {

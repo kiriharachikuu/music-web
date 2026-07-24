@@ -48,7 +48,10 @@ export function QualitySelector() {
     setIsOpen(false);
 
     try {
-      await setQualityPreference(level.toUpperCase() as "HIGH" | "MEDIUM" | "LOW");
+      // "default" 级别不保存到后端（Prisma 枚举无 DEFAULT）
+      if (level !== "default") {
+        await setQualityPreference(level.toUpperCase() as "HIGH" | "MEDIUM" | "LOW");
+      }
       await switchQuality(level);
       success(`已切换到${QUALITY_CONFIG[level]?.label || level}`);
     } catch {
@@ -89,15 +92,17 @@ export function QualitySelector() {
             </div>
           )}
         </div>
-        <div className="flex flex-col items-start">
+        {/* 桌面端显示文字 */}
+        <div className="hidden md:flex flex-col items-start">
           <span className={`font-medium transition-colors ${currentConfig?.color || "text-white/70"} group-hover:text-white`}>
             {currentConfig?.label || currentQuality}
           </span>
           <span className="text-[10px] text-white/40">{currentConfig?.sublabel}</span>
         </div>
+        {/* 桌面端显示下拉箭头 */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className={`h-4 w-4 text-white/40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`hidden md:block h-4 w-4 text-white/40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

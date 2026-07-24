@@ -66,6 +66,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // 客户端挂载后从 localStorage 恢复 volume / playMode / queue 等
     usePlayerStore.persist.rehydrate();
 
+    // 加载用户偏好音质（仅需登录用户）
+    void usePlayerStore.getState().loadPreferredQuality();
+
     // 自动播放：用户在设置中开启且存在上次播放的歌曲时，延迟恢复播放
     // 使用 requestIdleCallback / setTimeout 延迟到首屏渲染完成后执行，
     // 避免阻塞初始水合和首屏展示

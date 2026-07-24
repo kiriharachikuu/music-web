@@ -71,50 +71,53 @@ export function FullScreenControls({
         </span>
       </div>
 
-      {/* 控制按钮 */}
-      <div className="flex items-center justify-center gap-5 md:gap-10">
-        {/* 循环模式：激活态变 primary-500 */}
-        <motion.button
-          type="button"
-          onClick={onCyclePlayMode}
-          className={cn(
-            "rounded-full p-2.5 transition-all",
-            playMode === "list"
-              ? "text-white/60 hover:text-white hover:bg-white/10"
-              : playMode === "sequential"
-                ? "text-amber-400"
-                : "text-primary"
-          )}
-          aria-label={playModeLabel}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          {playMode === "single" ? (
-            <Repeat1 className="h-5 w-5" />
-          ) : playMode === "shuffle" ? (
-            <Shuffle className="h-5 w-5" />
-          ) : (
-            <Repeat className="h-5 w-5" />
-          )}
-        </motion.button>
+      {/* 控制按钮：左右等宽容器 + 绝对居中播放按钮 */}
+      <div className="relative flex items-center justify-center">
+        {/* 左侧按钮 */}
+        <div className="flex flex-1 items-center justify-end gap-5 md:gap-10">
+          {/* 循环模式：激活态变 primary-500 */}
+          <motion.button
+            type="button"
+            onClick={onCyclePlayMode}
+            className={cn(
+              "rounded-full p-2.5 transition-all",
+              playMode === "list"
+                ? "text-white/60 hover:text-white hover:bg-white/10"
+                : playMode === "sequential"
+                  ? "text-amber-400"
+                  : "text-primary"
+            )}
+            aria-label={playModeLabel}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            {playMode === "single" ? (
+              <Repeat1 className="h-5 w-5" />
+            ) : playMode === "shuffle" ? (
+              <Shuffle className="h-5 w-5" />
+            ) : (
+              <Repeat className="h-5 w-5" />
+            )}
+          </motion.button>
 
-        {/* 上一首 */}
-        <motion.button
-          type="button"
-          onClick={onPrev}
-          className="rounded-full p-2.5 text-white/70 transition-all hover:text-white hover:bg-white/10"
-          aria-label="上一首"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <SkipBack className="h-7 w-7" fill="currentColor" />
-        </motion.button>
+          {/* 上一首 */}
+          <motion.button
+            type="button"
+            onClick={onPrev}
+            className="rounded-full p-2.5 text-white/70 transition-all hover:text-white hover:bg-white/10"
+            aria-label="上一首"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <SkipBack className="h-7 w-7" fill="currentColor" />
+          </motion.button>
+        </div>
 
-        {/* 主播放按钮：白色圆形实心，图标 primary-700 */}
+        {/* 主播放按钮：白色圆形实心，绝对居中 */}
         <motion.button
           type="button"
           onClick={onToggle}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xl"
+          className="relative mx-4 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white shadow-xl md:mx-8"
           aria-label={isPlaying ? "暂停" : "播放"}
           whileHover={{ scale: 1.05, boxShadow: "0 0 30px rgba(139,0,255,0.3)" }}
           whileTap={{ scale: 0.95 }}
@@ -147,46 +150,42 @@ export function FullScreenControls({
           </motion.div>
         </motion.button>
 
-        {/* 下一首 */}
-        <motion.button
-          type="button"
-          onClick={onNext}
-          className="rounded-full p-2.5 text-white/70 transition-all hover:text-white hover:bg-white/10"
-          aria-label="下一首"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <SkipForward className="h-7 w-7" fill="currentColor" />
-        </motion.button>
+        {/* 右侧按钮 */}
+        <div className="flex flex-1 items-center gap-5 md:gap-10">
+          {/* 下一首 */}
+          <motion.button
+            type="button"
+            onClick={onNext}
+            className="rounded-full p-2.5 text-white/70 transition-all hover:text-white hover:bg-white/10"
+            aria-label="下一首"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <SkipForward className="h-7 w-7" fill="currentColor" />
+          </motion.button>
 
-        {/* 喜欢音乐 */}
-        <motion.button
-          type="button"
-          onClick={onToggleFavorite}
-          className={cn(
-            "rounded-full p-2.5 transition-all",
-            isFavorite
-              ? "text-primary"
-              : "text-white/60 hover:text-white hover:bg-white/10"
-          )}
-          aria-label={isFavorite ? "取消喜欢" : "喜欢"}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          animate={{ scale: isFavorite ? [1, 1.2, 1] : 1 }}
-          transition={{ duration: isFavorite ? 0.3 : 0 }}
-        >
-          <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
-        </motion.button>
+          {/* 喜欢音乐 */}
+          <motion.button
+            type="button"
+            onClick={onToggleFavorite}
+            className={cn(
+              "rounded-full p-2.5 transition-all",
+              isFavorite
+                ? "text-primary"
+                : "text-white/60 hover:text-white hover:bg-white/10"
+            )}
+            aria-label={isFavorite ? "取消喜欢" : "喜欢"}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            animate={{ scale: isFavorite ? [1, 1.2, 1] : 1 }}
+            transition={{ duration: isFavorite ? 0.3 : 0 }}
+          >
+            <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
+          </motion.button>
 
-        {/* 音质选择器（桌面端） */}
-        <div className="hidden md:block">
+          {/* 音质选择器 */}
           <QualitySelector />
         </div>
-      </div>
-
-      {/* 移动端：音质选择器 */}
-      <div className="md:hidden flex justify-center pt-3">
-        <QualitySelector />
       </div>
     </footer>
   );
