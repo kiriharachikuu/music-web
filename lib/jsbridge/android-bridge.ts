@@ -72,6 +72,10 @@ export interface AndroidJSBridge {
   cacheLyric(songId: string, lyricText: string): void;
   /** 获取本地缓存的歌词文本（返回空字符串表示未缓存） */
   getCachedLyric(songId: string): string;
+  /** 播放时静默缓存歌曲（音频+封面），已缓存时仅刷新 LRU 时间戳 */
+  cacheSongOnPlay(songId: string, url: string, headersJson: string, metaJson: string): void;
+  /** 更新已缓存歌曲的 LRU 时间戳（播放已缓存歌曲时调用） */
+  touchCachedSong(songId: string): void;
 }
 
 declare global {
@@ -510,6 +514,47 @@ export const androidBridge = {
       return bridge.getCachedLyric(songId);
     } catch {
       return "";
+    }
+  },
+
+  /**
+   * 播放时静默缓存歌曲（音频 + 封面），下载完成后自动执行 LRU 清理。
+   * - 已缓存时仅刷新 LRU 时间戳，不重复下载
+   * - 静默执行，不回传 JS 回调
+   * - 非 TWA 环境静默忽略
+   *
+   * @param songId 歌曲 ID
+   * @param url 音频网络地址
+   * @param headers 鉴权头（如 Authorization）
+   * @param meta 歌曲元数据（title / artist / albumName / coverUrl / fileUrl）
+   */
+  cacheSongOnPlay(
+    songId: string,
+    url: string,
+    headers: Record<string, string> | undefined,
+    meta: { title: string; artist: string; albumName?: string; coverUrl?: string; fileUrl: string }
+  ): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      const metaJson = JSON.stringify(meta);
+      bridge.cacheSongOnPlay(songId, url, serializeHeaders(headers), metaJson);
+    } catch {
+      // 静默
+    }
+  },
+
+  /**
+   * 更新已缓存歌曲的 LRU 时间戳（播放已缓存歌曲时调用）。
+   * - 非 TWA 环境静默忽略
+   */
+  touchCachedSong(songId: string): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      bridge.touchCachedSong(songId);
+    } catch {
+      // 静默
     }
   },
 };

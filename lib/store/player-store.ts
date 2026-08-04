@@ -220,72 +220,56 @@ export const usePlayerStore = create<PlayerState>()(
           error: null,
         });
 
-        // 2. 懒创建引擎（仅一次，后续复用）
-        if (!engine) {
-          const { createAudioEngine } = await import("@/lib/audio-engine/factory");
-          engine = createAudioEngine(getNextPreloadInfo);
-        }
-
-        // 3. 绑定事件回调（每次 play 都重新绑定，确保闭包拿到最新 get()）
-        const events: AudioEngineEvents = {
-          onPlay: () => usePlayerStore.setState({ isPlaying: true }),
-          onPause: () => usePlayerStore.setState({ isPlaying: false }),
-          onEnd: () => {
-            const cur = get();
-            if (cur.playMode === "single") {
-              // 单曲循环：重头播放
-              engine?.seek(0);
-              engine?.play();
-            } else if (cur.playMode === "sequential" && cur.currentIndex >= cur.queue.length - 1) {
-              // 顺序播放：已到末尾，停止播放
-              usePlayerStore.setState({ isPlaying: false, currentTime: 0 });
-            } else {
-              // 列表循环 / 随机 / 顺序（未到末尾）：进入下一首
-              get().next();
-            }
-          },
-          onLoad: (duration) => usePlayerStore.setState({ duration }),
-          onTimeUpdate: (currentTime) => usePlayerStore.setState({ currentTime }),
-          onError: (message) =>
-            usePlayerStore.setState({
-              isPlaying: false,
-              error: message || `音频加载失败：${targetSong.title}`,
-            }),
-          onSkipToNext: () => get().next(),
-          onSkipToPrevious: () => get().prev(),
-        };
-        engine.setEvents(events);
-
-        // 4. URL 解析：
-        //    - TWA 模式：优先查原生下载的本地文件（file://），真正实现离线播放；
-        //      未下载时走网络 URL（OkHttp 会自动缓存）
-        //    - 浏览器模式：命中 IndexedDB 用 blob: URL，未命中用网络 URL
-        const platform = getPlatform();
-        let url: string;
-        let headers: Record<string, string> | undefined;
-        let usedLocalCache = false;
-
-        if (platform.isTWA) {
-          const localPath = androidBridge.getLocalSongPath(targetSong.id);
-          if (localPath) {
-            url = `file://${localPath}`;
-            headers = undefined;
-            usedLocalCache = true;
-          } else {
-            url = resolveMediaUrl(targetSong.url);
-            const token = getToken();
-            headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
+        try {
+          // 2. 懒创建引擎（仅一次，后续复用）
+          if (!engine) {
+            const { createAudioEngine } = await import("@/lib/audio-engine/factory");
+            engine = createAudioEngine(getNextPreloadInfo);
           }
-        } else {
-          try {
-            const cached = await getCachedAudio(targetSong.id);
-            if (cached) {
-              if (currentBlobUrl) {
-                URL.revokeObjectURL(currentBlobUrl);
-                currentBlobUrl = null;
+
+          // 3. 绑定事件回调（每次 play 都重新绑定，确保闭包拿到最新 get()）
+          const events: AudioEngineEvents = {
+            onPlay: () => usePlayerStore.setState({ isPlaying: true }),
+            onPause: () => usePlayerStore.setState({ isPlaying: false }),
+            onEnd: () => {
+              const cur = get();
+              if (cur.playMode === "single") {
+                // 单曲循环：重头播放
+                engine?.seek(0);
+                engine?.play();
+              } else if (cur.playMode === "sequential" && cur.currentIndex >= cur.queue.length - 1) {
+                // 顺序播放：已到末尾，停止播放
+                usePlayerStore.setState({ isPlaying: false, currentTime: 0 });
+              } else {
+                // 列表循环 / 随机 / 顺序（未到末尾）：进入下一首
+                get().next();
               }
-              url = URL.createObjectURL(cached.blob);
-              currentBlobUrl = url;
+            },
+            onLoad: (duration) => usePlayerStore.setState({ duration }),
+            onTimeUpdate: (currentTime) => usePlayerStore.setState({ currentTime }),
+            onError: (message) =>
+              usePlayerStore.setState({
+                isPlaying: false,
+                error: message || `音频加载失败：${targetSong.title}`,
+              }),
+            onSkipToNext: () => get().next(),
+            onSkipToPrevious: () => get().prev(),
+          };
+          engine.setEvents(events);
+
+          // 4. URL 解析：
+          //    - TWA 模式：优先查原生下载的本地文件（file://），真正实现离线播放；
+          //      未下载时走网络 URL（OkHttp 会自动缓存）
+          //    - 浏览器模式：命中 IndexedDB 用 blob: URL，未命中用网络 URL
+          const platform = getPlatform();
+          let url: string;
+          let headers: Record<string, string> | undefined;
+          let usedLocalCache = false;
+
+          if (platform.isTWA) {
+            const localPath = androidBridge.getLocalSongPath(targetSong.id);
+            if (localPath) {
+              url = `file://${localPath}`;
               headers = undefined;
               usedLocalCache = true;
             } else {
@@ -293,72 +277,121 @@ export const usePlayerStore = create<PlayerState>()(
               const token = getToken();
               headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
             }
-          } catch {
-            url = resolveMediaUrl(targetSong.url);
-            const token = getToken();
-            headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
-          }
-        }
-
-        // 4.5 如果使用网络 URL 且有偏好音质，先加载音质列表选择正确 URL
-        //     避免先播放高音质再切换到低音质
-        const preferred = get().preferredQuality;
-        if (!usedLocalCache && preferred && preferred !== "default") {
-          try {
-            const { getSongQualities } = await import("@/lib/api");
-            const qualities = await getSongQualities(targetSong.id);
-            set({ availableQualities: qualities as QualityOption[] });
-
-            const match = qualities.find((q) => q.level === preferred);
-            if (match && match.level !== "default") {
-              url = resolveMediaUrl(match.fileUrl);
+          } else {
+            try {
+              const cached = await getCachedAudio(targetSong.id);
+              if (cached) {
+                if (currentBlobUrl) {
+                  URL.revokeObjectURL(currentBlobUrl);
+                  currentBlobUrl = null;
+                }
+                url = URL.createObjectURL(cached.blob);
+                currentBlobUrl = url;
+                headers = undefined;
+                usedLocalCache = true;
+              } else {
+                url = resolveMediaUrl(targetSong.url);
+                const token = getToken();
+                headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
+              }
+            } catch {
+              url = resolveMediaUrl(targetSong.url);
               const token = getToken();
               headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
-              set({ currentQuality: preferred });
-            } else {
-              set({ currentQuality: "default" });
             }
-          } catch {
-            set({ availableQualities: [], currentQuality: "default" });
           }
-        } else {
-          set({ currentQuality: "default", availableQualities: [] });
-        }
 
-        // 5. 调用引擎加载并播放
-        let coverUrl = targetSong.cover ? resolveMediaUrl(targetSong.cover) : undefined;
-        // TWA 模式：优先使用本地封面路径（离线可用）
-        if (platform.isTWA) {
-          const localCoverPath = androidBridge.getLocalCoverPath(targetSong.id);
-          if (localCoverPath) {
-            coverUrl = `file://${localCoverPath}`;
-          }
-        }
-        await engine.loadAndPlay(url, {
-          headers,
-          startTime: 0,
-          metadata: {
-            title: targetSong.title,
-            artist: targetSong.artist,
-            coverUrl,
-          },
-        });
-
-        // 6. 上报播放记录（静默，不阻塞播放）
-        void reportPlayHistory(targetSong.id);
-
-        // 7. 如果使用了本地缓存（TWA/IndexedDB），异步加载音质列表供 UI 展示
-        //     网络播放的音质列表已在步骤 4.5 中加载完毕
-        if (usedLocalCache) {
-          (async () => {
+          // 4.5 如果使用网络 URL 且有偏好音质，先加载音质列表选择正确 URL
+          //     避免先播放高音质再切换到低音质
+          const preferred = get().preferredQuality;
+          if (!usedLocalCache && preferred && preferred !== "default") {
             try {
               const { getSongQualities } = await import("@/lib/api");
               const qualities = await getSongQualities(targetSong.id);
               set({ availableQualities: qualities as QualityOption[] });
+
+              const match = qualities.find((q) => q.level === preferred);
+              if (match && match.level !== "default") {
+                url = resolveMediaUrl(match.fileUrl);
+                const token = getToken();
+                headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
+                set({ currentQuality: preferred });
+              } else {
+                set({ currentQuality: "default" });
+              }
             } catch {
-              set({ availableQualities: [] });
+              set({ availableQualities: [], currentQuality: "default" });
             }
-          })();
+          } else {
+            set({ currentQuality: "default", availableQualities: [] });
+          }
+
+          // 5. 调用引擎加载并播放
+          let coverUrl = targetSong.cover ? resolveMediaUrl(targetSong.cover) : undefined;
+          // TWA 模式：优先使用本地封面路径（离线可用）
+          if (platform.isTWA) {
+            const localCoverPath = androidBridge.getLocalCoverPath(targetSong.id);
+            if (localCoverPath) {
+              coverUrl = `file://${localCoverPath}`;
+            }
+          }
+          await engine.loadAndPlay(url, {
+            headers,
+            startTime: 0,
+            metadata: {
+              title: targetSong.title,
+              artist: targetSong.artist,
+              coverUrl,
+            },
+          });
+
+          // 6. 上报播放记录（静默，不阻塞播放）
+          void reportPlayHistory(targetSong.id);
+
+          // 6.5 TWA 播放缓存：已缓存则刷新 LRU 时间戳，未缓存则后台静默下载音频+封面
+          //     歌词缓存由 lyric-cache.ts 在获取歌词时同步写入原生存储
+          if (platform.isTWA) {
+            if (usedLocalCache) {
+              androidBridge.touchCachedSong(targetSong.id);
+            } else {
+              androidBridge.cacheSongOnPlay(
+                targetSong.id,
+                url,
+                headers,
+                {
+                  title: targetSong.title,
+                  artist: targetSong.artist,
+                  albumName: targetSong.album ?? "",
+                  coverUrl: targetSong.cover ? resolveMediaUrl(targetSong.cover) : undefined,
+                  fileUrl: targetSong.url,
+                }
+              );
+            }
+          }
+
+          // 7. 如果使用了本地缓存（TWA/IndexedDB），异步加载音质列表供 UI 展示
+          //     网络播放的音质列表已在步骤 4.5 中加载完毕
+          if (usedLocalCache) {
+            (async () => {
+              try {
+                const { getSongQualities } = await import("@/lib/api");
+                const qualities = await getSongQualities(targetSong.id);
+                set({ availableQualities: qualities as QualityOption[] });
+              } catch {
+                set({ availableQualities: [] });
+              }
+            })();
+          }
+        } catch (err) {
+          // 外层兜底：任何未捕获的错误都不让 Promise 变成 unhandled rejection
+          // （旧代码里可能抛同步异常直达 useEffect，冒泡到 ErrorBoundary 崩溃）
+          // eslint-disable-next-line no-console
+          console.error("[player-store] play() 异常:", err);
+          set({
+            isPlaying: false,
+            isSwitchingQuality: false,
+            error: `播放失败：${targetSong.title}`,
+          });
         }
       },
 
@@ -556,7 +589,36 @@ export const usePlayerStore = create<PlayerState>()(
     }),
     {
       name: "xt-music-player",
-      storage: createJSONStorage(() => localStorage),
+      // 自定义 storage：兜底损坏数据 + 非法 JSON，
+      // 避免 rehydrate 时抛错直达 global-error（切后台再回来的常见崩溃路径）
+      storage: (() => {
+        const base = createJSONStorage(() => localStorage);
+        return {
+          ...base,
+          getItem: (name: string) => {
+            try {
+              const raw = localStorage.getItem(name);
+              if (!raw) return null;
+              const parsed = JSON.parse(raw);
+              // 校验字段合法性，避免存储了半写数据导致后续渲染链崩溃
+              if (parsed?.state?.currentSong && typeof parsed.state.currentSong !== "object") {
+                parsed.state.currentSong = null;
+              }
+              if (!Array.isArray(parsed?.state?.queue)) {
+                if (parsed?.state) parsed.state.queue = [];
+              }
+              if (typeof parsed?.state?.currentIndex !== "number") {
+                if (parsed?.state) parsed.state.currentIndex = 0;
+              }
+              return parsed;
+            } catch {
+              // 损坏数据：清除后以空值启动，避免反复崩溃
+              try { localStorage.removeItem(name); } catch { /* noop */ }
+              return null;
+            }
+          },
+        } as ReturnType<typeof createJSONStorage>;
+      })(),
       // SSR 安全：跳过自动 hydration，由 AppShell 在客户端手动 rehydrate
       skipHydration: true,
       // 仅持久化稳定字段：currentSong / queue / currentIndex / volume / playMode / preferredQuality
@@ -569,6 +631,20 @@ export const usePlayerStore = create<PlayerState>()(
         playMode: state.playMode,
         preferredQuality: state.preferredQuality,
       }),
+      onRehydrateStorage: () => (state, error) => {
+        // zustand 4 内置的 rehydrate 错误回调，任何异常都走这里，不再冒泡到 React
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.warn("[player-store] rehydrate error -> fallback clean", error);
+          try { localStorage.removeItem("xt-music-player"); } catch { /* noop */ }
+          if (state) {
+            state.currentSong = null;
+            state.queue = [];
+            state.currentIndex = 0;
+            state.isPlaying = false;
+          }
+        }
+      },
     }
   )
 );

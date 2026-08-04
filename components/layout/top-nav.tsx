@@ -121,8 +121,8 @@ export function TopNav() {
         "fixed inset-x-0 top-0 z-30 border-b transition-colors duration-300 md:left-64",
         isMobileSearch && "hidden md:block",
         scrolled
-          ? "border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
-          : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"
+          ? "border-primary/10 bg-background/80 backdrop-blur-xl"
+          : "border-transparent bg-background/60 backdrop-blur-md"
       )}
     >
       <div className="h-[var(--safe-area-top,0px)]" />

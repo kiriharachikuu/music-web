@@ -1,6 +1,8 @@
 import { openDB, type IDBPDatabase } from "idb";
 import { api, API_BASE } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { androidBridge } from "@/lib/jsbridge/android-bridge";
+import { getPlatform } from "@/lib/platform/detect";
 
 /**
  * XingTone —— 歌词本地缓存（IndexedDB）
@@ -81,6 +83,11 @@ export async function cacheLyric(songId: string, lrc: string): Promise<void> {
 }
 
 export async function getCachedLyric(songId: string): Promise<string | null> {
+  // TWA 模式：优先读原生缓存（与音频/封面缓存统一 LRU 管理）
+  if (getPlatform().isTWA) {
+    const nativeLrc = androidBridge.getCachedLyric(songId);
+    if (nativeLrc) return nativeLrc;
+  }
   const db = await getDB();
   if (!db) return null;
   const rec = (await db.get(STORE_LYRICS, songId)) as
@@ -134,6 +141,10 @@ export async function fetchAndCacheLyric(songId: string): Promise<string | null>
   const lrc = await fetchLyric(songId);
   if (lrc) {
     await cacheLyric(songId, lrc);
+    // TWA 模式：同步写入原生存储，与音频/封面缓存统一 LRU 管理
+    if (getPlatform().isTWA) {
+      androidBridge.cacheLyric(songId, lrc);
+    }
   }
   return lrc;
 }

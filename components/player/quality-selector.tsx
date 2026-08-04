@@ -73,7 +73,7 @@ export function QualitySelector() {
         <div className="relative">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className={`h-5 w-5 transition-colors ${currentConfig?.color || "text-white/70"} group-hover:text-white`}
+            className={`h-5 w-5 transition-colors ${currentConfig?.color || "text-muted-foreground"} group-hover:text-foreground`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -87,7 +87,7 @@ export function QualitySelector() {
           </svg>
           {isSwitchingQuality && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <svg className="h-5 w-5 animate-spin text-white" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 animate-spin text-foreground" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none"/>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
               </svg>
@@ -96,15 +96,15 @@ export function QualitySelector() {
         </div>
         {/* 桌面端显示文字 */}
         <div className="hidden md:flex flex-col items-start">
-          <span className={`font-medium transition-colors ${currentConfig?.color || "text-white/70"} group-hover:text-white`}>
+          <span className={`font-medium transition-colors ${currentConfig?.color || "text-muted-foreground"} group-hover:text-foreground`}>
             {currentConfig?.label || currentQuality}
           </span>
-          <span className="text-[10px] text-white/40">{currentConfig?.sublabel}</span>
+          <span className="text-[10px] text-muted-foreground/60">{currentConfig?.sublabel}</span>
         </div>
         {/* 桌面端显示下拉箭头 */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className={`hidden md:block h-4 w-4 text-white/40 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`hidden md:block h-4 w-4 text-muted-foreground/60 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -131,12 +131,12 @@ export function QualitySelector() {
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
-              <div className="px-5 py-4 border-b border-gray-800/60">
+              <div className="px-5 py-4 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-white">当前歌曲音质</h3>
+                  <h3 className="text-sm font-semibold text-popover-foreground">当前歌曲音质</h3>
                   <motion.button
                     onClick={() => setIsOpen(false)}
-                    className="text-white/40 hover:text-white/70 transition-colors"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                   >
@@ -172,7 +172,7 @@ export function QualitySelector() {
                       }`}>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className={`h-5 w-5 ${isSelected ? config?.color || "text-primary" : "text-white/50"}`}
+                          className={`h-5 w-5 ${isSelected ? config?.color || "text-primary" : "text-muted-foreground/70"}`}
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -188,18 +188,18 @@ export function QualitySelector() {
 
                       <div className="flex-1 text-left">
                         <div className="flex items-center gap-2">
-                          <span className={`text-sm font-medium ${isSelected ? "text-white" : "text-white/80"}`}>
+                          <span className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-foreground/80"}`}>
                             {config?.label || quality.level}
                           </span>
                           {config?.badge && (
                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                              isSelected ? "bg-primary/20 text-primary" : "bg-white/10 text-white/50"
+                              isSelected ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground/70"
                             }`}>
                               {config.badge}
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-white/40">{config?.sublabel}</span>
+                        <span className="text-xs text-muted-foreground/60">{config?.sublabel}</span>
                       </div>
 
                       <div className="flex items-center">
@@ -225,8 +225,8 @@ export function QualitySelector() {
                 })}
               </div>
 
-              <div className="px-5 py-3 border-t border-gray-800/60 bg-gray-900/50">
-                <p className="text-xs text-white/30 text-center">
+              <div className="px-5 py-3 border-t border-border bg-muted/50">
+                <p className="text-xs text-muted-foreground/60 text-center">
                   选择音质将影响下载大小和播放效果
                 </p>
               </div>

@@ -404,7 +404,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
             {(
               [
                 { key: "low" as const, label: "低音质", desc: "128kbps" },
-                { key: "medium" as const, label: "中等音质", desc: "192kbps" },
+                { key: "medium" as const, label: "中音质", desc: "192kbps" },
                 { key: "high" as const, label: "高音质", desc: "320kbps" },
               ] as const
             ).map((q) => {

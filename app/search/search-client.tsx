@@ -261,7 +261,7 @@ export function SearchClient({
   return (
     <div className="min-h-dvh">
       {/* 移动端：固定顶部搜索栏 */}
-      <div className="fixed inset-x-0 top-0 z-30 border-b border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:hidden pt-safe">
+      <div className="fixed inset-x-0 top-0 z-30 border-b border-primary/10 bg-background/80 backdrop-blur-xl md:hidden pt-safe">
         <div className="flex h-12 items-center gap-2 px-2">
           {/* 返回按钮 */}
           <button
@@ -476,7 +476,7 @@ export function SearchClient({
                     </button>
                     {/* 日期选择器弹窗 */}
                     {showDatePicker && (
-                      <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-white p-4 shadow-lg dark:bg-gray-900">
+                      <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-xl border border-border bg-popover p-4 shadow-lg">
                         <div className="space-y-3">
                           <div>
                             <label className="mb-1.5 block text-xs font-medium text-foreground/70">

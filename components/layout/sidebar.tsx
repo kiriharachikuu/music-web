@@ -21,7 +21,7 @@ export function Sidebar() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-primary/10 bg-background/80 backdrop-blur-xl md:flex">
       {/* 品牌 Logo */}
       <div className="flex h-16 items-center gap-2 px-6">
         <AppImage

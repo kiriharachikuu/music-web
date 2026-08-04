@@ -73,10 +73,17 @@ function stopProgressTimer(): void {
 function startProgressTimer(onPreloadCheck: () => void): void {
   stopProgressTimer();
   progressTimer = setInterval(() => {
-    if (!howl) return;
-    currentPosition = (howl.seek() as number) || 0;
-    events?.onTimeUpdate(currentPosition);
-    onPreloadCheck();
+    try {
+      if (!howl) return;
+      // howl.seek() 在 howl 被 unload 或 audio 元素被浏览器回收时可能抛 TypeError
+      const pos = howl.seek();
+      currentPosition = (typeof pos === "number" && Number.isFinite(pos)) ? pos : 0;
+      events?.onTimeUpdate(currentPosition);
+      onPreloadCheck();
+    } catch {
+      // 静默失败：下一帧再继续，避免 setInterval 回调抛错冒泡到 global-error
+      currentPosition = 0;
+    }
   }, 250);
 }
 
@@ -153,87 +160,111 @@ export function createHowlerEngine(
       if (typeof window === "undefined") return;
       const myCallId = ++playCallId;
 
-      const Howl = await ensureHowlCtor();
-      unloadHowl();
+      try {
+        const Howl = await ensureHowlCtor();
+        unloadHowl();
 
-      // 竞态保护：await 期间有新 play 调用接管则中止
-      if (myCallId !== playCallId) return;
+        // 竞态保护：await 期间有新 play 调用接管则中止
+        if (myCallId !== playCallId) return;
 
-      currentUrl = url;
+        currentUrl = url;
 
-      // 尝试复用预加载实例
-      const preloaded = tryConsumePreload(url);
-      // 标记是否已为 load 事件注册过回调，避免复用预加载实例时 onLoad 重复触发
-      let loadHandlerRegistered = false;
-      if (preloaded) {
-        howl = preloaded;
-        if (howl.duration() > 0) {
-          currentDuration = howl.duration();
-          events?.onLoad(currentDuration);
-          // 已加载完成，后续 howl.on("load") 不会再触发，无需注册
-          loadHandlerRegistered = true;
+        // 尝试复用预加载实例
+        const preloaded = tryConsumePreload(url);
+        // 标记是否已为 load 事件注册过回调，避免复用预加载实例时 onLoad 重复触发
+        let loadHandlerRegistered = false;
+        if (preloaded) {
+          howl = preloaded;
+          if (howl.duration() > 0) {
+            currentDuration = howl.duration();
+            events?.onLoad(currentDuration);
+            // 已加载完成，后续 howl.on("load") 不会再触发，无需注册
+            loadHandlerRegistered = true;
+          } else {
+            // 预加载实例尚未加载完成，用 once 处理首次 load 事件
+            howl.once("load", () => {
+              try {
+                if (howl) {
+                  currentDuration = howl.duration() || 0;
+                  events?.onLoad(currentDuration);
+                }
+              } catch { /* noop */ }
+            });
+            loadHandlerRegistered = true;
+          }
+          howl.volume(currentVolume);
+          try { howl.seek(opts?.startTime ?? 0); } catch { /* noop */ }
         } else {
-          // 预加载实例尚未加载完成，用 once 处理首次 load 事件
-          howl.once("load", () => {
-            if (howl) {
+          howl = new Howl({
+            src: [url],
+            html5: true,
+            volume: currentVolume,
+            format: ["mp3", "flac", "wav", "ogg"],
+          });
+        }
+
+        // 仅在未注册过 load 回调时注册（新建实例的情况）
+        if (!loadHandlerRegistered) {
+          howl.on("load", () => {
+            try {
+              if (!howl) return;
               currentDuration = howl.duration() || 0;
               events?.onLoad(currentDuration);
-            }
+            } catch { /* noop */ }
           });
-          loadHandlerRegistered = true;
         }
-        howl.volume(currentVolume);
-        howl.seek(opts?.startTime ?? 0);
-      } else {
-        howl = new Howl({
-          src: [url],
-          html5: true,
-          volume: currentVolume,
-          format: ["mp3", "flac", "wav", "ogg"],
+        howl.on("end", () => {
+          try { events?.onEnd(); } catch { /* noop */ }
         });
-      }
-
-      // 仅在未注册过 load 回调时注册（新建实例的情况）
-      if (!loadHandlerRegistered) {
-        howl.on("load", () => {
-          if (!howl) return;
-          currentDuration = howl.duration() || 0;
-          events?.onLoad(currentDuration);
+        howl.on("loaderror", () => {
+          try { events?.onError("音频加载失败"); } catch { /* noop */ }
         });
-      }
-      howl.on("end", () => {
-        events?.onEnd();
-      });
-      howl.on("loaderror", () => {
-        events?.onError("音频加载失败");
-      });
-      howl.on("playerror", () => {
-        events?.onError("播放失败");
-      });
-      howl.on("play", () => {
-        events?.onPlay();
-      });
+        howl.on("playerror", () => {
+          try { events?.onError("播放失败"); } catch { /* noop */ }
+        });
+        howl.on("play", () => {
+          try { events?.onPlay(); } catch { /* noop */ }
+        });
 
-      howl.play();
-      startProgressTimer(() => {
-        // 预加载检查
-        if (currentDuration <= 0) return;
-        const remaining = currentDuration - currentPosition;
-        if (remaining > 0 && remaining <= PRELOAD_THRESHOLD) {
-          const preload = preloadCheckFn();
-          if (preload) {
-            const [nextUrl, nextHeaders] = preload;
-            if (nextUrl && nextUrl !== preloadUrl && nextUrl !== currentUrl) {
-              void preloadNextSong(nextUrl, nextHeaders);
+        try { howl.play(); } catch (err) {
+          // 浏览器自动播放策略或移动端切回前台时 play() 可能同步抛 DOMException
+          events?.onError(
+            err instanceof Error ? `播放失败：${err.message}` : "播放失败"
+          );
+          return;
+        }
+        startProgressTimer(() => {
+          // 预加载检查
+          if (currentDuration <= 0) return;
+          const remaining = currentDuration - currentPosition;
+          if (remaining > 0 && remaining <= PRELOAD_THRESHOLD) {
+            const preload = preloadCheckFn();
+            if (preload) {
+              const [nextUrl, nextHeaders] = preload;
+              if (nextUrl && nextUrl !== preloadUrl && nextUrl !== currentUrl) {
+                void preloadNextSong(nextUrl, nextHeaders);
+              }
             }
           }
-        }
-      });
+        });
+      } catch (err) {
+        // 兜底：任何 howler 内部错误都通过事件回传，不抛给外层
+        try {
+          events?.onError(
+            err instanceof Error ? `加载失败：${err.message}` : "音频加载失败"
+          );
+        } catch { /* noop */ }
+      }
     },
 
     play(): void {
-      if (!howl) return;
-      howl.play();
+      try {
+        if (!howl) return;
+        howl.play();
+      } catch {
+        // 浏览器后台切回时 howl 实例可能处于中间态抛错，不崩溃应用
+        return;
+      }
       startProgressTimer(() => {
         if (currentDuration <= 0) return;
         const remaining = currentDuration - currentPosition;
@@ -250,14 +281,22 @@ export function createHowlerEngine(
     },
 
     pause(): void {
-      if (!howl) return;
-      howl.pause();
+      try {
+        if (!howl) return;
+        howl.pause();
+      } catch {
+        // noop
+      }
       stopProgressTimer();
       events?.onPause();
     },
 
     seek(time: number): void {
-      if (howl) howl.seek(time);
+      try {
+        if (howl) howl.seek(time);
+      } catch {
+        // noop
+      }
       currentPosition = time;
     },
 

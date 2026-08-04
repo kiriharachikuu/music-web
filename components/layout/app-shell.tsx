@@ -62,32 +62,53 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const autoPlayRestoredRef = React.useRef(false);
 
   React.useEffect(() => {
-    // 客户端挂载后从 localStorage 恢复 volume / playMode / queue 等
-    usePlayerStore.persist.rehydrate();
-
-    // 加载用户偏好音质（仅需登录用户）
-    void usePlayerStore.getState().loadPreferredQuality();
-
-    // 自动播放：用户在设置中开启且存在上次播放的歌曲时，延迟恢复播放
-    // 使用 requestIdleCallback / setTimeout 延迟到首屏渲染完成后执行，
-    // 避免阻塞初始水合和首屏展示
-    if (autoPlayRestoredRef.current) return;
-    autoPlayRestoredRef.current = true;
-    const idleCb = typeof requestIdleCallback !== "undefined" ? requestIdleCallback : (fn: () => void) => setTimeout(fn, 200);
-    idleCb(() => {
+    // 外层兜底：任何初始化阶段的同步错误都不能冒泡到 React ErrorBoundary，
+    // 否则直接渲染 global-error（整个应用白屏）
+    try {
+      // 客户端挂载后从 localStorage 恢复 volume / playMode / queue 等
+      // zustand 的 rehydrate 在 skipHydration: true 时是同步执行的
       try {
-        const raw = localStorage.getItem("xt-music-settings");
-        const autoplay = raw ? JSON.parse(raw)?.autoplay === true : false;
-        if (autoplay) {
-          const { currentSong, play } = usePlayerStore.getState();
-          if (currentSong) {
-            void play(currentSong);
-          }
-        }
-      } catch {
-        // 忽略设置读取异常
+        usePlayerStore.persist.rehydrate();
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn("[AppShell] player rehydrate 失败，以空状态启动", err);
+        // 清掉损坏的数据，下次启动不会再崩
+        try { localStorage.removeItem("xt-music-player"); } catch { /* noop */ }
       }
-    });
+
+      // 加载用户偏好音质（仅需登录用户，异步静默失败）
+      try {
+        void (async () => {
+          try {
+            await usePlayerStore.getState().loadPreferredQuality();
+          } catch { /* 已在 store 内兜底，这里再加一层保险 */ }
+        })();
+      } catch { /* noop */ }
+
+      // 自动播放：用户在设置中开启且存在上次播放的歌曲时，延迟恢复播放
+      // 使用 requestIdleCallback / setTimeout 延迟到首屏渲染完成后执行，
+      // 避免阻塞初始水合和首屏展示
+      if (autoPlayRestoredRef.current) return;
+      autoPlayRestoredRef.current = true;
+      const idleCb = typeof requestIdleCallback !== "undefined" ? requestIdleCallback : (fn: () => void) => setTimeout(fn, 200);
+      idleCb(() => {
+        try {
+          const raw = localStorage.getItem("xt-music-settings");
+          const autoplay = raw ? JSON.parse(raw)?.autoplay === true : false;
+          if (autoplay) {
+            const { currentSong, play } = usePlayerStore.getState();
+            if (currentSong) {
+              void play(currentSong);
+            }
+          }
+        } catch {
+          // 忽略设置读取异常
+        }
+      });
+    } catch (outerErr) {
+      // eslint-disable-next-line no-console
+      console.error("[AppShell] 初始化阶段异常:", outerErr);
+    }
   }, []);
 
   // 监听播放器错误，3 秒后自动清除

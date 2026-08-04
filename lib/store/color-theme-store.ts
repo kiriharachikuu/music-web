@@ -23,27 +23,42 @@ export const useColorThemeStore = create<ColorThemeState>()(
     (set) => ({
       theme: "purple",
       setTheme: (theme: ColorTheme) => {
-        if (typeof document !== "undefined") {
-          const root = document.documentElement;
-          if (theme === "purple") {
-            root.removeAttribute("data-theme");
-          } else {
-            root.setAttribute("data-theme", theme);
+        try {
+          if (typeof document !== "undefined") {
+            const root = document.documentElement;
+            if (theme === "purple") {
+              root.removeAttribute("data-theme");
+            } else {
+              root.setAttribute("data-theme", theme);
+            }
           }
-        }
+        } catch { /* 极端情况下 document 操作失败也不影响应用启动 */ }
         set({ theme });
       },
     }),
     {
       name: STORAGE_KEY,
-      onRehydrateStorage: () => (state) => {
-        if (typeof document !== "undefined" && state) {
-          const root = document.documentElement;
-          if (state.theme === "purple") {
-            root.removeAttribute("data-theme");
-          } else {
-            root.setAttribute("data-theme", state.theme);
+      onRehydrateStorage: () => (state, error) => {
+        try {
+          if (error) {
+            // 数据损坏：清除 + 回退默认主题，不再冒泡
+            try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
+            return;
           }
+          if (typeof document !== "undefined" && state) {
+            const root = document.documentElement;
+            // 兜底 theme 非法值，避免 setAttribute 抛错
+            const t: unknown = state.theme;
+            if (t === "purple") {
+              root.removeAttribute("data-theme");
+            } else if (t === "sky" || t === "pink") {
+              root.setAttribute("data-theme", t);
+            } else {
+              root.removeAttribute("data-theme");
+            }
+          }
+        } catch {
+          // 不把任何异常冒泡到 React（rehydrate 回调是同步执行，直达 ErrorBoundary）
         }
       },
     }
