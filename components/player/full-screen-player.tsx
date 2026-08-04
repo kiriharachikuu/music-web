@@ -111,7 +111,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
     (async () => {
       const cached = await getCachedLyric(currentSong.id);
       if (cancelled) return;
-      if (cached) {
+      if (cached !== null) {
+        // 缓存存在（包括空字符串），直接使用
         setLrc(cached);
         setLrcLoading(false);
         return;

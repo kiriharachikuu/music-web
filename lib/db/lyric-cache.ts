@@ -109,13 +109,13 @@ export async function clearAllLyrics(): Promise<void> {
 }
 
 function normalizeLyricResponse(data: unknown): string | null {
-  if (typeof data === "string") return data || null;
+  if (typeof data === "string") return data;
   if (data && typeof data === "object") {
     if ("content" in data && typeof (data as { content?: unknown }).content === "string") {
-      return (data as { content: string }).content || null;
+      return (data as { content: string }).content;
     }
     if ("lyric" in data && typeof (data as { lyric?: unknown }).lyric === "string") {
-      return (data as { lyric: string }).lyric || null;
+      return (data as { lyric: string }).lyric;
     }
   }
   return null;
