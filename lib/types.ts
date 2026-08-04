@@ -333,6 +333,7 @@ function isLiveClipTrack(t: ApiSong | Track): t is LiveClipTrack {
  * 将后端 ApiSong 或 Track 转换为播放器可用的 PlayerSong
  * - ApiSong / OfficialTrack: url ← fileUrl, cover ← coverUrl, album ← albumName
  * - LiveClipTrack: url ← url, cover ← cover, album ← "场次名 (日期)" 便于区分同歌不同场次
+ * - ApiSong(trackType=live_clip): 收藏列表/歌单中的歌切以 ApiSong 格式存储，使用 fileUrl/coverUrl
  */
 export function toPlayerSong(s: ApiSong | Track): PlayerSong {
   if (isLiveClipTrack(s)) {
@@ -344,8 +345,10 @@ export function toPlayerSong(s: ApiSong | Track): PlayerSong {
       title: s.title,
       artist: s.artist,
       album: albumLabel,
-      cover: s.cover ?? undefined,
-      url: s.url,
+      // 兼容 LiveClipTrack(cover) 和 ApiSong(coverUrl) 两种格式
+      cover: s.cover ?? (s as unknown as ApiSong).coverUrl ?? undefined,
+      // 兼容 LiveClipTrack(url) 和 ApiSong(fileUrl) 两种格式
+      url: s.url ?? (s as unknown as ApiSong).fileUrl,
       duration: s.duration,
       trackType: s.trackType,
       sessionId: s.sessionId,
