@@ -39,7 +39,7 @@ export interface QualitySheetProps {
 }
 
 export function QualitySheet({ open, onOpenChange }: QualitySheetProps) {
-  const { availableQualities, currentQuality, switchQuality, isSwitchingQuality } = usePlayerStore();
+  const { availableQualities, currentQuality, switchQuality, isSwitchingQuality, setPreferredQuality } = usePlayerStore();
   const { success, error } = useToast();
 
   const handleSelectQuality = async (level: string) => {
@@ -54,6 +54,8 @@ export function QualitySheet({ open, onOpenChange }: QualitySheetProps) {
       if (level !== "default") {
         await setQualityPreference(level.toUpperCase() as "HIGH" | "MEDIUM" | "LOW");
       }
+      // 同步更新 store 中的偏好音质，确保切歌时能自动应用
+      setPreferredQuality(level);
       await switchQuality(level);
       success(`已切换到${QUALITY_CONFIG[level]?.label || level}`);
     } catch {

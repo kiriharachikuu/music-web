@@ -263,12 +263,14 @@ export const usePlayerStore = create<PlayerState>()(
         const platform = getPlatform();
         let url: string;
         let headers: Record<string, string> | undefined;
+        let usedLocalCache = false;
 
         if (platform.isTWA) {
           const localPath = androidBridge.getLocalSongPath(targetSong.id);
           if (localPath) {
             url = `file://${localPath}`;
             headers = undefined;
+            usedLocalCache = true;
           } else {
             url = resolveMediaUrl(targetSong.url);
             const token = getToken();
@@ -285,6 +287,7 @@ export const usePlayerStore = create<PlayerState>()(
               url = URL.createObjectURL(cached.blob);
               currentBlobUrl = url;
               headers = undefined;
+              usedLocalCache = true;
             } else {
               url = resolveMediaUrl(targetSong.url);
               const token = getToken();
@@ -295,6 +298,31 @@ export const usePlayerStore = create<PlayerState>()(
             const token = getToken();
             headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
           }
+        }
+
+        // 4.5 如果使用网络 URL 且有偏好音质，先加载音质列表选择正确 URL
+        //     避免先播放高音质再切换到低音质
+        const preferred = get().preferredQuality;
+        if (!usedLocalCache && preferred && preferred !== "default") {
+          try {
+            const { getSongQualities } = await import("@/lib/api");
+            const qualities = await getSongQualities(targetSong.id);
+            set({ availableQualities: qualities as QualityOption[] });
+
+            const match = qualities.find((q) => q.level === preferred);
+            if (match && match.level !== "default") {
+              url = resolveMediaUrl(match.fileUrl);
+              const token = getToken();
+              headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
+              set({ currentQuality: preferred });
+            } else {
+              set({ currentQuality: "default" });
+            }
+          } catch {
+            set({ availableQualities: [], currentQuality: "default" });
+          }
+        } else {
+          set({ currentQuality: "default", availableQualities: [] });
         }
 
         // 5. 调用引擎加载并播放
@@ -319,26 +347,19 @@ export const usePlayerStore = create<PlayerState>()(
         // 6. 上报播放记录（静默，不阻塞播放）
         void reportPlayHistory(targetSong.id);
 
-        // 7. 重置音质状态并异步加载音质列表
-        set({ currentQuality: "default", availableQualities: [] });
-        (async () => {
-          try {
-            const { getSongQualities } = await import("@/lib/api");
-            const qualities = await getSongQualities(targetSong.id);
-            set({ availableQualities: qualities as QualityOption[] });
-
-            // 如果用户有偏好音质且当前歌曲有该音质，自动切换
-            const preferred = get().preferredQuality;
-            if (preferred && preferred !== "default") {
-              const match = qualities.find((q) => q.level === preferred);
-              if (match && match.level !== "default") {
-                await get().switchQuality(preferred);
-              }
+        // 7. 如果使用了本地缓存（TWA/IndexedDB），异步加载音质列表供 UI 展示
+        //     网络播放的音质列表已在步骤 4.5 中加载完毕
+        if (usedLocalCache) {
+          (async () => {
+            try {
+              const { getSongQualities } = await import("@/lib/api");
+              const qualities = await getSongQualities(targetSong.id);
+              set({ availableQualities: qualities as QualityOption[] });
+            } catch {
+              set({ availableQualities: [] });
             }
-          } catch {
-            set({ availableQualities: [] });
-          }
-        })();
+          })();
+        }
       },
 
       pause: () => {
