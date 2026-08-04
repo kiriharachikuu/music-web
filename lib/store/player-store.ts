@@ -6,7 +6,7 @@ import { API_BASE } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import type { AudioEngine, AudioEngineEvents } from "@/lib/audio-engine/engine";
 import { getCachedAudio } from "@/lib/db/audio-cache";
-import { resolveMediaUrl } from "@/lib/utils";
+import { resolveMediaUrl, isExternalMediaUrl } from "@/lib/utils";
 import { getPlatform } from "@/lib/platform";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import type { TrackType, QualityOption } from "@/lib/types";
@@ -158,7 +158,7 @@ function getNextPreloadInfo(): [string, Record<string, string>] | null {
   const url = resolveMediaUrl(nextSong.url);
   const headers: Record<string, string> = {};
   const token = getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (token && !isExternalMediaUrl(url)) headers["Authorization"] = `Bearer ${token}`;
   return [url, headers];
 }
 
@@ -272,7 +272,7 @@ export const usePlayerStore = create<PlayerState>()(
           } else {
             url = resolveMediaUrl(targetSong.url);
             const token = getToken();
-            headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+            headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
           }
         } else {
           try {
@@ -288,12 +288,12 @@ export const usePlayerStore = create<PlayerState>()(
             } else {
               url = resolveMediaUrl(targetSong.url);
               const token = getToken();
-              headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+              headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
             }
           } catch {
             url = resolveMediaUrl(targetSong.url);
             const token = getToken();
-            headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+            headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
           }
         }
 
@@ -503,7 +503,7 @@ export const usePlayerStore = create<PlayerState>()(
         try {
           const url = resolveMediaUrl(quality.fileUrl);
           const token = getToken();
-          const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+          const headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
 
           await engine.loadAndPlay(url, {
             headers,
@@ -538,14 +538,15 @@ export const usePlayerStore = create<PlayerState>()(
       storage: createJSONStorage(() => localStorage),
       // SSR 安全：跳过自动 hydration，由 AppShell 在客户端手动 rehydrate
       skipHydration: true,
-      // 仅持久化稳定字段：currentSong / queue / currentIndex / volume / playMode
-      // 不持久化 currentTime / isPlaying / duration / isLyricPageOpen / isQueueOpen
+      // 仅持久化稳定字段：currentSong / queue / currentIndex / volume / playMode / preferredQuality
+      // 不持久化 currentTime / isPlaying / duration / isLyricPageOpen / isQueueOpen / availableQualities
       partialize: (state) => ({
         currentSong: state.currentSong,
         queue: state.queue,
         currentIndex: state.currentIndex,
         volume: state.volume,
         playMode: state.playMode,
+        preferredQuality: state.preferredQuality,
       }),
     }
   )

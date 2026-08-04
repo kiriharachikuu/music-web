@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { getToken } from "@/lib/auth";
 import type { UserProfile } from "@/lib/types";
 import { API_BASE } from "@/lib/api";
@@ -34,7 +33,6 @@ export function TopNav() {
   const isQueueOpen = usePlayerStore((s) => s.isQueueOpen);
 
   const isMobileSearch = pathname === "/search";
-  const isMobile = useIsMobile();
 
   const openLogin = useAuthStore((s) => s.openLogin);
 
@@ -82,8 +80,6 @@ export function TopNav() {
     void fetchProfile();
   }, [pathname]);
 
-  if (isMobileSearch && isMobile) return null;
-
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -123,6 +119,7 @@ export function TopNav() {
     <header
       className={cn(
         "fixed inset-x-0 top-0 z-30 border-b transition-colors duration-300 md:left-64",
+        isMobileSearch && "hidden md:block",
         scrolled
           ? "border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60"
           : "border-transparent bg-white/60 backdrop-blur-md dark:bg-gray-900/40"

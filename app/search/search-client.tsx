@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, Clock, Flame, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, X, Clock, Flame, Calendar, ArrowLeft } from "lucide-react";
 
 import type {
   SearchResult,
@@ -81,6 +82,7 @@ export function SearchClient({
   const openLogin = useAuthStore((s) => s.openLogin);
   const [hasMore, setHasMore] = React.useState(false);
   const [loadingMore, setLoadingMore] = React.useState(false);
+  const router = useRouter();
   const searchInputMobileRef = React.useRef<HTMLInputElement>(null);
   const searchInputDesktopRef = React.useRef<HTMLInputElement>(null);
   /** 当前分页（ref，不触发重渲染，避免与搜索 effect 形成循环） */
@@ -260,17 +262,32 @@ export function SearchClient({
     <div className="min-h-dvh">
       {/* 移动端：固定顶部搜索栏 */}
       <div className="fixed inset-x-0 top-0 z-30 border-b border-primary/10 bg-white/80 backdrop-blur-xl dark:bg-gray-900/60 md:hidden pt-safe">
-        <div className="flex h-12 items-center gap-3 px-4">
+        <div className="flex h-12 items-center gap-2 px-2">
+          {/* 返回按钮 */}
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) {
+                router.back();
+              } else {
+                router.push("/");
+              }
+            }}
+            aria-label="返回"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground active:bg-foreground/10"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />
             <input
               id="search-input-mobile"
               ref={searchInputMobileRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="搜索歌曲、歌手、专辑、歌单"
-              className="h-10 w-full rounded-full border border-input bg-card/60 pl-12 pr-12 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-card/40"
+              placeholder="搜索歌曲、歌手、专辑"
+              className="h-10 w-full rounded-full border border-input bg-card/60 pl-11 pr-10 text-sm shadow-sm outline-none transition-all placeholder:text-foreground/40 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-card/40"
             />
             {query && (
               <button
@@ -280,7 +297,7 @@ export function SearchClient({
                   setDebounced("");
                 }}
                 aria-label="清空"
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground active:text-foreground"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground active:text-foreground"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -290,7 +307,7 @@ export function SearchClient({
       </div>
 
       {/* 内容区域 */}
-      <section className="animate-fade-in space-y-6 pt-[calc(var(--safe-area-top,0px)+5rem)] md:pt-0">
+      <section className="animate-fade-in space-y-6 pt-[calc(var(--safe-area-top,0px)+4rem)] md:pt-0">
         {/* 桌面端搜索框 */}
         <div className="relative hidden md:block">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground/40" />

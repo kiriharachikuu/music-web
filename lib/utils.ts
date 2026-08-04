@@ -80,6 +80,16 @@ export function resolveMediaUrl(url?: string | null): string {
 }
 
 /**
+ * 判断 URL 是否为外部资源（COS/S3 等对象存储），非后端 URL。
+ * 外部资源不需要 JWT Authorization 头，带了反而触发 CORS 预检失败。
+ */
+export function isExternalMediaUrl(url: string): boolean {
+  if (!/^https?:\/\//i.test(url)) return false;
+  if (!_BACKEND_ORIGIN) return true;
+  return !url.startsWith(_BACKEND_ORIGIN);
+}
+
+/**
  * 递归遍历响应数据，将所有 /uploads/ 开头的字符串字段解析为可访问的绝对 URL。
  *
  * 性能优化：数组内同构对象只解析第一条记录来识别需要处理的 key，
