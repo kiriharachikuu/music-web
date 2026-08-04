@@ -8,7 +8,7 @@ import {
   useDragControls,
   type PanInfo,
 } from "framer-motion";
-import { ChevronDown, Heart, ListMusic, Music2, ChevronUp } from "lucide-react";
+import { ChevronDown, Heart, ListMusic, Music2, Music, ChevronUp } from "lucide-react";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 import { AppImage } from "@/components/ui/app-image";
 
@@ -22,6 +22,7 @@ import { LyricsView } from "./lyrics-view";
 import { QueueSheet } from "./queue-sheet";
 import { FullScreenControls } from "./full-screen-controls";
 import { QualitySelector } from "./quality-selector";
+import { QualitySheet } from "./quality-sheet";
 import {
   setMediaSessionMetadata,
   setMediaSessionPlaybackState,
@@ -160,6 +161,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
   // ----- 队列抽屉状态 -----
   const [queueOpen, setQueueOpen] = React.useState(false);
+  // ----- 移动端音质抽屉状态 -----
+  const [qualitySheetOpen, setQualitySheetOpen] = React.useState(false);
   const [entered, setEntered] = React.useState(false);
 
   // ----- 移动端封面/歌词视图切换 -----
@@ -316,16 +319,29 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           </div>
           {/* PC 端占位让两侧按钮对称 */}
           <div className="hidden flex-1 md:block" />
-          <motion.button
-            type="button"
-            onClick={() => setQueueOpen(true)}
-            className="rounded-full p-2.5 text-white/60 transition-all hover:text-white hover:bg-white/10 active:scale-95"
-            aria-label="播放队列"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ListMusic className="h-5 w-5" />
-          </motion.button>
+          <div className="flex items-center gap-1">
+            {/* 移动端音质按钮 */}
+            <motion.button
+              type="button"
+              onClick={() => setQualitySheetOpen(true)}
+              className="rounded-full p-2.5 text-white/60 transition-all hover:text-white hover:bg-white/10 active:scale-95 md:hidden"
+              aria-label="音质选择"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Music className="h-5 w-5" />
+            </motion.button>
+            <motion.button
+              type="button"
+              onClick={() => setQueueOpen(true)}
+              className="rounded-full p-2.5 text-white/60 transition-all hover:text-white hover:bg-white/10 active:scale-95"
+              aria-label="播放队列"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ListMusic className="h-5 w-5" />
+            </motion.button>
+          </div>
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
@@ -511,6 +527,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
       {/* ===== 播放队列抽屉 ===== */}
       <QueueSheet open={queueOpen} onOpenChange={setQueueOpen} />
+
+      {/* ===== 移动端音质抽屉 ===== */}
+      <QualitySheet open={qualitySheetOpen} onOpenChange={setQualitySheetOpen} />
     </motion.div>
   );
 }

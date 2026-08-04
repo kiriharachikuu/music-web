@@ -183,8 +183,10 @@ export function FullScreenControls({
             <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
           </motion.button>
 
-          {/* 音质选择器 */}
-          <QualitySelector />
+          {/* 音质选择器：仅 PC 端显示，移动端在顶部 header 区域 */}
+          <div className="hidden md:block">
+            <QualitySelector />
+          </div>
         </div>
       </div>
     </footer>
