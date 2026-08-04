@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 export type ColorTheme = "purple" | "sky" | "pink";
 
@@ -38,6 +38,7 @@ export const useColorThemeStore = create<ColorThemeState>()(
     }),
     {
       name: STORAGE_KEY,
+      storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state, error) => {
         try {
           if (error) {
