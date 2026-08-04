@@ -64,7 +64,7 @@ export function FavoritesTab() {
         artist: c.artist,
         duration: c.duration,
         fileUrl: c.fileUrl,
-        coverUrl: c.coverUrl ?? undefined,
+        coverUrl: c.coverUrl ?? c.session?.cover ?? undefined,
         releaseDate: "",
         plays: 0,
         status: "PUBLISHED" as const,

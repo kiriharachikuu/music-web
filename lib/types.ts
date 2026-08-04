@@ -137,7 +137,7 @@ export interface PlaylistSongItem {
     duration: number;
     fileUrl: string;
     coverUrl?: string | null;
-    session?: { id: string; title: string };
+    session?: { id: string; title: string; cover?: string | null };
   } | null;
 }
 

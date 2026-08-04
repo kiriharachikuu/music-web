@@ -108,7 +108,7 @@ export function PlaylistDetailClient({
             artist: ps.clip.artist,
             duration: ps.clip.duration,
             fileUrl: ps.clip.fileUrl,
-            coverUrl: ps.clip.coverUrl ?? undefined,
+            coverUrl: ps.clip.coverUrl ?? ps.clip.session?.cover ?? undefined,
             releaseDate: "",
             plays: 0,
             status: "PUBLISHED",
