@@ -189,9 +189,9 @@ export const usePlayerStore = create<PlayerState>()(
       error: null,
 
       // 音质相关初始状态
-      currentQuality: "medium",
+      currentQuality: "low",
       availableQualities: [],
-      preferredQuality: "medium",
+      preferredQuality: "low",
       isSwitchingQuality: false,
 
       // 播放：可传入新歌曲与队列；不传则播放队列当前位置
@@ -529,7 +529,7 @@ export const usePlayerStore = create<PlayerState>()(
           const result = await getQualityPreference();
           set({ preferredQuality: result.preferredQuality.toLowerCase() });
         } catch {
-          set({ preferredQuality: "medium" });
+          set({ preferredQuality: "low" });
         }
       },
     }),
