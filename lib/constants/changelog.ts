@@ -43,6 +43,26 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.4.0",
+    versionCode: 9,
+    releaseDate: "2026-08-04",
+    title: "排行榜自动排名、移动端返回手势与体验优化",
+    changes: [
+      { type: "feature", content: "热歌榜改为基于过去 7 天真实播放量自动排名 Top 50，每周一凌晨自动更新" },
+      { type: "feature", content: "飙升榜改为基于本周与上周播放增长量自动排名 Top 50，每周一凌晨自动更新" },
+      { type: "feature", content: "移动端新增 iOS 风格边缘滑动返回手势，从屏幕左边缘向右滑动即可返回上一页" },
+      { type: "feature", content: "移动端所有非一级页面顶部新增返回按钮" },
+      { type: "feature", content: "移动端音质切换改为上拉抽屉交互，入口移至全屏播放页顶部" },
+      { type: "improvement", content: "全屏播放页 PC 端修复封面区域和音质选择器多余滚动条问题" },
+      { type: "improvement", content: "歌曲下载功能仅限 Android 客户端使用，PC 端和 iOS 端隐藏下载入口" },
+      { type: "fix", content: "修复歌切（Live Clip）歌词无法显示的问题" },
+      { type: "fix", content: "修复转码任务完成判定逻辑、重试计数等缺陷" },
+      { type: "fix", content: "修复切歌时 blob URL 内存泄漏问题" },
+      { type: "fix", content: "修复播放历史无限膨胀问题，限制每用户 500 条并自动清理" },
+      { type: "fix", content: "优化搜索性能，为歌曲标题/歌手/专辑名/歌单名添加数据库索引" },
+    ],
+  },
+  {
     version: "1.3.0",
     versionCode: 8,
     releaseDate: "2026-07-22",
@@ -180,8 +200,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "1.3.0";
-export const APP_VERSION_CODE = 8;
+export const APP_VERSION = "1.4.0";
+export const APP_VERSION_CODE = 9;
 
 /**
  * 获取更新类型对应的显示标签
