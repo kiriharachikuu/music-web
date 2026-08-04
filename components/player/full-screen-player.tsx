@@ -264,7 +264,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         <div
           className="h-full w-full"
           style={{
-            background: `radial-gradient(ellipse at center, rgba(139,0,255,${
+            background: `radial-gradient(ellipse at center, hsl(var(--primary) / ${
               isDark ? 0.45 : 0.3
             }) 0%, rgba(0,0,0,0.85) 100%)`,
           }}
@@ -353,7 +353,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               className="relative aspect-square w-[min(520px,100%,40vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10"
               animate={{
                 boxShadow: isPlaying
-                  ? "0 0 60px rgba(139,0,255,0.25), 0 0 20px rgba(139,0,255,0.1), 0 25px 50px -12px rgba(0,0,0,0.5)"
+                  ? "0 0 60px hsl(var(--primary) / 0.25), 0 0 20px hsl(var(--primary) / 0.1), 0 25px 50px -12px rgba(0,0,0,0.5)"
                   : "0 25px 50px -12px rgba(0,0,0,0.5)",
               }}
               transition={{ duration: 0.5 }}
@@ -426,7 +426,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                 className="relative aspect-square w-[min(360px,75vw,65vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10"
                 animate={{
                   boxShadow: isPlaying
-                    ? "0 0 40px rgba(139,0,255,0.2), 0 0 15px rgba(139,0,255,0.08), 0 20px 40px -10px rgba(0,0,0,0.4)"
+                    ? "0 0 40px hsl(var(--primary) / 0.2), 0 0 15px hsl(var(--primary) / 0.08), 0 20px 40px -10px rgba(0,0,0,0.4)"
                     : "0 20px 40px -10px rgba(0,0,0,0.4)",
                 }}
                 transition={{ duration: 0.5 }}

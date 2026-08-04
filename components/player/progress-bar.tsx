@@ -125,12 +125,12 @@ export function ProgressBar({ value, max, onSeek }: ProgressBarProps) {
         className="absolute left-0 h-1.5 rounded-full"
         style={{
           width: `${pct}%`,
-          background: "linear-gradient(90deg, rgba(168,85,247,1) 0%, rgba(139,92,246,1) 50%, rgba(124,58,237,1) 100%)",
+          background: "linear-gradient(90deg, hsl(var(--primary) / 0.8) 0%, hsl(var(--primary)) 50%, hsl(var(--primary) / 0.8) 100%)",
         }}
         animate={{
           boxShadow: dragging
-            ? "0 0 10px rgba(139,92,246,0.6)"
-            : "0 0 5px rgba(139,92,246,0.3)",
+            ? "0 0 10px hsl(var(--primary) / 0.6)"
+            : "0 0 5px hsl(var(--primary) / 0.3)",
         }}
       />
       {/* 拖拽圆点：白边 + 主题色实心 */}
@@ -143,8 +143,8 @@ export function ProgressBar({ value, max, onSeek }: ProgressBarProps) {
         animate={{
           scale: dragging ? 1.3 : 1,
           boxShadow: dragging
-            ? "0 0 20px rgba(139,92,246,0.8), 0 0 40px rgba(139,92,246,0.4)"
-            : "0 0 8px rgba(139,92,246,0.4)",
+            ? "0 0 20px hsl(var(--primary) / 0.8), 0 0 40px hsl(var(--primary) / 0.4)"
+            : "0 0 8px hsl(var(--primary) / 0.4)",
         }}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
       />

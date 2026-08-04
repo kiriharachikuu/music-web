@@ -223,13 +223,12 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                 key: "light",
                 label: "亮色",
                 icon: Sun,
-                // 预览：白底 + 深色文字 + 主色色块
+                // 预览：白底 + 深色文字
                 preview: (
                   <div className="flex h-full items-center justify-between bg-white px-2.5">
                     <span className="text-xs font-semibold text-gray-900">
                       Aa
                     </span>
-                    <span className="h-3 w-3 rounded-sm bg-[#8B00FF]" />
                   </div>
                 ),
               },
@@ -237,13 +236,12 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                 key: "dark",
                 label: "暗色",
                 icon: Moon,
-                // 预览：深底 + 浅色文字 + 主色色块
+                // 预览：深底 + 浅色文字
                 preview: (
                   <div className="flex h-full items-center justify-between bg-gray-900 px-2.5">
                     <span className="text-xs font-semibold text-gray-100">
                       Aa
                     </span>
-                    <span className="h-3 w-3 rounded-sm bg-[#A855F7]" />
                   </div>
                 ),
               },
@@ -331,7 +329,6 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                 preview: (
                   <div className="flex h-full items-center justify-between px-2.5" style={{ background: "linear-gradient(135deg, #FAF5FF 0%, #8B00FF 100%)" }}>
                     <span className="text-xs font-semibold text-gray-900">Aa</span>
-                    <span className="h-3 w-3 rounded-sm bg-[#8B00FF]" />
                   </div>
                 ),
               },
@@ -343,7 +340,6 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                 preview: (
                   <div className="flex h-full items-center justify-between px-2.5" style={{ background: "linear-gradient(135deg, #E3F2FF 0%, #007AFF 100%)" }}>
                     <span className="text-xs font-semibold text-gray-900">Aa</span>
-                    <span className="h-3 w-3 rounded-sm bg-[#007AFF]" />
                   </div>
                 ),
               },
@@ -355,7 +351,6 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
                 preview: (
                   <div className="flex h-full items-center justify-between px-2.5" style={{ background: "linear-gradient(135deg, #FFE8EE 0%, #FF375F 100%)" }}>
                     <span className="text-xs font-semibold text-gray-900">Aa</span>
-                    <span className="h-3 w-3 rounded-sm bg-[#FF375F]" />
                   </div>
                 ),
               },

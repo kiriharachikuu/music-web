@@ -78,7 +78,7 @@ export function Sidebar() {
           sizes="256px"
           className="object-contain object-bottom opacity-80 drop-shadow-2xl animate-fade-in"
           style={{
-            filter: "drop-shadow(0 8px 20px rgba(139, 0, 255, 0.25))",
+            filter: "drop-shadow(0 8px 20px hsl(var(--primary) / 0.25))",
           }}
         />
       </div>
