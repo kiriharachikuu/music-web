@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { TopNav } from "@/components/layout/top-nav";
 import { MiniPlayer } from "@/components/layout/mini-player";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
+import { MobileBackGesture } from "@/components/layout/mobile-back-gesture";
 import { Toaster } from "@/components/ui/toaster";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
@@ -214,6 +215,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh">
+      {/* 移动端边缘滑动返回手势 */}
+      <MobileBackGesture />
+
       {/* PC 侧边栏 */}
       <Sidebar />
 

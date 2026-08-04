@@ -128,14 +128,14 @@ export function TopNav() {
       <div className="h-[var(--safe-area-top,0px)]" />
       <div className="flex h-14 w-full items-center gap-3 px-4 max-md:landscape:h-11 md:px-6">
         <div className="flex flex-1 items-center gap-3">
-          {/* PC 端返回按钮：仅在非一级页面显示 */}
+          {/* 返回按钮：非一级页面显示（移动端 + PC 端） */}
           {!isTopLevel && (
             <Button
               variant="ghost"
               size="icon"
               onClick={handleBack}
               aria-label="返回"
-              className="hidden h-9 w-9 text-foreground/70 hover:text-foreground md:inline-flex"
+              className="h-9 w-9 shrink-0 text-foreground/70 hover:text-foreground"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
