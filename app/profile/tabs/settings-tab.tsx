@@ -17,7 +17,7 @@ import {
   KeyRound,
 } from "lucide-react";
 
-import { clearAllDownloads } from "@/lib/download";
+import { clearAllDownloads, getCacheSize } from "@/lib/download";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/common/confirm-dialog";
 import { useToast } from "@/components/ui/toaster";
@@ -60,8 +60,56 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
   const [lockScreenPlayerEnabled, setLockScreenPlayerEnabledState] = React.useState(true);
   const cacheSizeSavedRef = React.useRef(500);
   const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
+  const [currentCacheSize, setCurrentCacheSize] = React.useState(0);
   const confirm = useConfirm();
   const toast = useToast();
+
+  /** 汇总当前本地缓存总大小（IndexedDB 音频缓存 + localStorage + Cache API） */
+  const calcTotalCacheSize = async (): Promise<number> => {
+    let total = 0;
+    try {
+      total += await getCacheSize();
+    } catch { /* ignore */ }
+    try {
+      let lsSize = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        const v = localStorage.getItem(k) ?? "";
+        lsSize += (k.length + v.length) * 2; // UTF-16
+      }
+      total += lsSize;
+    } catch { /* ignore */ }
+    if ("caches" in window) {
+      try {
+        const keys = await caches.keys();
+        for (const k of keys) {
+          try {
+            const cache = await caches.open(k);
+            const reqs = await cache.keys();
+            for (const req of reqs) {
+              try {
+                const res = await cache.match(req);
+                if (res?.headers.get("content-length")) {
+                  total += parseInt(res.headers.get("content-length")!, 10);
+                } else if (res?.body) {
+                  // content-length 不可得时，读取 stream 长度会消耗响应，这里不计入
+                }
+              } catch { /* ignore */ }
+            }
+          } catch { /* ignore */ }
+        }
+      } catch { /* ignore */ }
+    }
+    return total;
+  };
+
+  const formatSize = (bytes: number): string => {
+    if (bytes >= 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+    if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    if (bytes >= 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    return `${bytes} B`;
+  };
 
   React.useEffect(() => {
     setMounted(true);
@@ -80,6 +128,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
       /* ignore */
     }
     void loadQualityPreference();
+    void calcTotalCacheSize().then(setCurrentCacheSize);
   }, []);
 
   const loadQualityPreference = async () => {
@@ -153,6 +202,8 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
       }
+      // 清除完成后重新计算缓存大小
+      setCurrentCacheSize(await calcTotalCacheSize());
       toast.success("缓存已清除");
     } catch {
       toast.error("清除失败");
@@ -443,13 +494,18 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
 
       {/* 清除缓存 */}
       <SettingsRow icon={Trash2} title="清除缓存">
-        <Button
-          variant="outline"
-          onClick={clearCache}
-          className="rounded-full px-4 text-sm"
-        >
-          清除
-        </Button>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground">
+            共 {formatSize(currentCacheSize)}
+          </span>
+          <Button
+            variant="outline"
+            onClick={clearCache}
+            className="rounded-full px-4 text-sm"
+          >
+            清除
+          </Button>
+        </div>
       </SettingsRow>
 
       {/* 修改密码 */}

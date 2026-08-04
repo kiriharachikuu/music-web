@@ -290,7 +290,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </div>
 
         {/* 顶部信息栏：关闭按钮 + 移动端歌名歌手 + 队列按钮 */}
-        <header className="flex shrink-0 items-center justify-between px-4 py-3 md:px-8">
+        <header className="relative flex shrink-0 items-center justify-between px-4 py-3 md:px-8">
           <motion.button
             type="button"
             onClick={onClose}
@@ -301,8 +301,10 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           >
             <ChevronDown className="h-5 w-5" />
           </motion.button>
-          {/* 移动端：歌名 + 歌手 */}
-          <div className="flex flex-1 flex-col items-center justify-center px-4 text-center md:hidden">
+          {/* PC 端占位让两侧按钮对称 */}
+          <div className="hidden flex-1 md:block" />
+          {/* 移动端：歌名 + 歌手（绝对居中，不受两侧按钮数量影响） */}
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center justify-center px-16 text-center md:hidden">
             <div className="flex items-center gap-1.5">
               {currentSong.trackType === "live_clip" && currentSong.sessionId && (
                 <LiveClipBadge
@@ -317,8 +319,6 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               {currentSong.artist}
             </p>
           </div>
-          {/* PC 端占位让两侧按钮对称 */}
-          <div className="hidden flex-1 md:block" />
           <div className="flex items-center gap-1">
             {/* 移动端音质按钮 */}
             <motion.button
