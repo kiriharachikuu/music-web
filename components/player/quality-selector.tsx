@@ -145,7 +145,7 @@ export function QualitySelector() {
                 </div>
               </div>
 
-              <div className="py-2 max-h-80 overflow-y-auto">
+              <div className="py-2">
                 {availableQualities.map((quality, index) => {
                   const config = QUALITY_CONFIG[quality.level];
                   const isSelected = quality.level === currentQuality;

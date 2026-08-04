@@ -328,9 +328,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
-        <main className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[1.2fr_0.8fr] md:items-stretch md:gap-2 md:px-16 md:overflow-y-auto">
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden md:grid md:grid-cols-[1.2fr_0.8fr] md:items-stretch md:gap-2 md:px-16">
           {/* 左：大封面 + 歌名歌手（仅 PC 显示） */}
-          <div className="hidden flex-col justify-center overflow-y-auto py-6 md:flex md:px-20">
+          <div className="hidden flex-col justify-center overflow-hidden py-6 md:flex md:px-20">
             <div className="flex flex-col items-start gap-5">
               <motion.div
               className="relative aspect-square w-[min(520px,100%,40vh)] overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10"
