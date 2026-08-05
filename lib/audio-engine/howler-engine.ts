@@ -209,6 +209,10 @@ export function createHowlerEngine(
             try {
               if (!howl) return;
               currentDuration = howl.duration() || 0;
+              // 断点续播：加载完成后 seek 到 startTime（音质切换/恢复播放场景）
+              if (opts?.startTime && opts.startTime > 0) {
+                try { howl.seek(opts.startTime); currentPosition = opts.startTime; } catch { /* noop */ }
+              }
               events?.onLoad(currentDuration);
             } catch { /* noop */ }
           });

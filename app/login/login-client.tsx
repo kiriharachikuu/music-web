@@ -321,6 +321,10 @@ function FormField({
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onFocus={(e) => {
+            // 延迟等键盘动画稳定后再滚动，确保输入框可见
+            setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+          }}
           placeholder={placeholder}
           autoComplete={autoComplete}
           disabled={disabled}
@@ -362,6 +366,10 @@ function PasswordField({
           type={show ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onFocus={(e) => {
+            // 延迟等键盘动画稳定后再滚动，确保输入框可见
+            setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+          }}
           placeholder={placeholder}
           autoComplete={autoComplete}
           disabled={disabled}

@@ -549,10 +549,12 @@ export const usePlayerStore = create<PlayerState>()(
         const quality = state.availableQualities.find((q) => q.level === level);
         if (!quality) return;
 
+        // 保存当前播放位置（切换后从该位置继续播放，实现无缝切换）
         const currentTime = state.currentTime;
 
-        set({ isSwitchingQuality: true, isPlaying: false });
-        engine.pause();
+        // 标记切换中，但不改 isPlaying（避免 UI 闪烁暂停）
+        // engine.loadAndPlay 内部会卸载旧实例并加载新实例，无需手动 pause
+        set({ isSwitchingQuality: true });
 
         try {
           const url = resolveMediaUrl(quality.fileUrl);
