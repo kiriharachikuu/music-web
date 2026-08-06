@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn, formatPlays } from "@/lib/utils";
 import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
+import { SongActionSheet } from "@/components/common/song-action-sheet";
 import { SwipeableRow } from "@/components/common/swipeable-row";
 import { downloadSong, listDownloads, isDownloadAvailable } from "@/lib/download";
 import { useToast } from "@/components/ui/toaster";
@@ -95,6 +96,9 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
     string[]
   >([]);
   const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
+  // 移动端操作抽屉：当前操作的歌曲
+  const [actionSong, setActionSong] = React.useState<T | null>(null);
+  const [actionSheetOpen, setActionSheetOpen] = React.useState(false);
   // 下载状态：已缓存 id 集合 + 正在下载 id 集合
   const [downloadedIds, setDownloadedIds] = React.useState<Set<string>>(
     new Set()
@@ -311,18 +315,19 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
               {formatTime(song.duration)}
             </span>
 
-            {/* 操作按钮组 */}
+            {/* 操作按钮组：PC 显示内联按钮 + 下拉菜单；移动端仅显示三点触发底部抽屉 */}
             <div className="flex shrink-0 items-center gap-0.5 md:gap-1">
+              {/* PC：喜欢（hover 显示，已喜欢常显） */}
               {onLike && (
                 <button
                   type="button"
                   onClick={() => onLike(song as unknown as ApiSong)}
                   aria-label={isLiked ? "取消喜欢" : "喜欢"}
                   className={cn(
-                    "flex h-10 w-8 items-center justify-center rounded-full transition-colors md:h-8 md:w-8",
+                    "hidden h-8 w-8 items-center justify-center rounded-full transition-colors md:flex",
                     isLiked
                       ? "text-primary dark:text-primary/60"
-                      : "text-foreground/40 md:opacity-0 md:hover:bg-primary/10 md:hover:text-primary md:group-hover:opacity-100 dark:md:hover:text-primary/60"
+                      : "text-foreground/40 opacity-0 hover:bg-primary/10 hover:text-primary group-hover:opacity-100 dark:hover:text-primary/60"
                   )}
                 >
                   <Heart
@@ -330,7 +335,7 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                   />
                 </button>
               )}
-              {/* 下载按钮：未下载(空心 hover 显示) / 已下载(实心 primary 常显) / 下载中(旋转) */}
+              {/* PC：下载按钮（未下载 hover 显示 / 已下载常显 / 下载中旋转） */}
               {isDownloadAvailable() && (() => {
                 const isDownloading = downloadingIds.has(song.id);
                 const isDownloaded = downloadedIds.has(song.id);
@@ -347,10 +352,10 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                           : "下载"
                     }
                     className={cn(
-                      "flex h-10 w-8 items-center justify-center rounded-full transition-colors md:h-8 md:w-8",
+                      "hidden h-8 w-8 items-center justify-center rounded-full transition-colors md:flex",
                       isDownloading || isDownloaded
                         ? "text-primary dark:text-primary/60"
-                        : "text-foreground/40 md:opacity-0 md:hover:bg-primary/10 md:hover:text-primary md:group-hover:opacity-100 dark:md:hover:text-primary/60",
+                        : "text-foreground/40 opacity-0 hover:bg-primary/10 hover:text-primary group-hover:opacity-100 dark:hover:text-primary/60",
                       isDownloading && "cursor-wait"
                     )}
                   >
@@ -392,111 +397,126 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                   <Trash2 className="h-4 w-4" />
                 </button>
               )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="更多操作"
-                    className="flex h-10 w-8 items-center justify-center rounded-full text-foreground/40 transition-all hover:bg-foreground/5 hover:text-foreground md:h-8 md:w-8 md:opacity-0 md:group-hover:opacity-100"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
-                  {onLike && (
-                    <DropdownMenuItem onClick={() => onLike(song as unknown as ApiSong)}>
-                      <Heart
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          isLiked && "fill-current text-primary dark:text-primary/60"
-                        )}
-                      />
-                      {isLiked ? "取消喜欢" : "喜欢"}
-                    </DropdownMenuItem>
-                  )}
-                  {isDownloadAvailable() && (
-                    <DropdownMenuItem
-                      disabled={
-                        downloadingIds.has(song.id) || downloadedIds.has(song.id)
-                      }
-                      onClick={() => void handleDownload(song)}
+              {/* PC：下拉菜单 */}
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="更多操作"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 opacity-0 transition-all hover:bg-foreground/5 hover:text-foreground group-hover:opacity-100"
                     >
-                      {downloadingIds.has(song.id) ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Download
+                      <MoreHorizontal className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {onLike && (
+                      <DropdownMenuItem onClick={() => onLike(song as unknown as ApiSong)}>
+                        <Heart
                           className={cn(
                             "mr-2 h-4 w-4",
-                            downloadedIds.has(song.id) &&
-                              "fill-current text-primary dark:text-primary/60"
+                            isLiked && "fill-current text-primary dark:text-primary/60"
                           )}
                         />
-                      )}
-                      {downloadingIds.has(song.id)
-                        ? "下载中…"
-                        : downloadedIds.has(song.id)
-                          ? "已下载"
-                          : "下载"}
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => {
-                      const added = addToQueue(toPlayerSong(song));
-                      if (added) {
-                        toast.success("已添加到播放队列", { description: song.title });
-                      } else {
-                        toast.show("已在播放队列中", { description: song.title });
-                      }
-                    }}
-                  >
-                    <ListMusic className="mr-2 h-4 w-4" />
-                    添加到队列
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      const added = playNext(toPlayerSong(song));
-                      if (added) {
-                        toast.success("将作为下一首播放", { description: song.title });
-                      } else {
-                        toast.show("已在播放队列中", { description: song.title });
-                      }
-                    }}
-                  >
-                    <ListStart className="mr-2 h-4 w-4" />
-                    下一首播放
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (song.trackType === "live_clip") {
-                        setAddToPlaylistSongIds([]);
-                        setAddToPlaylistClipIds([song.id]);
-                      } else {
-                        setAddToPlaylistSongIds([song.id]);
-                        setAddToPlaylistClipIds([]);
-                      }
-                      setPlaylistDialogOpen(true);
-                    }}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    添加到歌单
-                  </DropdownMenuItem>
-                  {"albumId" in song && song.albumId && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/album/${song.albumId}`}
-                          className="flex items-center"
-                        >
-                          <Disc className="mr-2 h-4 w-4" />
-                          查看专辑
-                        </Link>
+                        {isLiked ? "取消喜欢" : "喜欢"}
                       </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    )}
+                    {isDownloadAvailable() && (
+                      <DropdownMenuItem
+                        disabled={
+                          downloadingIds.has(song.id) || downloadedIds.has(song.id)
+                        }
+                        onClick={() => void handleDownload(song)}
+                      >
+                        {downloadingIds.has(song.id) ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              downloadedIds.has(song.id) &&
+                                "fill-current text-primary dark:text-primary/60"
+                            )}
+                          />
+                        )}
+                        {downloadingIds.has(song.id)
+                          ? "下载中…"
+                          : downloadedIds.has(song.id)
+                            ? "已下载"
+                            : "下载"}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const added = addToQueue(toPlayerSong(song));
+                        if (added) {
+                          toast.success("已添加到播放队列", { description: song.title });
+                        } else {
+                          toast.show("已在播放队列中", { description: song.title });
+                        }
+                      }}
+                    >
+                      <ListMusic className="mr-2 h-4 w-4" />
+                      添加到队列
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const added = playNext(toPlayerSong(song));
+                        if (added) {
+                          toast.success("将作为下一首播放", { description: song.title });
+                        } else {
+                          toast.show("已在播放队列中", { description: song.title });
+                        }
+                      }}
+                    >
+                      <ListStart className="mr-2 h-4 w-4" />
+                      下一首播放
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (song.trackType === "live_clip") {
+                          setAddToPlaylistSongIds([]);
+                          setAddToPlaylistClipIds([song.id]);
+                        } else {
+                          setAddToPlaylistSongIds([song.id]);
+                          setAddToPlaylistClipIds([]);
+                        }
+                        setPlaylistDialogOpen(true);
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      添加到歌单
+                    </DropdownMenuItem>
+                    {"albumId" in song && song.albumId && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href={`/album/${song.albumId}`}
+                            className="flex items-center"
+                          >
+                            <Disc className="mr-2 h-4 w-4" />
+                            查看专辑
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              {/* 移动端：三点触发底部操作抽屉 */}
+              <button
+                type="button"
+                aria-label="更多操作"
+                onClick={() => {
+                  setActionSong(song);
+                  setActionSheetOpen(true);
+                }}
+                className="flex h-10 w-8 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-foreground/5 hover:text-foreground md:hidden"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
             </div>
           </div>
           </SwipeableRow>
@@ -507,6 +527,63 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
         clipIds={addToPlaylistClipIds.length > 0 ? addToPlaylistClipIds : undefined}
         open={playlistDialogOpen}
         onOpenChange={setPlaylistDialogOpen}
+      />
+      <SongActionSheet
+        song={actionSong}
+        open={actionSheetOpen}
+        onOpenChange={setActionSheetOpen}
+        isLiked={actionSong ? (likedIds?.has(actionSong.id) ?? false) : false}
+        onLike={() => {
+          if (actionSong && onLike) onLike(actionSong as unknown as ApiSong);
+        }}
+        isDownloaded={actionSong ? downloadedIds.has(actionSong.id) : false}
+        isDownloading={actionSong ? downloadingIds.has(actionSong.id) : false}
+        onDownload={() => {
+          if (actionSong) void handleDownload(actionSong);
+        }}
+        canDownload={isDownloadAvailable()}
+        onAddToQueue={() => {
+          if (!actionSong) return;
+          const added = addToQueue(toPlayerSong(actionSong));
+          if (added) {
+            toast.success("已添加到播放队列", { description: actionSong.title });
+          } else {
+            toast.show("已在播放队列中", { description: actionSong.title });
+          }
+          setActionSheetOpen(false);
+        }}
+        onPlayNext={() => {
+          if (!actionSong) return;
+          const added = playNext(toPlayerSong(actionSong));
+          if (added) {
+            toast.success("将作为下一首播放", { description: actionSong.title });
+          } else {
+            toast.show("已在播放队列中", { description: actionSong.title });
+          }
+          setActionSheetOpen(false);
+        }}
+        onAddToPlaylist={() => {
+          if (!actionSong) return;
+          if (actionSong.trackType === "live_clip") {
+            setAddToPlaylistSongIds([]);
+            setAddToPlaylistClipIds([actionSong.id]);
+          } else {
+            setAddToPlaylistSongIds([actionSong.id]);
+            setAddToPlaylistClipIds([]);
+          }
+          setActionSheetOpen(false);
+          setPlaylistDialogOpen(true);
+        }}
+        onDelete={
+          onDelete
+            ? () => {
+                if (actionSong) {
+                  onDelete(actionSong);
+                  setActionSheetOpen(false);
+                }
+              }
+            : undefined
+        }
       />
     </div>
   );

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn, formatPlays } from "@/lib/utils";
 import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
+import { SongActionSheet } from "@/components/common/song-action-sheet";
 import { downloadSong, listDownloads, isDownloadAvailable } from "@/lib/download";
 import { useToast } from "@/components/ui/toaster";
 import { AppImage } from "@/components/ui/app-image";
@@ -82,6 +83,9 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
     string[]
   >([]);
   const [playlistDialogOpen, setPlaylistDialogOpen] = React.useState(false);
+  // 移动端操作抽屉：当前操作的歌曲
+  const [actionSong, setActionSong] = React.useState<T | null>(null);
+  const [actionSheetOpen, setActionSheetOpen] = React.useState(false);
   const [downloadedIds, setDownloadedIds] = React.useState<Set<string>>(
     new Set()
   );
@@ -435,6 +439,19 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
                   </DropdownMenu>
                 </div>
 
+                {/* 移动端：三点触发底部操作抽屉 */}
+                <button
+                  type="button"
+                  aria-label="更多操作"
+                  onClick={() => {
+                    setActionSong(song);
+                    setActionSheetOpen(true);
+                  }}
+                  className="flex h-10 w-8 shrink-0 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-foreground/5 hover:text-foreground md:hidden"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+
                 {selectable && (
                   <span className="w-12 shrink-0 text-right text-xs text-foreground/40 md:hidden">
                     {formatTime(song.duration)}
@@ -451,6 +468,63 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
         onOpenChange={setPlaylistDialogOpen}
         songIds={addToPlaylistSongIds.length > 0 ? addToPlaylistSongIds : undefined}
         clipIds={addToPlaylistClipIds.length > 0 ? addToPlaylistClipIds : undefined}
+      />
+      <SongActionSheet
+        song={actionSong}
+        open={actionSheetOpen}
+        onOpenChange={setActionSheetOpen}
+        isLiked={actionSong ? (likedIds?.has(actionSong.id) ?? false) : false}
+        onLike={() => {
+          if (actionSong && onLike) onLike(actionSong as ApiSong);
+        }}
+        isDownloaded={actionSong ? downloadedIds.has(actionSong.id) : false}
+        isDownloading={actionSong ? downloadingIds.has(actionSong.id) : false}
+        onDownload={() => {
+          if (actionSong) void handleDownload(actionSong);
+        }}
+        canDownload={isDownloadAvailable()}
+        onAddToQueue={() => {
+          if (!actionSong) return;
+          const added = addToQueue(toPlayerSong(actionSong));
+          if (added) {
+            toast.success("已添加到播放队列", { description: actionSong.title });
+          } else {
+            toast.show("已在播放队列中", { description: actionSong.title });
+          }
+          setActionSheetOpen(false);
+        }}
+        onPlayNext={() => {
+          if (!actionSong) return;
+          const added = playNext(toPlayerSong(actionSong));
+          if (added) {
+            toast.success("将作为下一首播放", { description: actionSong.title });
+          } else {
+            toast.show("已在播放队列中", { description: actionSong.title });
+          }
+          setActionSheetOpen(false);
+        }}
+        onAddToPlaylist={() => {
+          if (!actionSong) return;
+          if (actionSong.trackType === "live_clip") {
+            setAddToPlaylistSongIds([]);
+            setAddToPlaylistClipIds([actionSong.id]);
+          } else {
+            setAddToPlaylistSongIds([actionSong.id]);
+            setAddToPlaylistClipIds([]);
+          }
+          setActionSheetOpen(false);
+          setPlaylistDialogOpen(true);
+        }}
+        onDelete={
+          onDelete
+            ? () => {
+                if (actionSong) {
+                  onDelete(actionSong);
+                  setActionSheetOpen(false);
+                }
+              }
+            : undefined
+        }
       />
     </div>
   );
