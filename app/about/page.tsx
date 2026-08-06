@@ -122,19 +122,29 @@ const devTeamMembers = [
  */
 const supportMembers = [
   {
-    name: "SingleDog233",
+    name: "信格纸",
     role: "资源整理专员",
     avatarColor: "from-amber-500 to-orange-600",
-  },
-  {
-    name: "大m星",
-    role: "资源整理专员",
-    avatarColor: "from-cyan-500 to-sky-600",
   },
   {
     name: "玄半甲",
     role: "资源整理专员",
     avatarColor: "from-emerald-500 to-teal-600",
+  },
+  {
+    name: "SingleDog2568",
+    role: "资源整理专员",
+    avatarColor: "from-cyan-500 to-sky-600",
+  },
+  {
+    name: "人造人间",
+    role: "资源整理专员",
+    avatarColor: "from-violet-500 to-purple-600",
+  },
+  {
+    name: "辰瞳",
+    role: "资源整理专员",
+    avatarColor: "from-rose-500 to-pink-600",
   },
 ];
 
