@@ -280,6 +280,10 @@ export interface ArtistDetail {
   albums: Album[];
   songCount: number;
   albumCount: number;
+  /** 歌切预览（前 10 首） */
+  liveClips: LiveClipTrack[];
+  /** 歌手歌切总数 */
+  liveClipCount: number;
 }
 
 /** 搜索结果分类 Tab */

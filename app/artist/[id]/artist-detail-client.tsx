@@ -13,6 +13,7 @@ import { getToken } from "@/lib/auth";
 import { SongList } from "@/components/common/song-list";
 import { AlbumCard } from "@/components/common/album-card";
 import { EmptyState } from "@/components/common/empty-state";
+import { SectionTitle } from "@/components/common/section-title";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate, formatTotalDuration } from "@/lib/utils";
 
@@ -76,6 +77,14 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
     [artist.songs]
   );
 
+  // 详情页预览：单曲/歌切各取前 10 首
+  const previewSongs = React.useMemo(() => songs.slice(0, 10), [songs]);
+  const previewClips = React.useMemo(
+    () => (artist.liveClips ?? []).slice(0, 10),
+    [artist.liveClips]
+  );
+  const liveClipCount = artist.liveClipCount ?? previewClips.length;
+
   const totalDuration = React.useMemo(
     () => songs.reduce((sum, s) => sum + (s.duration || 0), 0),
     [songs]
@@ -91,6 +100,14 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
     setPlayMode("shuffle");
     const random = songs[Math.floor(Math.random() * songs.length)];
     play(toPlayerSong(random), toPlayerSongs(songs));
+  };
+
+  const playAllClips = () => {
+    if (previewClips.length === 0) return;
+    play(
+      toPlayerSong(previewClips[0]),
+      previewClips.map(toPlayerSong)
+    );
   };
 
   return (
@@ -131,6 +148,8 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
             </h1>
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-foreground/70">
               <span>{artist.songCount} 首歌曲</span>
+              <span>·</span>
+              <span>{liveClipCount} 首歌切</span>
               <span>·</span>
               <span>{artist.albumCount} 张专辑</span>
               {totalDuration > 0 && (
@@ -195,13 +214,20 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
         </span>
       </div>
 
-      {songs.length > 0 ? (
-        <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
-          <SongList
-            songs={songs}
-            likedIds={likedIds}
-            onLike={handleLike}
+      {/* 单曲板块（预览前 10 首） */}
+      {previewSongs.length > 0 ? (
+        <div className="space-y-4">
+          <SectionTitle
+            title="单曲"
+            moreHref={`/artist/${artist.id}/songs`}
           />
+          <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
+            <SongList
+              songs={previewSongs}
+              likedIds={likedIds}
+              onLike={handleLike}
+            />
+          </div>
         </div>
       ) : (
         <EmptyState
@@ -209,6 +235,32 @@ export function ArtistDetailClient({ artist }: { artist: ArtistDetail }) {
           title="歌手暂无歌曲"
           description="该歌手还没有发布任何歌曲。"
         />
+      )}
+
+      {/* 歌切板块（预览前 10 首） */}
+      {previewClips.length > 0 && (
+        <div className="space-y-4">
+          <SectionTitle
+            title="歌切"
+            moreHref={`/artist/${artist.id}/clips`}
+          />
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={playAllClips}
+              size="sm"
+              className="rounded-full bg-primary px-4 text-white shadow-card hover:bg-primary/90 active:bg-primary/95"
+            >
+              <Play className="h-3.5 w-3.5 translate-x-[1px]" />
+              播放歌切
+            </Button>
+            <span className="text-xs text-foreground/40">
+              共 {liveClipCount} 首
+            </span>
+          </div>
+          <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
+            <SongList songs={previewClips} showTrackType />
+          </div>
+        </div>
       )}
 
       {artist.albums.length > 0 && (
