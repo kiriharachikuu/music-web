@@ -103,6 +103,8 @@ async function preloadNextSong(
       preload: true,
       volume: 0, // 静音，仅用于预加载
     });
+    // 预加载实例也需补齐 playsinline，复用时直接可用
+    ensureIOSBackgroundPlay(preloadHowl);
     preloadUrl = url;
   } catch {
     // 预加载失败静默处理
@@ -123,10 +125,55 @@ function tryConsumePreload(url: string): HowlType | null {
 /** 清理预加载实例 */
 function clearPreload(): void {
   if (preloadHowl) {
+    detachIOSAudioNode(preloadHowl);
     preloadHowl.unload();
     preloadHowl = null;
   }
   preloadUrl = null;
+}
+
+/**
+ * 给 Howler 内部 HTML5 audio 元素补齐 iOS 后台播放所需属性
+ *
+ * 根因：Howler 2.x 既不设置 playsinline，也不把 <audio> 附加到 DOM。
+ * - 缺少 playsinline：iOS PWA 进入后台（锁屏/切 app）会暂停音频
+ * - audio 不在 DOM：iOS WebKit 对游离 audio 元素的后台播放支持不稳定
+ *
+ * 通过 Howler 私有 API _sounds[0]._node 访问内部 audio 元素，
+ * 设置 playsinline / webkit-playsinline，并在未附加时挂到 document.body（隐藏）。
+ */
+function ensureIOSBackgroundPlay(h: HowlType): void {
+  try {
+    const sounds = (h as unknown as {
+      _sounds?: Array<{ _node?: HTMLAudioElement }>;
+    })._sounds;
+    if (!sounds || !sounds[0] || !sounds[0]._node) return;
+    const node = sounds[0]._node;
+    node.setAttribute("playsinline", "true");
+    node.setAttribute("webkit-playsinline", "true");
+    if (!node.parentNode) {
+      node.style.display = "none";
+      document.body.appendChild(node);
+    }
+  } catch {
+    // Howler 内部 API 变化时静默失败，不影响正常播放
+  }
+}
+
+/** 从 DOM 移除 Howler 内部 audio 元素（unload 时清理） */
+function detachIOSAudioNode(h: HowlType): void {
+  try {
+    const sounds = (h as unknown as {
+      _sounds?: Array<{ _node?: HTMLAudioElement }>;
+    })._sounds;
+    if (!sounds || !sounds[0] || !sounds[0]._node) return;
+    const node = sounds[0]._node;
+    if (node.parentNode) {
+      node.parentNode.removeChild(node);
+    }
+  } catch {
+    // noop
+  }
 }
 
 /** 卸载当前 Howl 实例 */
@@ -138,6 +185,8 @@ function unloadHowl(): void {
       URL.revokeObjectURL(currentUrl);
     }
     currentUrl = null;
+    // 移除附加到 DOM 的 iOS audio 元素
+    detachIOSAudioNode(howl);
     howl.unload();
     howl = null;
   }
@@ -202,6 +251,10 @@ export function createHowlerEngine(
             format: ["mp3", "flac", "wav", "ogg"],
           });
         }
+
+        // iOS 后台播放：补齐 playsinline 属性并将 audio 元素附加到 DOM
+        // Howler 2.x 不设置 playsinline 也不附加 DOM，导致 iOS PWA 后台音频中断
+        ensureIOSBackgroundPlay(howl);
 
         // 仅在未注册过 load 回调时注册（新建实例的情况）
         if (!loadHandlerRegistered) {

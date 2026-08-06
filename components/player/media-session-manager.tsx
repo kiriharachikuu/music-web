@@ -35,23 +35,30 @@ export function MediaSessionManager() {
   const prev = usePlayerStore((s) => s.prev);
   const seek = usePlayerStore((s) => s.seek);
 
-  // 元数据 + 播放状态 + 位置（锁屏进度条）
-  // 依赖 currentSong / isPlaying / duration / currentTime，与原 FullScreenPlayer 内逻辑一致
+  // 元数据 + 播放状态：仅在切歌或播放状态变化时更新
+  // 避免依赖 currentTime（每 250ms 变化）导致封面频繁重复设置、iOS 锁屏闪烁
   React.useEffect(() => {
     setMediaSessionMetadata(currentSong);
     setMediaSessionPlaybackState(isPlaying);
+  }, [currentSong, isPlaying]);
+
+  // 位置状态（锁屏进度条）：依赖 duration / currentTime
+  React.useEffect(() => {
     if (currentSong && duration > 0) {
       setMediaSessionPositionState({
         duration,
         currentTime: Math.min(currentTime, duration),
       });
     }
-  }, [currentSong, isPlaying, duration, currentTime]);
+  }, [currentSong, duration, currentTime]);
 
   // 操作处理器：play / pause / prev / next / seekto
-  // 依赖项只放稳定的 store actions（zustand 引用稳定），无需重新注册
+  // 关键：依赖 isPlaying，在音频开始播放时重新注册 handler。
+  // iOS Safari 的 MediaSession 要求音频实际播放后才激活 handler，
+  // 应用启动时（尚未播放）注册的 handler 不会被 iOS 激活，锁屏 prev/next 不响应。
+  // 不返回 cleanup：暂停状态下也应保留 handler 让用户切歌，清空会导致锁屏按钮失效。
   React.useEffect(() => {
-    const cleanup = setupMediaSessionHandlers({
+    setupMediaSessionHandlers({
       play: () => {
         if (!usePlayerStore.getState().isPlaying) toggle();
       },
@@ -62,8 +69,8 @@ export function MediaSessionManager() {
       nexttrack: () => next(),
       seekto: (t) => seek(t),
     });
-    return cleanup;
-  }, [toggle, prev, next, seek]);
+    // 不返回 cleanup：常驻组件，handler 覆盖式注册，不清空
+  }, [isPlaying, toggle, prev, next, seek]);
 
   return null;
 }
