@@ -2,17 +2,22 @@
 
 import { Play, Music2 } from "lucide-react";
 
-import type { ApiSong } from "@/lib/types";
+import type { ApiSong, LiveClipTrack } from "@/lib/types";
 import { toPlayerSong } from "@/lib/types";
-import { usePlayerStore, formatTime } from "@/lib/store/player-store";
+import { usePlayerStore } from "@/lib/store/player-store";
 import { cn } from "@/lib/utils";
 import { AppImage } from "@/components/ui/app-image";
+import { LiveClipBadge } from "@/components/common/live-clip-badge";
+
+type SongCardItem = ApiSong | LiveClipTrack;
 
 /**
  * 单曲卡片
- * - 封面为主，下方歌名 + 歌手 + 时长
+ * - 封面为主，下方歌名 + 歌手 + 专辑/场次
+ * - 支持 ApiSong（官方单曲）和 LiveClipTrack（直播歌切）
+ * - 歌切显示 LIVE 徽章 + 场次名
  * - hover 上浮 + 主色播放按钮
- * - 用于发现页"新歌推送"等横向滚动场景
+ * - 用于发现页"新歌推送"/"每日推荐"等横向滚动场景
  * - 点击直接播放（调用 playerStore.play）
  */
 export function SongCard({
@@ -20,20 +25,31 @@ export function SongCard({
   queue,
   className,
 }: {
-  song: ApiSong;
+  song: SongCardItem;
   /** 播放队列（默认仅本曲） */
-  queue?: ApiSong[];
+  queue?: SongCardItem[];
   className?: string;
 }) {
   const play = usePlayerStore((s) => s.play);
   const currentSong = usePlayerStore((s) => s.currentSong);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const isActive = currentSong?.id === song.id;
+  const isLiveClip = song.trackType === "live_clip";
 
   const handlePlay = () => {
     const list = queue && queue.length > 0 ? queue : [song];
     play(toPlayerSong(song), list.map(toPlayerSong));
   };
+
+  // 封面来源：歌切用 cover，官方用 coverUrl 或 album.cover
+  const coverSrc = isLiveClip
+    ? (song as LiveClipTrack).cover
+    : (song as ApiSong).coverUrl || (song as ApiSong).album?.cover || undefined;
+
+  // 副标题：歌切显示场次名，官方显示专辑名
+  const subtitle = isLiveClip
+    ? (song as LiveClipTrack).sessionName
+    : (song as ApiSong).albumName || (song as ApiSong).album?.name || "";
 
   return (
     <div
@@ -48,9 +64,9 @@ export function SongCard({
         aria-label={`播放 ${song.title}`}
         className="relative block aspect-square w-full overflow-hidden rounded-xl bg-primary/5 text-left shadow-card transition-transform duration-300 active:scale-95 md:hover:-translate-y-1"
       >
-        {song.coverUrl || (song.album?.cover && song.album.cover) ? (
+        {coverSrc ? (
           <AppImage
-            src={song.coverUrl || song.album?.cover || undefined}
+            src={coverSrc}
             alt={song.title}
             fill
             className="transition-transform duration-500 md:group-hover:scale-105"
@@ -83,19 +99,33 @@ export function SongCard({
             正在播放
           </span>
         )}
+
+        {/* 歌切 LIVE 徽章 */}
+        {isLiveClip && (
+          <span className="absolute left-2 top-2">
+            <LiveClipBadge />
+          </span>
+        )}
       </button>
 
       <div className="min-w-0 px-0.5">
         <p
           className={cn(
-            "truncate text-sm font-medium",
+            "flex items-center gap-1 truncate text-sm font-medium",
             isActive && "text-primary dark:text-primary/60"
           )}
         >
-          {song.title}
+          {isLiveClip && <LiveClipBadge className="shrink-0" />}
+          <span className="truncate">{song.title}</span>
         </p>
         <p className="mt-0.5 truncate text-xs text-foreground/50">
           {song.artist}
+          {subtitle && (
+            <>
+              <span className="mx-0.5">·</span>
+              <span>{subtitle}</span>
+            </>
+          )}
         </p>
       </div>
     </div>

@@ -9,7 +9,6 @@ import type { DiscoverData } from "@/lib/types";
 import { SectionTitle } from "@/components/common/section-title";
 import { BannerCarousel } from "@/components/common/banner-carousel";
 import { SongCard } from "@/components/common/song-card";
-import { SongList } from "@/components/common/song-list";
 import { PlaylistGrid } from "@/components/common/playlist-grid";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
@@ -91,7 +90,11 @@ export function DiscoverClient({ data: ssrData }: { data: DiscoverData | null })
           {dailySongs.length > 0 && (
             <div>
               <SectionTitle title="每日推荐·单曲" moreHref="/daily-recommend/songs" />
-              <SongList songs={dailySongs} showTrackType />
+              <div className="flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
+                {dailySongs.map((song) => (
+                  <SongCard key={song.id} song={song} queue={dailySongs} />
+                ))}
+              </div>
             </div>
           )}
 
@@ -99,7 +102,11 @@ export function DiscoverClient({ data: ssrData }: { data: DiscoverData | null })
           {dailyClips.length > 0 && (
             <div>
               <SectionTitle title="每日推荐·歌切" moreHref="/daily-recommend/clips" />
-              <SongList songs={dailyClips} showTrackType />
+              <div className="flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar md:gap-4">
+                {dailyClips.map((clip) => (
+                  <SongCard key={clip.id} song={clip} queue={dailyClips} />
+                ))}
+              </div>
             </div>
           )}
 
