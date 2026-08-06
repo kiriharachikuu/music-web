@@ -14,13 +14,12 @@ import { EmptyState } from "@/components/common/empty-state";
 import { cn } from "@/lib/utils";
 
 type Tab = "albums" | "playlists" | "artists" | "songs" | "live_sessions" | "live_clips";
-type Sort = "latest" | "hottest" | "name";
+type Sort = "latest" | "oldest";
 
-/** 排序选项 */
+/** 排序选项（按时间正序/倒序） */
 const SORTS: { key: Sort; label: string }[] = [
   { key: "latest", label: "最新" },
-  { key: "hottest", label: "最热" },
-  { key: "name", label: "名称" },
+  { key: "oldest", label: "最早" },
 ];
 
 /**
@@ -77,7 +76,7 @@ export function LibraryClient({
         );
       } else if (isLiveSessionsTab) {
         const res = await api.get<Paginated<LiveSession>>(
-          "/live-sessions?page=1&limit=12"
+          `/live-sessions?page=1&limit=12&sort=${sort}`
         );
         setLiveSessions(res.list ?? []);
         setPage(2);
@@ -95,7 +94,7 @@ export function LibraryClient({
         );
       } else if (isLiveClipsTab) {
         const res = await api.get<Paginated<LiveClipTrack>>(
-          `/live-sessions/clips?page=1&limit=12`
+          `/live-sessions/clips?page=1&limit=12&sort=${sort}`
         );
         setLiveClips(res.list ?? []);
         setPage(2);
@@ -154,7 +153,7 @@ export function LibraryClient({
         setHasMore(res.hasMore ?? list.length >= 12);
       } else if (isLiveSessionsTab) {
         const res = await api.get<Paginated<LiveSession>>(
-          `/live-sessions?page=${page}&limit=12`
+          `/live-sessions?page=${page}&limit=12&sort=${sort}`
         );
         const list = res.list ?? [];
         setLiveSessions((prev) => [...prev, ...list]);
@@ -170,7 +169,7 @@ export function LibraryClient({
         setHasMore(res.hasMore ?? list.length >= 12);
       } else if (isLiveClipsTab) {
         const res = await api.get<Paginated<LiveClipTrack>>(
-          `/live-sessions/clips?page=${page}&limit=12`
+          `/live-sessions/clips?page=${page}&limit=12&sort=${sort}`
         );
         const list = res.list ?? [];
         setLiveClips((prev) => [...prev, ...list]);
@@ -269,32 +268,30 @@ export function LibraryClient({
           })}
         </div>
 
-        {/* 排序选项（直播 / 歌切 Tab 不显示） */}
-        {!isLiveSessionsTab && !isLiveClipsTab && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-foreground/40">排序</span>
-            <div className="flex items-center gap-1.5">
-              {SORTS.map((s) => {
-                const isActive = sort === s.key;
-                return (
-                  <button
-                    key={s.key}
-                    type="button"
-                    onClick={() => setSort(s.key)}
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                      isActive
-                        ? "bg-primary text-white"
-                        : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
-                    )}
-                  >
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
+        {/* 排序选项（所有 Tab 均按时间排序） */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-foreground/40">排序</span>
+          <div className="flex items-center gap-1.5">
+            {SORTS.map((s) => {
+              const isActive = sort === s.key;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setSort(s.key)}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    isActive
+                      ? "bg-primary text-white"
+                      : "bg-foreground/5 text-foreground/50 hover:bg-foreground/10 hover:text-foreground"
+                  )}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
-        )}
+        </div>
       </div>
 
       {/* 内容网格 */}

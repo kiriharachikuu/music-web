@@ -9,6 +9,7 @@ import { TopNav } from "@/components/layout/top-nav";
 import { MiniPlayer } from "@/components/layout/mini-player";
 import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { MobileBackGesture } from "@/components/layout/mobile-back-gesture";
+import { MediaSessionManager } from "@/components/player/media-session-manager";
 import { Toaster } from "@/components/ui/toaster";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
@@ -222,6 +223,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-dvh">
         {children}
+        {/* MediaSession 常驻：登录页等独立页面也保持锁屏元数据同步 */}
+        <MediaSessionManager />
         <LoginSheet />
         <UpdateDialog />
         <Toaster />
@@ -238,6 +241,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-dvh">
       {/* 移动端边缘滑动返回手势 */}
       <MobileBackGesture />
+
+      {/* MediaSession 常驻管理器：锁屏 / 控制中心 / 车载 / 耳机按键元数据同步 */}
+      <MediaSessionManager />
 
       {/* PC 侧边栏 */}
       <Sidebar />

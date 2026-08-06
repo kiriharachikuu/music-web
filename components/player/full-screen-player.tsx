@@ -23,12 +23,9 @@ import { QueueSheet } from "./queue-sheet";
 import { FullScreenControls } from "./full-screen-controls";
 import { QualitySelector } from "./quality-selector";
 import { QualitySheet } from "./quality-sheet";
-import {
-  setMediaSessionMetadata,
-  setMediaSessionPlaybackState,
-  setMediaSessionPositionState,
-  setupMediaSessionHandlers,
-} from "@/lib/media-session";
+// MediaSession 集成已迁移到常驻挂载的 <MediaSessionManager />（见 app-shell.tsx）
+// 原本挂在此处的逻辑在关闭全屏播放页时 cleanup 会清空 handler，
+// 导致 iOS 锁屏 / 控制中心在用户关闭播放页后无法更新封面、歌名、播放状态
 
 /**
  * XingTone —— 全屏歌词播放页（Apple Music 级视觉体验）
@@ -128,36 +125,6 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       cancelled = true;
     };
   }, [currentSong?.id]);
-
-  // ----- Media Session 集成 -----
-  // 元数据 + 播放状态 + 位置（锁屏进度条）
-  React.useEffect(() => {
-    setMediaSessionMetadata(currentSong);
-    setMediaSessionPlaybackState(isPlaying);
-    if (currentSong && duration > 0) {
-      setMediaSessionPositionState({
-        duration,
-        currentTime: Math.min(currentTime, duration),
-      });
-    }
-  }, [currentSong, isPlaying, duration, currentTime]);
-
-  // 操作处理器：play / pause / prev / next / seekto
-  // 依赖项只放稳定的 store actions（zustand 引用稳定），无需重新注册
-  React.useEffect(() => {
-    const cleanup = setupMediaSessionHandlers({
-      play: () => {
-        if (!usePlayerStore.getState().isPlaying) toggle();
-      },
-      pause: () => {
-        if (usePlayerStore.getState().isPlaying) toggle();
-      },
-      previoustrack: () => prev(),
-      nexttrack: () => next(),
-      seekto: (t) => seek(t),
-    });
-    return cleanup;
-  }, [toggle, prev, next, seek]);
 
   // ----- 队列抽屉状态 -----
   const [queueOpen, setQueueOpen] = React.useState(false);
