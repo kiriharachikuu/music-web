@@ -48,10 +48,11 @@ const ProgressBar = React.memo(function ProgressBar({
           className="absolute inset-y-0 left-0 rounded-full"
           style={{
             width: `${pct}%`,
-            background: "linear-gradient(90deg, rgba(168,85,247,1) 0%, rgba(139,92,246,1) 100%)",
+            background:
+              "linear-gradient(90deg, hsl(var(--primary) / 0.8) 0%, hsl(var(--primary)) 100%)",
           }}
           animate={{
-            boxShadow: "0 0 6px rgba(139,92,246,0.4)",
+            boxShadow: "0 0 6px hsl(var(--primary) / 0.4)",
           }}
           transition={{ duration: 0.1 }}
         />

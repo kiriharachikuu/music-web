@@ -144,6 +144,14 @@ let engine: AudioEngine | null = null;
 let currentBlobUrl: string | null = null;
 
 /**
+ * play() 调用代次计数器（竞态守卫）
+ * - 每次 play() 入口自增并捕获本次 id
+ * - 在各 await 之后校验：若不再是最新代次则中止，避免慢请求覆盖新点击的曲目
+ *   （典型现象：点 A 卡住 → 点 B → A 的慢请求后到，反而播放了 A）
+ */
+let playRequestId = 0;
+
+/**
  * 构造下一首预加载信息（仅 HowlerEngine 使用）
  * - 返回 [url, headers] 或 null
  * - 随机模式或空队列时返回 null
@@ -198,6 +206,8 @@ export const usePlayerStore = create<PlayerState>()(
       play: async (song, queue) => {
         if (typeof window === "undefined") return;
         const state = get();
+        // 竞态守卫：本次 play 的代次；后续每个 await 后校验，过期则中止
+        const myRequestId = ++playRequestId;
 
         // 1. 更新队列 / 当前歌曲
         let nextQueue = state.queue;
@@ -226,6 +236,8 @@ export const usePlayerStore = create<PlayerState>()(
             const { createAudioEngine } = await import("@/lib/audio-engine/factory");
             engine = createAudioEngine(getNextPreloadInfo);
           }
+          // 守卫：创建引擎期间若用户又点了别的歌，中止本次（不覆盖新点击）
+          if (myRequestId !== playRequestId) return;
 
           // 3. 绑定事件回调（每次 play 都重新绑定，确保闭包拿到最新 get()）
           const events: AudioEngineEvents = {
@@ -301,6 +313,9 @@ export const usePlayerStore = create<PlayerState>()(
             }
           }
 
+          // 守卫：缓存查询 await 期间若用户又点了别的歌，中止本次
+          if (myRequestId !== playRequestId) return;
+
           // 4.5 如果使用网络 URL 且有偏好音质，先加载音质列表选择正确 URL
           //     避免先播放高音质再切换到低音质
           const preferred = get().preferredQuality;
@@ -308,6 +323,8 @@ export const usePlayerStore = create<PlayerState>()(
             try {
               const { getSongQualities } = await import("@/lib/api");
               const qualities = await getSongQualities(targetSong.id);
+              // 守卫：音质查询（网络）期间若用户又点了别的歌，中止本次，避免慢请求覆盖新点击
+              if (myRequestId !== playRequestId) return;
               set({ availableQualities: qualities as QualityOption[] });
 
               const match = qualities.find((q) => q.level === preferred);
@@ -335,6 +352,8 @@ export const usePlayerStore = create<PlayerState>()(
               coverUrl = `file://${localCoverPath}`;
             }
           }
+          // 守卫：最终加载前再次确认仍是最新请求，防止过期 play 覆盖新点击的曲目
+          if (myRequestId !== playRequestId) return;
           await engine.loadAndPlay(url, {
             headers,
             startTime: 0,
