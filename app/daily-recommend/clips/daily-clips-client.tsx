@@ -1,0 +1,59 @@
+"use client";
+
+import * as React from "react";
+import { Music2 } from "lucide-react";
+
+import type { LiveClipTrack } from "@/lib/types";
+import { api } from "@/lib/api";
+import { SongList } from "@/components/common/song-list";
+import { EmptyState } from "@/components/common/empty-state";
+import { PageSkeleton } from "@/components/common/loading-skeleton";
+
+/**
+ * 每日推荐·歌切 客户端组件
+ * - 接收 SSR 数据（可能为 null），null 时客户端 fallback 请求
+ * - SongList + showTrackType 渲染，标题“每日推荐·歌切”
+ */
+export function DailyClipsClient({ initialClips }: { initialClips: LiveClipTrack[] | null }) {
+  const [clips, setClips] = React.useState<LiveClipTrack[] | null>(initialClips);
+  const [loading, setLoading] = React.useState(!initialClips);
+
+  React.useEffect(() => {
+    if (initialClips) return;
+    let cancelled = false;
+    api.get<LiveClipTrack[]>("/discover/daily-clips?limit=20")
+      .then((res) => { if (!cancelled) setClips(res); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [initialClips]);
+
+  if (loading && !clips) {
+    return <PageSkeleton variant="row" />;
+  }
+
+  return (
+    <section className="animate-fade-in space-y-6">
+      <header>
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">
+          每日推荐·歌切
+        </h1>
+        <p className="mt-0.5 text-sm text-foreground/50">
+          每日随机推荐 20 首直播歌切
+        </p>
+      </header>
+
+      {clips && clips.length > 0 ? (
+        <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
+          <SongList songs={clips} showTrackType />
+        </div>
+      ) : (
+        <EmptyState
+          icon={Music2}
+          title="暂无推荐歌切"
+          description="后端服务未就绪或暂无已发布歌切。"
+        />
+      )}
+    </section>
+  );
+}

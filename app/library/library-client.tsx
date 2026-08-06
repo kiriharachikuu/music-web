@@ -1,18 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { Library, Loader2, Users } from "lucide-react";
+import { Library, Loader2, Music2, Users } from "lucide-react";
 
-import type { Album, Playlist, Paginated, LiveSession, ArtistBrief } from "@/lib/types";
+import type { Album, Playlist, Paginated, LiveSession, ArtistBrief, ApiSong, LiveClipTrack } from "@/lib/types";
 import { api } from "@/lib/api";
 import { AlbumCard } from "@/components/common/album-card";
 import { PlaylistCard } from "@/components/common/playlist-card";
 import { LiveSessionCard } from "@/components/common/live-session-card";
+import { SongList } from "@/components/common/song-list";
 import { ArtistCard } from "@/app/search/search-results";
 import { EmptyState } from "@/components/common/empty-state";
 import { cn } from "@/lib/utils";
 
-type Tab = "albums" | "playlists" | "live_sessions" | "artists";
+type Tab = "albums" | "playlists" | "artists" | "songs" | "live_sessions" | "live_clips";
 type Sort = "latest" | "hottest" | "name";
 
 /** 排序选项 */
@@ -44,6 +45,8 @@ export function LibraryClient({
   );
   const [liveSessions, setLiveSessions] = React.useState<LiveSession[]>([]);
   const [artists, setArtists] = React.useState<ArtistBrief[]>([]);
+  const [songs, setSongs] = React.useState<ApiSong[]>([]);
+  const [liveClips, setLiveClips] = React.useState<LiveClipTrack[]>([]);
   const [page, setPage] = React.useState(2);
   const [hasMore, setHasMore] = React.useState(
     (initialAlbums?.list?.length ?? 0) < (initialAlbums?.total ?? 0)
@@ -56,6 +59,8 @@ export function LibraryClient({
   const fetchPath = tab === "albums" ? "/albums" : "/playlists";
   const isLiveSessionsTab = tab === "live_sessions";
   const isArtistsTab = tab === "artists";
+  const isLiveClipsTab = tab === "live_clips";
+  const isSongsTab = tab === "songs";
 
   /** 从第一页重新加载（tab / sort 变化时） */
   const reload = React.useCallback(async () => {
@@ -79,6 +84,24 @@ export function LibraryClient({
         setHasMore(
           res.hasMore ?? (res.list?.length ?? 0) < (res.total ?? 0)
         );
+      } else if (isSongsTab) {
+        const res = await api.get<Paginated<ApiSong>>(
+          `/songs?page=1&limit=12&sort=${sort}`
+        );
+        setSongs(res.list ?? []);
+        setPage(2);
+        setHasMore(
+          res.hasMore ?? (res.list?.length ?? 0) < (res.total ?? 0)
+        );
+      } else if (isLiveClipsTab) {
+        const res = await api.get<Paginated<LiveClipTrack>>(
+          `/live-sessions/clips?page=1&limit=12`
+        );
+        setLiveClips(res.list ?? []);
+        setPage(2);
+        setHasMore(
+          res.hasMore ?? (res.list?.length ?? 0) < (res.total ?? 0)
+        );
       } else {
         const res = await api.get<Paginated<Album | Playlist>>(
           `${fetchPath}?page=1&limit=12&sort=${sort}`
@@ -94,6 +117,10 @@ export function LibraryClient({
         setArtists([]);
       } else if (isLiveSessionsTab) {
         setLiveSessions([]);
+      } else if (isSongsTab) {
+        setSongs([]);
+      } else if (isLiveClipsTab) {
+        setLiveClips([]);
       } else {
         setItems([]);
       }
@@ -101,7 +128,7 @@ export function LibraryClient({
     } finally {
       setLoading(false);
     }
-  }, [fetchPath, sort, isLiveSessionsTab, isArtistsTab]);
+  }, [fetchPath, sort, isLiveSessionsTab, isArtistsTab, isSongsTab, isLiveClipsTab]);
 
   // tab / sort 变化触发重新加载（跳过首帧，首帧用 SSR 数据）
   React.useEffect(() => {
@@ -133,6 +160,22 @@ export function LibraryClient({
         setLiveSessions((prev) => [...prev, ...list]);
         setPage((p) => p + 1);
         setHasMore(res.hasMore ?? list.length >= 12);
+      } else if (isSongsTab) {
+        const res = await api.get<Paginated<ApiSong>>(
+          `/songs?page=${page}&limit=12&sort=${sort}`
+        );
+        const list = res.list ?? [];
+        setSongs((prev) => [...prev, ...list]);
+        setPage((p) => p + 1);
+        setHasMore(res.hasMore ?? list.length >= 12);
+      } else if (isLiveClipsTab) {
+        const res = await api.get<Paginated<LiveClipTrack>>(
+          `/live-sessions/clips?page=${page}&limit=12`
+        );
+        const list = res.list ?? [];
+        setLiveClips((prev) => [...prev, ...list]);
+        setPage((p) => p + 1);
+        setHasMore(res.hasMore ?? list.length >= 12);
       } else {
         const res = await api.get<Paginated<Album | Playlist>>(
           `${fetchPath}?page=${page}&limit=12&sort=${sort}`
@@ -147,7 +190,7 @@ export function LibraryClient({
     } finally {
       setLoading(false);
     }
-  }, [fetchPath, sort, page, hasMore, loading, isLiveSessionsTab, isArtistsTab]);
+  }, [fetchPath, sort, page, hasMore, loading, isLiveSessionsTab, isArtistsTab, isSongsTab, isLiveClipsTab]);
 
   // 无限滚动：IntersectionObserver
   React.useEffect(() => {
@@ -167,7 +210,11 @@ export function LibraryClient({
     ? artists
     : isLiveSessionsTab
       ? liveSessions
-      : items;
+      : isSongsTab
+        ? songs
+        : isLiveClipsTab
+          ? liveClips
+          : items;
 
   return (
     <section className="animate-fade-in space-y-6">
@@ -195,7 +242,9 @@ export function LibraryClient({
               { key: "albums", label: "专辑" },
               { key: "playlists", label: "歌单" },
               { key: "artists", label: "歌手" },
-              { key: "live_sessions", label: "歌切" },
+              { key: "songs", label: "单曲" },
+              { key: "live_sessions", label: "直播" },
+              { key: "live_clips", label: "歌切" },
             ] as { key: Tab; label: string }[]
           ).map((t) => {
             const isActive = tab === t.key;
@@ -220,8 +269,8 @@ export function LibraryClient({
           })}
         </div>
 
-        {/* 排序选项（歌切 Tab 不显示） */}
-        {!isLiveSessionsTab && (
+        {/* 排序选项（直播 / 歌切 Tab 不显示） */}
+        {!isLiveSessionsTab && !isLiveClipsTab && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-foreground/40">排序</span>
             <div className="flex items-center gap-1.5">
@@ -251,29 +300,42 @@ export function LibraryClient({
       {/* 内容网格 */}
       {currentItems.length === 0 && !loading ? (
         <EmptyState
-          icon={isArtistsTab ? Users : Library}
+          icon={
+            isArtistsTab
+              ? Users
+              : isSongsTab || isLiveClipsTab
+                ? Music2
+                : Library
+          }
           title={
             isArtistsTab
               ? "暂无歌手"
               : isLiveSessionsTab
-                ? "暂无歌切"
-                : "暂无内容"
+                ? "暂无直播"
+                : isSongsTab
+                  ? "暂无单曲"
+                  : isLiveClipsTab
+                    ? "暂无歌切"
+                    : "暂无内容"
           }
           description={
             isArtistsTab
               ? "还没有已收录的歌手。"
               : isLiveSessionsTab
-                ? "还没有已发布的直播歌切专辑。"
-                : "后端服务未就绪或暂无数据。"
+                ? "还没有已发布的直播场次。"
+                : isSongsTab
+                  ? "还没有已发布的单曲。"
+                  : isLiveClipsTab
+                    ? "还没有已发布的歌切。"
+                    : "后端服务未就绪或暂无数据。"
           }
         />
       ) : (
         <div
           className={cn(
-            "gap-3 sm:gap-4",
-            isArtistsTab
-              ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
-              : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+            isSongsTab || isLiveClipsTab
+              ? ""
+              : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"
           )}
         >
           {isArtistsTab
@@ -284,13 +346,17 @@ export function LibraryClient({
               ? liveSessions.map((session) => (
                   <LiveSessionCard key={session.id} session={session} />
                 ))
-              : items.map((item) =>
-                  tab === "albums" ? (
-                    <AlbumCard key={item.id} album={item as Album} />
-                  ) : (
-                    <PlaylistCard key={item.id} playlist={item as Playlist} />
-                  )
-                )}
+              : isSongsTab
+                ? <SongList songs={songs} showTrackType />
+                : isLiveClipsTab
+                  ? <SongList songs={liveClips} showTrackType />
+                  : items.map((item) =>
+                      tab === "albums" ? (
+                        <AlbumCard key={item.id} album={item as Album} />
+                      ) : (
+                        <PlaylistCard key={item.id} playlist={item as Playlist} />
+                      )
+                    )}
         </div>
       )}
 

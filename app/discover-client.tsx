@@ -9,6 +9,7 @@ import type { DiscoverData } from "@/lib/types";
 import { SectionTitle } from "@/components/common/section-title";
 import { BannerCarousel } from "@/components/common/banner-carousel";
 import { SongCard } from "@/components/common/song-card";
+import { SongList } from "@/components/common/song-list";
 import { PlaylistGrid } from "@/components/common/playlist-grid";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
@@ -71,7 +72,8 @@ export function DiscoverClient({ data: ssrData }: { data: DiscoverData | null })
 
   const {
     banners = [],
-    dailyRecommend = [],
+    dailySongs = [],
+    dailyClips = [],
     newSongs = [],
     featuredPlaylists = [],
     hotArtists = [],
@@ -84,6 +86,22 @@ export function DiscoverClient({ data: ssrData }: { data: DiscoverData | null })
           <h1 className="text-xl font-bold tracking-tight md:text-3xl">发现</h1>
           {/* Banner 轮播 */}
           {banners.length > 0 && <BannerCarousel banners={banners} />}
+
+          {/* 每日推荐·单曲 */}
+          {dailySongs.length > 0 && (
+            <div>
+              <SectionTitle title="每日推荐·单曲" moreHref="/daily-recommend/songs" />
+              <SongList songs={dailySongs} showTrackType />
+            </div>
+          )}
+
+          {/* 每日推荐·歌切 */}
+          {dailyClips.length > 0 && (
+            <div>
+              <SectionTitle title="每日推荐·歌切" moreHref="/daily-recommend/clips" />
+              <SongList songs={dailyClips} showTrackType />
+            </div>
+          )}
 
           {/* 新歌推送 */}
           {newSongs.length > 0 && (
@@ -119,7 +137,8 @@ export function DiscoverClient({ data: ssrData }: { data: DiscoverData | null })
 
           {/* 全空兜底 */}
           {banners.length === 0 &&
-            dailyRecommend.length === 0 &&
+            dailySongs.length === 0 &&
+            dailyClips.length === 0 &&
             newSongs.length === 0 &&
             featuredPlaylists.length === 0 &&
             hotArtists.length === 0 && (

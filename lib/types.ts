@@ -214,8 +214,10 @@ export interface ApiResponse<T> {
 /** 发现页聚合数据（GET /api/discover） */
 export interface DiscoverData {
   banners: Banner[];
-  /** 每日推荐（30 首歌曲） */
-  dailyRecommend: ApiSong[];
+  /** 每日推荐·单曲（20 首随机单曲） */
+  dailySongs: ApiSong[];
+  /** 每日推荐·歌切（20 首随机歌切） */
+  dailyClips: LiveClipTrack[];
   /** 新歌推送 */
   newSongs: ApiSong[];
   /** 精选歌单 */

@@ -148,13 +148,13 @@ export function MiniPlayer() {
               type="button"
               aria-label={isPlaying ? "暂停" : "播放"}
               className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white shadow-card md:h-10 md:w-10 max-md:landscape:h-8 max-md:landscape:w-8"
-              whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(139,92,246,0.4)" }}
+              whileHover={{ scale: 1.05, boxShadow: "0 0 15px hsl(var(--primary) / 0.4)" }}
               whileTap={{ scale: 0.95 }}
               animate={{
                 boxShadow: isPlaying
                   ? [
-                      "0 0 0 0 rgba(139,92,246,0.3)",
-                      "0 0 0 10px rgba(139,92,246,0)",
+                      "0 0 0 0 hsl(var(--primary) / 0.3)",
+                      "0 0 0 10px hsl(var(--primary) / 0)",
                     ]
                   : "0 4px 12px rgba(0,0,0,0.2)",
               }}
