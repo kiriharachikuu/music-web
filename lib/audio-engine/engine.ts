@@ -35,6 +35,12 @@ export interface AudioEngineEvents {
   onSkipToNext?: () => void;
   /** 通知栏/锁屏：上一曲（TWA 原生 MediaSession 触发） */
   onSkipToPrevious?: () => void;
+  /**
+   * HowlerEngine 同步自动切歌（预加载实例已就绪，引擎已开始播放）
+   * - iOS 后台 onEnd → async play() 的 await 不执行，改用同步切换规避
+   * - store 层只需同步更新 currentSong 等状态，不调用 async play()
+   */
+  onAutoPlayNext?: () => void;
 }
 
 /** 加载播放的可选参数 */

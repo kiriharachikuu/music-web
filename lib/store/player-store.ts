@@ -266,6 +266,29 @@ export const usePlayerStore = create<PlayerState>()(
               }),
             onSkipToNext: () => get().next(),
             onSkipToPrevious: () => get().prev(),
+            onAutoPlayNext: () => {
+              // HowlerEngine 已同步切换到预加载实例并开始播放
+              // 只需同步更新 store 状态，不调用 async play()
+              // 预加载仅在非 shuffle 模式工作，所以这里只处理列表循环 / 顺序模式
+              const cur = get();
+              if (cur.queue.length === 0) return;
+              if (cur.playMode === "sequential" && cur.currentIndex >= cur.queue.length - 1) {
+                // 顺序播放到末尾：预加载不会触发，但以防万一
+                usePlayerStore.setState({ isPlaying: false, currentTime: 0 });
+                return;
+              }
+              const idx = (cur.currentIndex + 1) % cur.queue.length;
+              const song = cur.queue[idx];
+              usePlayerStore.setState({
+                currentSong: song,
+                currentIndex: idx,
+                currentTime: 0,
+                duration: 0,
+                error: null,
+              });
+              // 静默上报播放记录
+              void reportPlayHistory(song.id);
+            },
           };
           engine.setEvents(events);
 

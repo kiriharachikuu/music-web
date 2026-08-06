@@ -40,6 +40,12 @@ let playCallId = 0;
 let preloadHowl: HowlType | null = null;
 let preloadUrl: string | null = null;
 
+/** 同步切换时遗留的旧 Howl 实例（在事件回调中不能 unload，延迟到下次 unloadHowl 清理） */
+let staleHowls: HowlType[] = [];
+
+/** 预加载检查函数（由 createHowlerEngine 传入，保存在模块作用域供 onHowlEnd 使用） */
+let preloadCheckFn: (() => [string, Record<string, string> | undefined] | null) | null = null;
+
 /** 当前音量（0~1） */
 let currentVolume = 0.8;
 
@@ -177,8 +183,124 @@ function unloadHowl(): void {
     howl.unload();
     howl = null;
   }
+  // 清理同步切换时遗留的旧 Howl 实例
+  for (const h of staleHowls) {
+    try { h.unload(); } catch { /* noop */ }
+  }
+  staleHowls = [];
   currentDuration = 0;
   currentPosition = 0;
+}
+
+/**
+ * 给 Howl 实例注册事件回调（不含 "load"，由调用方单独处理）
+ * - 提取自 loadAndPlay，供同步切换复用
+ * - "end" 事件使用命名函数 onHowlEnd，支持同步切歌
+ */
+function registerHowlEvents(h: HowlType): void {
+  h.on("end", onHowlEnd);
+  h.on("loaderror", () => {
+    try { events?.onError("音频加载失败"); } catch { /* noop */ }
+  });
+  h.on("playerror", () => {
+    try { events?.onError("播放失败"); } catch { /* noop */ }
+  });
+  h.on("play", () => {
+    try { events?.onPlay(); } catch { /* noop */ }
+  });
+}
+
+/**
+ * Howl "end" 事件处理
+ *
+ * 关键：优先同步切换到预加载的下一首，不依赖 async play()。
+ * iOS 后台挂起 JavaScript 时，onEnd → next() → play() 中的 await 不执行，
+ * 导致后台无法自动切歌。同步切换规避了这个限制。
+ *
+ * 如果没有预加载实例，fallback 到 onEnd 回调（走 async play() 流程）。
+ */
+function onHowlEnd(): void {
+  if (preloadHowl && preloadUrl) {
+    // 有预加载实例：同步切换
+    const oldHowl = howl;
+    const nextHowl = preloadHowl;
+    const nextUrl = preloadUrl;
+    preloadHowl = null;
+    preloadUrl = null;
+
+    // 停止进度轮询
+    stopProgressTimer();
+
+    // 释放旧 blob URL
+    if (currentUrl && currentUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(currentUrl);
+    }
+
+    // 旧 Howl 已被 _ended 的 stop 暂停，不调用 unload（在事件回调中不安全）
+    // 保存引用，延迟到下次 unloadHowl 清理
+    if (oldHowl) {
+      staleHowls.push(oldHowl);
+    }
+
+    // 切换到预加载实例
+    howl = nextHowl;
+    currentUrl = nextUrl;
+    currentDuration = nextHowl.duration() || 0;
+    currentPosition = 0;
+
+    // iOS 后台播放属性
+    ensureIOSBackgroundPlay(howl);
+
+    // 注册事件（新 Howl 的 end 也走同步切换逻辑）
+    registerHowlEvents(howl);
+
+    // 如果已加载完成，通知 duration；否则注册 once load 等待加载
+    if (currentDuration > 0) {
+      events?.onLoad(currentDuration);
+    } else {
+      howl.once("load", () => {
+        try {
+          if (howl !== nextHowl) return;
+          currentDuration = howl.duration() || 0;
+          events?.onLoad(currentDuration);
+        } catch { /* noop */ }
+      });
+    }
+
+    // 恢复音量（预加载实例是静音的）
+    howl.volume(currentVolume);
+
+    // 同步开始播放
+    try {
+      howl.play();
+    } catch {
+      // play() 同步抛错时回退到 onEnd
+      events?.onEnd();
+      return;
+    }
+
+    // 启动进度轮询
+    startProgressTimer(() => {
+      if (currentDuration <= 0) return;
+      const remaining = currentDuration - currentPosition;
+      if (remaining > 0 && remaining <= PRELOAD_THRESHOLD) {
+        const preload = preloadCheckFn?.();
+        if (preload) {
+          const [nextUrl, nextHeaders] = preload;
+          if (nextUrl && nextUrl !== preloadUrl && nextUrl !== currentUrl) {
+            void preloadNextSong(nextUrl, nextHeaders);
+          }
+        }
+      }
+    });
+
+    // 通知 store 同步更新 currentSong 等状态（不调用 async play()）
+    events?.onAutoPlayNext?.();
+    return;
+  }
+
+  // 没有预加载实例：走正常 onEnd 回调（async play()）
+  try { events?.onEnd(); } catch { /* noop */ }
 }
 
 /**
@@ -187,8 +309,10 @@ function unloadHowl(): void {
  * - 闭包持有模块作用域变量，无需 this 状态
  */
 export function createHowlerEngine(
-  preloadCheckFn: () => [string, Record<string, string> | undefined] | null
+  preloadCheckFnArg: () => [string, Record<string, string> | undefined] | null
 ): AudioEngine {
+  // 保存到模块作用域，供 onHowlEnd 同步切换时调用
+  preloadCheckFn = preloadCheckFnArg;
   return {
     type: "howler",
 
@@ -243,6 +367,9 @@ export function createHowlerEngine(
         // Howler 2.x 不设置 playsinline 也不附加 DOM，导致 iOS PWA 后台音频中断
         ensureIOSBackgroundPlay(howl);
 
+        // 注册 end / loaderror / playerror / play 事件（含同步切歌逻辑）
+        registerHowlEvents(howl);
+
         // 仅在未注册过 load 回调时注册（新建实例的情况）
         if (!loadHandlerRegistered) {
           howl.on("load", () => {
@@ -257,18 +384,6 @@ export function createHowlerEngine(
             } catch { /* noop */ }
           });
         }
-        howl.on("end", () => {
-          try { events?.onEnd(); } catch { /* noop */ }
-        });
-        howl.on("loaderror", () => {
-          try { events?.onError("音频加载失败"); } catch { /* noop */ }
-        });
-        howl.on("playerror", () => {
-          try { events?.onError("播放失败"); } catch { /* noop */ }
-        });
-        howl.on("play", () => {
-          try { events?.onPlay(); } catch { /* noop */ }
-        });
 
         try { howl.play(); } catch (err) {
           // 浏览器自动播放策略或移动端切回前台时 play() 可能同步抛 DOMException
@@ -282,7 +397,7 @@ export function createHowlerEngine(
           if (currentDuration <= 0) return;
           const remaining = currentDuration - currentPosition;
           if (remaining > 0 && remaining <= PRELOAD_THRESHOLD) {
-            const preload = preloadCheckFn();
+            const preload = preloadCheckFn?.();
             if (preload) {
               const [nextUrl, nextHeaders] = preload;
               if (nextUrl && nextUrl !== preloadUrl && nextUrl !== currentUrl) {
@@ -313,7 +428,7 @@ export function createHowlerEngine(
         if (currentDuration <= 0) return;
         const remaining = currentDuration - currentPosition;
         if (remaining > 0 && remaining <= PRELOAD_THRESHOLD) {
-          const preload = preloadCheckFn();
+          const preload = preloadCheckFn?.();
           if (preload) {
             const [nextUrl, nextHeaders] = preload;
             if (nextUrl && nextUrl !== preloadUrl && nextUrl !== currentUrl) {
