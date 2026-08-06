@@ -253,7 +253,45 @@ export const usePlayerStore = create<PlayerState>()(
                 // 顺序播放：已到末尾，停止播放
                 usePlayerStore.setState({ isPlaying: false, currentTime: 0 });
               } else {
-                // 列表循环 / 随机 / 顺序（未到末尾）：进入下一首
+                // TWA 模式：同步切歌，避免 async play() 在后台 WebView 被延迟
+                const platform = getPlatform();
+                if (platform.isTWA && engine?.type === "native") {
+                  const queue = cur.queue;
+                  if (queue.length > 0) {
+                    const idx = (cur.currentIndex + 1) % queue.length;
+                    const song = queue[idx];
+                    // 同步解析 URL（优先本地文件）
+                    const localPath = androidBridge.getLocalSongPath(song.id);
+                    let url: string;
+                    let headers: Record<string, string> | undefined;
+                    if (localPath) {
+                      url = `file://${localPath}`;
+                    } else {
+                      url = resolveMediaUrl(song.url);
+                      const token = getToken();
+                      headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
+                    }
+                    // 同步更新 store 状态
+                    usePlayerStore.setState({
+                      currentSong: song,
+                      currentIndex: idx,
+                      currentTime: 0,
+                      duration: 0,
+                      error: null,
+                    });
+                    // 同步调用原生引擎（不经过 async loadAndPlay）
+                    androidBridge.loadAndPlay(url, headers, 0);
+                    const localCoverPath = androidBridge.getLocalCoverPath(song.id);
+                    const coverUrl = localCoverPath
+                      ? `file://${localCoverPath}`
+                      : song.cover ? resolveMediaUrl(song.cover) : "";
+                    androidBridge.setMetadata(song.title, song.artist, coverUrl);
+                    // 静默上报
+                    void reportPlayHistory(song.id);
+                    return;
+                  }
+                }
+                // 浏览器模式 / fallback：进入下一首（HowlerEngine 的同步切换在引擎层处理）
                 get().next();
               }
             },

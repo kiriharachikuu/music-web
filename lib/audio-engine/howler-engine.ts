@@ -279,6 +279,15 @@ function onHowlEnd(): void {
       return;
     }
 
+    // 立即预加载下一首（后台连播依赖预加载提前就绪）
+    const nextPreload = preloadCheckFn?.();
+    if (nextPreload) {
+      const [nextUrl, nextHeaders] = nextPreload;
+      if (nextUrl && nextUrl !== preloadUrl && nextUrl !== currentUrl) {
+        void preloadNextSong(nextUrl, nextHeaders);
+      }
+    }
+
     // 启动进度轮询
     startProgressTimer(() => {
       if (currentDuration <= 0) return;
@@ -392,8 +401,19 @@ export function createHowlerEngine(
           );
           return;
         }
+
+        // 立即预加载下一首：不依赖进度轮询（后台 setInterval 被暂停时无法触发）
+        // 后台连播依赖预加载实例在歌曲结束前就绪
+        const initialPreload = preloadCheckFn?.();
+        if (initialPreload) {
+          const [nextUrl, nextHeaders] = initialPreload;
+          if (nextUrl && nextUrl !== preloadUrl && nextUrl !== currentUrl) {
+            void preloadNextSong(nextUrl, nextHeaders);
+          }
+        }
+
         startProgressTimer(() => {
-          // 预加载检查
+          // 预加载检查（补充：用户手动切歌或初始预加载失败时兜底）
           if (currentDuration <= 0) return;
           const remaining = currentDuration - currentPosition;
           if (remaining > 0 && remaining <= PRELOAD_THRESHOLD) {
