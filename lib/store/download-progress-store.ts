@@ -85,9 +85,23 @@ export const useDownloadProgressStore = create<DownloadProgressStore>((set) => (
   reset: () => set({ inFlight: new Map() }),
 }));
 
-/** 选择器：按 startedAt 升序的 in-flight 任务数组 */
-export function selectInFlightOrdered(state: DownloadProgressStore): InFlightDownload[] {
-  return Array.from(state.inFlight.values()).sort(
+// 上次返回的数组 + 对应的 Map 引用，用于浅比较缓存：
+// Map 引用未变时直接复用旧数组，避免每次渲染都生成新数组，
+// 触发 React 的"Maximum update depth exceeded"（#185）。
+let _cachedOrdered: InFlightDownload[] = [];
+let _cachedMapRef: Map<string, InFlightDownload> | null = null;
+
+/** 选择器：按 startedAt 升序的 in-flight 任务数组（稳定引用） */
+export function selectInFlightOrdered(
+  state: DownloadProgressStore
+): InFlightDownload[] {
+  const map = state.inFlight;
+  if (map === _cachedMapRef) return _cachedOrdered;
+
+  const next = Array.from(map.values()).sort(
     (a, b) => a.startedAt - b.startedAt
   );
+  _cachedMapRef = map;
+  _cachedOrdered = next;
+  return next;
 }

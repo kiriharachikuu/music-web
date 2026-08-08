@@ -25,6 +25,7 @@ import {
   selectInFlightOrdered,
   type InFlightDownload,
 } from "@/lib/store/download-progress-store";
+import { useShallow } from "zustand/react/shallow";
 
 /** 子模块 4：下载管理（区分下载中与已下载） */
 export function DownloadsTab() {
