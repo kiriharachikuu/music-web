@@ -107,16 +107,17 @@ async function preloadNextSong(
       src: [url],
       html5: true,
       preload: true,
-      // 不再使用 volume: 0：iOS 会把 volume=0 的 audio 视为不活跃，
-      // 后续在非用户手势上下文里 play() 会被静默拦截。
-      // 改用 mute: true（仅静音不禁用），iOS 仍认为这是真实音频元素。
-      // Howler 2.x 在构造时只接受 mute，复用前再调用 mute(false) 解除。
+      // 预加载实例静音但不禁用音频元素：
+      // - volume: 0 会被 iOS 视为"不活跃"，后续 play() 在非用户手势下被拦截
+      // - mute: true 仅静音，iOS 仍把 audio 视作真实媒体资源
+      // 复用前由 onHowlEnd / loadAndPlay 调 mute(false) 解除
       mute: true,
     });
     preloadUrl = url;
-    // 立即激活内部 audio 元素：Howler 默认懒创建 _node，
-    // 必须先 play() 一次再 pause()，让 audio 元素进入 DOM 并设好 playsinline，
-    // 否则后续 onHowlEnd 在 iOS 上调用 play() 会被拦截（用户没体感但不发声）
+    // 主动把 audio 元素拉进 DOM 并设好 playsinline：
+    // 不通过 play() 激活（play 在非用户手势下会污染 iOS 音频会话），
+    // 只触发 audio.load() 让 iOS 提前"认识"这个元素、加载好元数据。
+    // 真正播放由 onHowlEnd 在切歌瞬间同步调用 play() 完成。
     primeHowlerNode(preloadHowl);
     ensureIOSBackgroundPlay(preloadHowl);
   } catch {
@@ -180,33 +181,54 @@ function ensureIOSBackgroundPlay(h: HowlType): boolean {
 }
 
 /**
- * 强制让 Howler 创建内部的 HTMLAudioElement
+ * 强制让 Howler 创建内部的 HTMLAudioElement 并提前进入 DOM
  *
  * 根因：Howler 在第一次 play() 时才懒创建 audio 元素，
- * 导致预加载阶段 ensureIOSBackgroundPlay() 是 no-op，
- * 等到 onHowlEnd 真正要 play() 时元素才被创建出来，
- * iOS 此时会因为元素刚刚创建 / 没有用户手势上下文而拦截播放。
+ * 如果等到 onHowlEnd 才创建，元素刚出生 + playsinline 还没设，
+ * iOS 会拦截 play() 静默失败。
  *
- * 通过调用一次 play() 立即 pause() 来"激活"Howl 的内部节点，
- * 让 audio 元素提前进入 DOM 并设置好 playsinline，
- * 后续 onHowlEnd 再 play() 就会被 iOS 视为已就绪的连续播放。
+ * 上一版曾尝试 play()→pause() 的"预激"流程，但发现：
+ * 1. 在非用户手势上下文里调 play() 会污染 iOS 音频会话状态，
+ *    系统可能把音频元素标记为"已尝试启动但失败"，后续 play() 持续被拦；
+ * 2. play() 返回的 soundId 在 pause/stop 后并未真正释放音频会话。
+ *
+ * 新方案：不调 play()，直接通过 Howler 私有 API 拿到（或创建）内部
+ * HTMLAudioElement，挂到 DOM 并设置 playsinline，让 iOS 提前"认识"它。
+ * 实际播放动作留给 onHowlEnd 在切歌瞬间同步调用。
  */
 function primeHowlerNode(h: HowlType): void {
   try {
-    const id = h.play();
-    // 立即静音并暂停，零声音泄漏
-    h.mute(true);
-    h.pause();
-    // 复位到位置 0
-    try { h.seek(0); } catch { /* noop */ }
-    // 解除静音（保持后续 play() 时正常发声）
-    h.mute(false);
-    // 释放这一次 play() 触发的 id（Howler 2.x 中 stop(id) 即可彻底停止）
-    if (typeof id === "number") {
-      try { h.stop(id); } catch { /* noop */ }
+    type InternalSound = { _node?: HTMLAudioElement; _id?: number };
+    const internal = h as unknown as {
+      _sounds?: InternalSound[];
+      _inactiveSound?: () => InternalSound;
+      _soundIds?: number[];
+      _pos?: number;
+    };
+    // 找到当前可复用的 sound 槽位，或主动创建一个
+    let sound: InternalSound | null = null;
+    if (internal._sounds && internal._sounds.length > 0) {
+      sound = internal._sounds[0];
+    } else if (typeof internal._inactiveSound === "function") {
+      sound = internal._inactiveSound();
     }
+    if (!sound || !sound._node) return;
+    const node = sound._node;
+    // 提前设好 playsinline，并确保在 DOM 中
+    node.setAttribute("playsinline", "true");
+    node.setAttribute("webkit-playsinline", "true");
+    if (!node.parentNode) {
+      node.style.display = "none";
+      document.body.appendChild(node);
+    }
+    // 让 audio 元素开始加载（不播放）：iOS 看到这是一个会真实加载的资源
+    // 这样后续 play() 时 iOS 已把它视作"就绪的连续媒体"
+    try {
+      node.preload = "auto";
+      node.load();
+    } catch { /* noop */ }
   } catch {
-    // 预激活动作失败静默处理，不影响主流程
+    // 预激活失败静默处理，不影响主流程
   }
 }
 
@@ -242,6 +264,10 @@ function unloadHowl(): void {
  *
  * 这里判断"位置已接近 duration 且 iOS"时按 onEnd 走同步切歌逻辑，
  * 复用 onHowlEnd 的预加载切换路径，规避 iOS 后台 onEnd 不触发的坑。
+ *
+ * 其它 iOS pause：通常是系统中断（电话、闹钟、灵动岛接管、AirPods 断开），
+ * 此时必须立即停止进度轮询——音频已经不发声，setInterval 继续推
+ * currentTime 会导致"灵动岛显示暂停但进度条还在动"的 UI 与状态不一致。
  */
 function onHowlPause(): void {
   try {
@@ -268,9 +294,14 @@ function onHowlPause(): void {
       onHowlEnd();
       return;
     }
-    // 其它 pause：正常同步
+    // 其它 iOS pause：先冻结本地进度，避免 setInterval 在音频已停的状态下
+    // 继续推进 currentTime 引发 UI 与实际状态错位
+    stopProgressTimer();
+    currentPosition = pos;
+    events?.onTimeUpdate(currentPosition);
     events?.onPause();
   } catch {
+    try { stopProgressTimer(); } catch { /* noop */ }
     try { events?.onPause(); } catch { /* noop */ }
   }
 }
@@ -289,7 +320,27 @@ function registerHowlEvents(h: HowlType): void {
     try { events?.onError("播放失败"); } catch { /* noop */ }
   });
   h.on("play", () => {
-    try { events?.onPlay(); } catch { /* noop */ }
+    try {
+      // iOS 系统中断恢复时也会触发 play 事件（如 AirPods 重新连接、
+      // 控制中心解除暂停），此时需要把进度轮询重新拉起来，
+      // 否则 UI 状态显示正在播放但 currentTime 一直停在中断时的位置
+      if (!progressTimer) {
+        startProgressTimer(() => {
+          if (currentDuration <= 0) return;
+          const remaining = currentDuration - currentPosition;
+          if (remaining > 0 && remaining <= PRELOAD_THRESHOLD) {
+            const preload = preloadCheckFn?.();
+            if (preload) {
+              const [nextUrl, nextHeaders] = preload;
+              if (nextUrl && nextUrl !== preloadUrl && nextUrl !== currentUrl) {
+                void preloadNextSong(nextUrl, nextHeaders);
+              }
+            }
+          }
+        });
+      }
+      events?.onPlay();
+    } catch { /* noop */ }
   });
   h.on("pause", onHowlPause);
 }
