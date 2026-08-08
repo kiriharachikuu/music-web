@@ -53,6 +53,117 @@ function isEditableTarget(el: EventTarget | null): boolean {
  * - 全局 "/" 快捷键：聚焦搜索框（不在输入态时触发）
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
+  //region debug-point android-touch-blocked-web-reporter
+  React.useEffect(() => {
+    const report = (event: string, fields: Record<string, unknown>) => {
+      try {
+        void fetch("http://127.0.0.1:7777/event", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            session: "android-touch-blocked",
+            source: "web",
+            event,
+            ts: Date.now(),
+            ...fields,
+          }),
+          keepalive: true,
+        });
+      } catch {
+      }
+    };
+    const describe = (el: Element | null) =>
+      el
+        ? {
+            tag: el.tagName,
+            id: (el as HTMLElement).id,
+            className: (el as HTMLElement).className?.toString().slice(0, 240),
+            role: el.getAttribute("role"),
+            ariaHidden: el.getAttribute("aria-hidden"),
+            dataState: el.getAttribute("data-state"),
+          }
+        : null;
+    const snapshot = (event: Event) => {
+      const ev = event as Event & {
+        touches?: TouchList;
+        changedTouches?: TouchList;
+      };
+      const touch = ev.touches?.[0] ?? ev.changedTouches?.[0];
+      const point = touch
+        ? { x: touch.clientX, y: touch.clientY }
+        : event instanceof MouseEvent
+          ? { x: event.clientX, y: event.clientY }
+          : { x: Math.round(window.innerWidth / 2), y: Math.round(window.innerHeight / 2) };
+      report(event.type, {
+        path: window.location.pathname,
+        point,
+        target: describe(event.target instanceof Element ? event.target : null),
+        elementFromPoint: describe(
+          document.elementFromPoint(point.x, point.y)
+        ),
+        centerElement: describe(
+          document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2)
+        ),
+        overlays: Array.from(
+          document.querySelectorAll(
+            '[data-radix-portal], [role="dialog"], [data-state="open"], .fixed, .absolute'
+          )
+        )
+          .slice(0, 20)
+          .map((node) => describe(node)),
+      });
+    };
+    const origError = console.error;
+    const origWarn = console.warn;
+    const origLog = console.log;
+    const forward =
+      (level: "log" | "warn" | "error") =>
+      (...args: unknown[]) => {
+        try {
+          report("console-" + level, {
+            args: args
+              .map((a) => {
+                if (a instanceof Error) {
+                  return a.stack || (a.name + ": " + a.message);
+                }
+                if (typeof a === "string") return a;
+                try {
+                  return JSON.stringify(a).slice(0, 1000);
+                } catch {
+                  return String(a);
+                }
+              })
+              .join(" | "),
+          });
+        } catch {
+        }
+      };
+    console.log = forward("log");
+    console.warn = forward("warn");
+    console.error = (...args: unknown[]) => {
+      try {
+        origError.apply(console, args);
+      } catch {
+      }
+      forward("error")(...args);
+    };
+    report("app-shell-mounted", {
+      path: window.location.pathname,
+      bodyPointerEvents: getComputedStyle(document.body).pointerEvents,
+      htmlPointerEvents: getComputedStyle(document.documentElement).pointerEvents,
+    });
+    document.addEventListener("touchstart", snapshot, true);
+    document.addEventListener("click", snapshot, true);
+    return () => {
+      console.log = origLog;
+      console.warn = origWarn;
+      console.error = origError;
+      document.removeEventListener("touchstart", snapshot, true);
+      document.removeEventListener("click", snapshot, true);
+    };
+  }, []);
+  //endregion debug-point android-touch-blocked-web-reporter
+
   const pathname = usePathname();
   const router = useRouter();
   const isStandalone = STANDALONE_PATHS.some((p) => pathname === p);

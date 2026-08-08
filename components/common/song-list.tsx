@@ -106,12 +106,17 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
   const [downloadingIds, setDownloadingIds] = React.useState<Set<string>>(
     new Set()
   );
+  const [canDownload, setCanDownload] = React.useState(false);
   const toast = useToast();
+
+  React.useEffect(() => {
+    setCanDownload(isDownloadAvailable());
+  }, []);
 
   // 初始化：加载本地已缓存歌曲 id（listDownloads 一次性查回，避免逐条查 IndexedDB）
   // 仅在 TWA 环境下查询（非 TWA 环境下载功能已隐藏）
   React.useEffect(() => {
-    if (!isDownloadAvailable()) return;
+    if (!canDownload) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -126,7 +131,7 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [canDownload]);
 
   /** 触发下载某首歌曲，更新下载态并 toast 反馈 */
   const handleDownload = async (song: T) => {
@@ -336,7 +341,7 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                 </button>
               )}
               {/* PC：下载按钮（未下载 hover 显示 / 已下载常显 / 下载中旋转） */}
-              {isDownloadAvailable() && (() => {
+              {canDownload && (() => {
                 const isDownloading = downloadingIds.has(song.id);
                 const isDownloaded = downloadedIds.has(song.id);
                 return (
@@ -421,7 +426,7 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                         {isLiked ? "取消喜欢" : "喜欢"}
                       </DropdownMenuItem>
                     )}
-                    {isDownloadAvailable() && (
+                    {canDownload && (
                       <DropdownMenuItem
                         disabled={
                           downloadingIds.has(song.id) || downloadedIds.has(song.id)

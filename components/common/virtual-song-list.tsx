@@ -92,6 +92,7 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
   const [downloadingIds, setDownloadingIds] = React.useState<Set<string>>(
     new Set()
   );
+  const [canDownload, setCanDownload] = React.useState(false);
   const toast = useToast();
   const parentRef = React.useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = React.useState(false);
@@ -101,6 +102,10 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  React.useEffect(() => {
+    setCanDownload(isDownloadAvailable());
   }, []);
 
   const rowVirtualizer = useVirtualizer({
@@ -114,7 +119,7 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
   });
 
   React.useEffect(() => {
-    if (!isDownloadAvailable()) return;
+    if (!canDownload) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -129,7 +134,7 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [canDownload]);
 
   const handleDownload = async (song: T) => {
     if (downloadingIds.has(song.id)) return;
@@ -400,7 +405,7 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
                         <ListMusic className="h-4 w-4" />
                         添加到歌单
                       </DropdownMenuItem>
-                      {isDownloadAvailable() && (
+                      {canDownload && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
