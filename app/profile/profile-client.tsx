@@ -81,13 +81,15 @@ export function ProfileClient() {
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
   const [editOpen, setEditOpen] = React.useState(false);
-  // "下载 App" 入口仅在非 Android / 非桌面端时展示：
-  // 当前已运行在桌面客户端或 Android 增强壳时，自身即为 App，引导"下载 App"无意义
+  // "下载 App" 入口仅在非 Android / 非桌面端 / 非 iOS PWA 时展示：
+  // 当前已运行在桌面客户端、Android 增强壳或 iOS PWA（已添加到主屏的 Web）时，
+  // 自身即为 App 或近似 App 体验，引导"下载 App"无意义
   // SSR 与首帧一致显示（true），挂载后根据真实平台决定，避免 hydration mismatch
   const [showDownloadApp, setShowDownloadApp] = React.useState(true);
   React.useEffect(() => {
     const p = getPlatform();
-    setShowDownloadApp(!(p.isTWA || p.isElectron));
+    const isIOSPwa = p.isIOS && p.isStandalone;
+    setShowDownloadApp(!(p.isTWA || p.isElectron || isIOSPwa));
   }, []);
   const openLogin = useAuthStore((s) => s.openLogin);
 

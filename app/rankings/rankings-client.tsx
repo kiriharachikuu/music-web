@@ -11,9 +11,7 @@ import { useFavoritesStore } from "@/lib/store/favorites-store";
 import { getToken } from "@/lib/auth";
 import { SongList } from "@/components/common/song-list";
 import { EmptyState } from "@/components/common/empty-state";
-import { SongListSkeleton } from "@/components/common/loading-skeleton";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /** 榜单 Tab 配置 */
@@ -23,29 +21,16 @@ const TABS: { key: RankingType; label: string; desc: string }[] = [
   { key: "hot", label: "热歌榜", desc: "本周播放冠军" },
 ];
 
-/** 维度切换配置 */
-const DIMENSIONS: { key: "play" | "favorite"; label: string }[] = [
-  { key: "play", label: "播放量" },
-  { key: "favorite", label: "收藏量" },
-];
-
 
 
 /**
  * 排行榜客户端组件
- * - 维度切换（播放量 / 收藏量）：切换时客户端重新请求并更新数据
  * - Tab 切换（下划线 + 文字同步变 primary-700）
  * - 整榜播放 / 随机播放
  * - Top3 序号金银铜徽章（SongList 内部已处理）
  */
 export function RankingsClient({ data }: { data: RankingsData }) {
-  // 维度：播放量（默认）/ 收藏量
-  const [dimension, setDimension] = React.useState<"play" | "favorite">(
-    "play"
-  );
   const [rankings, setRankings] = React.useState<RankingsData>(data);
-  const [loading, setLoading] = React.useState(false);
-
   const [active, setActive] = React.useState<RankingType>("soar");
   const play = usePlayerStore((s) => s.play);
   const setPlayMode = usePlayerStore((s) => s.setPlayMode);
@@ -75,28 +60,6 @@ export function RankingsClient({ data }: { data: RankingsData }) {
 
   const songs = rankings[active] ?? [];
   const currentTab = TABS.find((t) => t.key === active)!;
-
-  // 切换维度时客户端重新拉取榜单数据
-  React.useEffect(() => {
-    let cancelled = false;
-    async function fetchRankings() {
-      setLoading(true);
-      try {
-        const res = await api.get<RankingsData>(`/rankings?by=${dimension}`);
-        if (!cancelled) {
-          setRankings(res);
-        }
-      } catch {
-        // 失败时静默保留旧数据，避免清空榜单
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void fetchRankings();
-    return () => {
-      cancelled = true;
-    };
-  }, [dimension]);
 
   /** 整榜播放：从第一首开始，列表循环 */
   const playAll = () => {
@@ -128,29 +91,6 @@ export function RankingsClient({ data }: { data: RankingsData }) {
           </p>
         </div>
       </header>
-
-      {/* 维度切换：圆角分段（播放量 / 收藏量） */}
-      <div className="inline-flex items-center gap-1 rounded-full bg-foreground/5 p-1">
-        {DIMENSIONS.map((d) => {
-          const isActive = dimension === d.key;
-          return (
-            <button
-              key={d.key}
-              type="button"
-              onClick={() => setDimension(d.key)}
-              aria-pressed={isActive}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-white shadow-sm shadow-primary/30"
-                  : "text-foreground/60 hover:text-foreground"
-              )}
-            >
-              {d.label}
-            </button>
-          );
-        })}
-      </div>
 
       {/* Tab 切换：下划线式 */}
       <div className="flex items-center gap-6 overflow-x-auto border-b border-border no-scrollbar">
@@ -202,12 +142,8 @@ export function RankingsClient({ data }: { data: RankingsData }) {
         </div>
       )}
 
-      {/* 榜单列表 / 加载骨架 */}
-      {loading ? (
-        <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
-          <SongListSkeleton count={10} />
-        </div>
-      ) : songs.length > 0 ? (
+      {/* 榜单列表 */}
+      {songs.length > 0 ? (
         <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
           <SongList
             songs={songs}

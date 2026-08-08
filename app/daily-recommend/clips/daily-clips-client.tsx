@@ -5,14 +5,15 @@ import { Music2 } from "lucide-react";
 
 import type { LiveClipTrack } from "@/lib/types";
 import { api } from "@/lib/api";
+import { readDailySnapshot } from "@/lib/daily-snapshot";
 import { SongList } from "@/components/common/song-list";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
 
 /**
  * 每日推荐·歌切 客户端组件
- * - 接收 SSR 数据（可能为 null），null 时客户端 fallback 请求
- * - SongList + showTrackType 渲染，标题“每日推荐·歌切”
+ * - 优先复用 Discover 页写入的 sessionStorage 快照（与首页推荐歌切完全一致）
+ * - 无快照时回退请求 /discover/daily-clips 独立接口
  */
 export function DailyClipsClient({ initialClips }: { initialClips: LiveClipTrack[] | null }) {
   const [clips, setClips] = React.useState<LiveClipTrack[] | null>(initialClips);
@@ -21,6 +22,14 @@ export function DailyClipsClient({ initialClips }: { initialClips: LiveClipTrack
   React.useEffect(() => {
     if (initialClips) return;
     let cancelled = false;
+    // 1) 优先从 sessionStorage 读 Discover 写入的同一份快照
+    const snap = readDailySnapshot();
+    if (snap?.clips && Array.isArray(snap.clips) && snap.clips.length > 0) {
+      setClips(snap.clips as LiveClipTrack[]);
+      setLoading(false);
+      return;
+    }
+    // 2) 无快照时再回退独立接口
     api.get<LiveClipTrack[]>("/discover/daily-clips?limit=20")
       .then((res) => { if (!cancelled) setClips(res); })
       .catch(() => {})

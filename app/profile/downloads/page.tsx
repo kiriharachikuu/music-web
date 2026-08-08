@@ -9,10 +9,11 @@ import { getPlatform } from "@/lib/platform/detect";
 export default function DownloadsPage() {
   if (!isDownloadAvailable()) {
     // 下载管理功能仅对 Android 增强壳（TWA）与桌面客户端（Electron）开放；
-    // 其余平台通过 /download 引导页跳转到对应客户端
+    // iOS PWA（已添加到主屏的 Web）也不支持离线缓存
     const p = getPlatform();
     const isAndroidTWA = p.isTWA;
     const isDesktop = p.isElectron;
+    const isIOSPwa = p.isIOS && p.isStandalone;
     return (
       <div className="animate-fade-in">
         <div className="mb-4 flex items-center gap-2">
@@ -29,16 +30,22 @@ export default function DownloadsPage() {
             <Smartphone className="h-8 w-8" />
           </div>
           <h2 className="mt-4 text-lg font-semibold">
-            下载功能仅支持 {isAndroidTWA || isDesktop ? "" : "Android 客户端和桌面端"}
+            {isAndroidTWA || isDesktop
+              ? "下载管理模块未启用"
+              : isIOSPwa
+                ? "下载功能仅支持 Android 客户端和桌面端"
+                : "下载功能仅支持 Android 客户端和桌面端"}
           </h2>
           <p className="mt-2 max-w-xs text-sm text-foreground/60">
             {isAndroidTWA
               ? "当前已是 Android 客户端，但下载管理模块未启用。"
               : isDesktop
                 ? "当前已是桌面客户端，但下载管理模块未启用。"
-                : "下载管理功能仅在 Android 客户端和桌面端可用，请下载 XingTone 客户端体验完整功能。"}
+                : isIOSPwa
+                  ? "当前是 iOS PWA，但浏览器侧不支持歌曲离线缓存。请使用 Android 客户端或桌面端以启用下载功能。"
+                  : "下载管理功能仅在 Android 客户端和桌面端可用，请下载 XingTone 客户端体验完整功能。"}
           </p>
-          {!isAndroidTWA && !isDesktop && (
+          {!isAndroidTWA && !isDesktop && !isIOSPwa && (
             <Link
               href="/download"
               className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90"

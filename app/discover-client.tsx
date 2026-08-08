@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { PullToRefresh } from "@/components/common/pull-to-refresh";
 import { ArtistCard } from "@/app/search/search-results";
+import { patchDailySnapshot } from "@/lib/daily-snapshot";
 
 /**
  * 发现页客户端组件
@@ -37,6 +38,18 @@ export function DiscoverClient({ data: ssrData }: { data: DiscoverData | null })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [ssrData]);
+
+  // 拉取到 /discover 数据后，把每日推荐的两份子集写入 sessionStorage 快照，
+  // 详情页（/daily-recommend/songs|clips）会优先读取，避免两次随机请求产生不一致
+  React.useEffect(() => {
+    if (!data) return;
+    if (Array.isArray(data.dailySongs) && data.dailySongs.length > 0) {
+      patchDailySnapshot("songs", data.dailySongs);
+    }
+    if (Array.isArray(data.dailyClips) && data.dailyClips.length > 0) {
+      patchDailySnapshot("clips", data.dailyClips);
+    }
+  }, [data]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

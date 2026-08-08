@@ -23,13 +23,14 @@ import { getPlatform } from "@/lib/platform/detect";
 export function Sidebar() {
   const pathname = usePathname();
   // "下载 App" 入口仅在非 Android / 非桌面端时展示：
-  // 当前已运行在桌面客户端（Electron）或 Android 增强壳（TWA）时，自身即为 App，
-  // 引导"下载 App"会造成循环跳转，隐藏更自然。
+  // 当前已运行在桌面客户端（Electron）、Android 增强壳（TWA）或 iOS PWA（已添加到主屏的 Web）时，
+  // 自身即为 App 或近似 App 体验，引导"下载 App"会造成循环跳转，隐藏更自然。
   // SSR 与首帧 hydration 一致为 true（默认显示），挂载后依据真实平台修正，避免 hydration mismatch
   const [showDownloadApp, setShowDownloadApp] = React.useState(true);
   React.useEffect(() => {
     const p = getPlatform();
-    setShowDownloadApp(!(p.isTWA || p.isElectron));
+    const isIOSPwa = p.isIOS && p.isStandalone;
+    setShowDownloadApp(!(p.isTWA || p.isElectron || isIOSPwa));
   }, []);
 
   const isActive = (href: string) =>
