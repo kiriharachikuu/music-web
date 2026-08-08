@@ -11,6 +11,7 @@ import { MobileTabBar } from "@/components/layout/mobile-tab-bar";
 import { MobileBackGesture } from "@/components/layout/mobile-back-gesture";
 import { MediaSessionManager } from "@/components/player/media-session-manager";
 import { Toaster } from "@/components/ui/toaster";
+import { DesktopControlBridge } from "@/components/layout/desktop-control-bridge";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
 import { cn } from "@/lib/utils";
@@ -244,6 +245,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* MediaSession 常驻管理器：锁屏 / 控制中心 / 车载 / 耳机按键元数据同步 */}
       <MediaSessionManager />
+
+      {/* 桌面客户端控制桥接：托盘 / 全局快捷键 / 任务栏缩略图命令转发到播放器 */}
+      <DesktopControlBridge />
 
       {/* PC 侧边栏 */}
       <Sidebar />

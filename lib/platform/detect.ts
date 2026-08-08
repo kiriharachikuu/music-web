@@ -2,11 +2,13 @@
  * XingTone —— 运行时平台检测
  *
  * 判定维度：
+ * - isDesktopApp：window.__XINGTONE_DESKTOP__（Electron 桌面客户端预加载脚本注入）
  * - isTWA：window.AndroidJSBridge 是否注入（自制增强 TWA 标识）
  * - isStandalone：display-mode: standalone 或 navigator.standalone（PWA 安装态）
  * - isIOS / isAndroid / isDesktop：UA 推断
  *
  * 综合平台：
+ * - "desktop"      : Electron 桌面客户端（Windows / macOS / Linux）
  * - "twa"          : 已注入 AndroidJSBridge，原生接管播放
  * - "browser-pwa"  : 浏览器以 standalone 模式运行（PWA 已安装）
  * - "browser"      : 普通浏览器（含未安装 PWA 的移动端）
@@ -14,7 +16,7 @@
  * SSR 安全：所有访问均做 typeof window 检查
  */
 
-export type Platform = "twa" | "browser-pwa" | "browser";
+export type Platform = "desktop" | "twa" | "browser-pwa" | "browser";
 
 export interface PlatformInfo {
   platform: Platform;
@@ -22,6 +24,8 @@ export interface PlatformInfo {
   isStandalone: boolean;
   /** 是否为自制增强 TWA（注入了 AndroidJSBridge） */
   isTWA: boolean;
+  /** 是否为 Electron 桌面客户端 */
+  isElectron: boolean;
   isIOS: boolean;
   isAndroid: boolean;
   isDesktop: boolean;
@@ -38,6 +42,17 @@ export function isAndroidJSBridgeAvailable(): boolean {
     typeof window !== "undefined" &&
     typeof (window as unknown as { AndroidJSBridge?: unknown }).AndroidJSBridge !==
       "undefined"
+  );
+}
+
+/**
+ * 检测是否运行在 Electron 桌面客户端中
+ * - 由 music-desktop 的 preload 脚本注入 window.__XINGTONE_DESKTOP__ = true
+ */
+export function isElectronApp(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    (window as unknown as { __XINGTONE_DESKTOP__?: boolean }).__XINGTONE_DESKTOP__ === true
   );
 }
 
@@ -94,6 +109,7 @@ export function detectPlatform(): PlatformInfo {
       platform: "browser",
       isStandalone: false,
       isTWA: false,
+      isElectron: false,
       isIOS: false,
       isAndroid: false,
       isDesktop: true,
@@ -102,11 +118,14 @@ export function detectPlatform(): PlatformInfo {
   }
   const ua = navigator.userAgent.toLowerCase();
   const { isIOS, isAndroid, isDesktop } = detectDevice(ua);
+  const isElectron = isElectronApp();
   const isTWA = isAndroidJSBridgeAvailable();
   const isStandalone = isStandaloneMode();
 
   let platform: Platform;
-  if (isTWA) {
+  if (isElectron) {
+    platform = "desktop";
+  } else if (isTWA) {
     platform = "twa";
   } else if (isStandalone) {
     platform = "browser-pwa";
@@ -114,7 +133,17 @@ export function detectPlatform(): PlatformInfo {
     platform = "browser";
   }
 
-  return { platform, isStandalone, isTWA, isIOS, isAndroid, isDesktop, ua };
+  return {
+    platform,
+    isStandalone,
+    isTWA,
+    isElectron,
+    isIOS,
+    isAndroid,
+    // Electron 桌面客户端强制 isDesktop=true（UA 可能是 Chromium 而非传统桌面 UA）
+    isDesktop: isElectron || isDesktop,
+    ua,
+  };
 }
 
 /**

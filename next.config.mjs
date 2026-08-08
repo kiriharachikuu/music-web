@@ -6,10 +6,17 @@ const withBundleAnalyzerConfig = withBundleAnalyzer({
 });
 
 /**
+ * 是否为桌面客户端构建
+ * - music-desktop 执行 build:web 时会设置 DESKTOP_BUILD=true
+ * - 此时启用 output: 'standalone'，并关闭 PWA（SW 在 Electron 内无意义且会干扰本地服务）
+ */
+const isDesktopBuild = process.env.DESKTOP_BUILD === "true";
+
+/**
  * next-pwa 集成
  * - dest: "public" → 生产构建生成 sw.js 到 public 目录
  * - register: true → 自动注册 Service Worker
- * - disable: 开发环境关闭，避免热更新被缓存干扰
+ * - disable: 开发环境或桌面构建时关闭，避免热更新被缓存干扰 / Electron 不需要 SW
  *
  * 离线缓存策略（runtimeCaching）：
  * - 音频：CacheFirst（优先缓存，离线可播）
@@ -19,7 +26,7 @@ const withBundleAnalyzerConfig = withBundleAnalyzer({
 const withPWA = withPWAInit({
   dest: "public",
   register: true,
-  disable: process.env.NODE_ENV === "development",
+  disable: process.env.NODE_ENV === "development" || isDesktopBuild,
   runtimeCaching: [
     // 页面导航（NetworkFirst → 缓存 HTML，离线时加载已访问页面）
     {
@@ -88,6 +95,8 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // 桌面客户端构建：生成 standalone 服务，交由 Electron 主进程启动
+  ...(isDesktopBuild ? { output: "standalone" } : {}),
   images: {
     remotePatterns: [
       {
@@ -127,4 +136,5 @@ export default withBundleAnalyzerConfig(withPWA(nextConfig));
  * 3. 需在 HTTPS（或 localhost）下 Service Worker 才会激活
  * 4. 引导用户用「安装应用 / 添加到主屏幕」，而非「添加书签」
  * 5. 生产构建（next build && next start）才会生成 SW；dev 环境已禁用
+ * 6. DESKTOP_BUILD=true 时禁用 SW 并启用 output: standalone，供 Electron 打包
  */

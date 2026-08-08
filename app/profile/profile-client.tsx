@@ -17,6 +17,9 @@ import {
   Smartphone,
   LogOut,
   MessageCircle,
+  FileText,
+  AlertTriangle,
+  Scale,
 } from "lucide-react";
 import { isDownloadAvailable } from "@/lib/download";
 import { AnimatePresence, motion } from "framer-motion";
@@ -219,6 +222,9 @@ export function ProfileClient() {
       {/* 其他 */}
       <MenuSection title="其他">
         <MenuLink icon={Info} label="关于项目" href="/about" />
+        <MenuLink icon={FileText} label="用户协议" href="/legal/user-agreement" />
+        <MenuLink icon={AlertTriangle} label="免责声明" href="/legal/disclaimer" />
+        <MenuLink icon={Scale} label="开源许可" href="/legal/open-source" />
         <MenuLink icon={Smartphone} label="下载 App" href="/download" />
         <MenuItem
           icon={MessageCircle}
@@ -335,7 +341,19 @@ export function ProfileClient() {
       {activeTab === "playlists" && <PlaylistsTab />}
       {activeTab === "history" && <HistoryTab />}
       {activeTab === "downloads" && <DownloadsTab />}
-      {activeTab === "settings" && <SettingsTab onLogout={handleLogout} />}
+      {activeTab === "settings" && (
+        <>
+          <SettingsTab onLogout={handleLogout} />
+          <div className="rounded-2xl border border-primary/10 bg-card p-5">
+            <p className="mb-4 text-sm font-semibold text-foreground/80">法律与信息</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <LegalLink icon={FileText} label="用户协议" href="/legal/user-agreement" />
+              <LegalLink icon={AlertTriangle} label="免责声明" href="/legal/disclaimer" />
+              <LegalLink icon={Scale} label="开源许可" href="/legal/open-source" />
+            </div>
+          </div>
+        </>
+      )}
     </section>
   );
 
@@ -407,6 +425,26 @@ function MenuLink({
     >
       <Icon className="h-5 w-5 shrink-0 text-foreground/50" />
       <span className="flex-1">{label}</span>
+    </Link>
+  );
+}
+
+function LegalLink({
+  icon: Icon,
+  label,
+  href,
+}: {
+  icon: typeof Heart;
+  label: string;
+  href: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/50 px-4 py-3 text-sm text-foreground/75 transition-colors hover:border-primary/30 hover:text-primary"
+    >
+      <Icon className="h-4 w-4 shrink-0 text-foreground/45" />
+      <span>{label}</span>
     </Link>
   );
 }
