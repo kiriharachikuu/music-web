@@ -51,7 +51,13 @@ export function TopNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // 仅在挂载时拉取一次用户头像信息：避免路由切换时重复请求
+  // （pathname 变化不触发；如需刷新登出/登录后的头像，调用 forceUpdate 即可）
+  const profileLoadedRef = React.useRef(false);
   React.useEffect(() => {
+    if (profileLoadedRef.current) return;
+    profileLoadedRef.current = true;
+
     const token = getToken();
     if (!token) {
       setIsLoggedIn(false);
@@ -78,7 +84,7 @@ export function TopNav() {
       }
     };
     void fetchProfile();
-  }, [pathname]);
+  }, []);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);

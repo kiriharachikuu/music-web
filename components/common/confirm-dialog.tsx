@@ -52,11 +52,12 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resolve = React.useCallback((result: boolean) => {
-    setState((prev) => {
-      prev.resolve?.(result);
-      return { open: false };
-    });
-  }, []);
+    // 先把 resolve 回调取出再清空 state，避免在 setState updater 中产生副作用
+    // （React 18 严格模式下 updater 会被调用两次，导致 await 提前 resolve 两次）
+    const callback = state.resolve;
+    setState({ open: false });
+    callback?.(result);
+  }, [state.resolve]);
 
   return (
     <ConfirmContext.Provider value={{ confirm }}>

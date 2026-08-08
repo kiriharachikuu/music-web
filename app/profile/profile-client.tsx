@@ -289,7 +289,7 @@ export function ProfileClient() {
             {profile.email}
           </p>
           <p className="mt-0.5 font-mono text-xs text-foreground/30">
-            UID: {profile.id.slice(-8).toUpperCase()}
+            UID: {profile.id ? profile.id.slice(-8).toUpperCase() : "—"}
           </p>
         </div>
         {/* 编辑资料按钮 */}

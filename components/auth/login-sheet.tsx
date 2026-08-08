@@ -209,14 +209,25 @@ function LoginContent({
         credentials: "include",
       });
 
-      const json = await res.json();
+      // 解析响应 body：失败响应可能为空 / 非 JSON，需要兜底
+      let json: { code?: number; message?: string; data?: AuthResult } = {};
+      try {
+        const text = await res.text();
+        json = text ? (JSON.parse(text) as typeof json) : {};
+      } catch {
+        json = {};
+      }
 
       if (!res.ok) {
         setError(json.message || `请求失败 (${res.status})`);
         return;
       }
 
-      const data = json.data as AuthResult;
+      const data = json.data;
+      if (!data?.token || !data?.user) {
+        setError("登录响应数据异常，请稍后重试");
+        return;
+      }
       setToken(data.token);
       setUser(data.user);
 

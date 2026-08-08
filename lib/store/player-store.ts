@@ -663,7 +663,9 @@ export const usePlayerStore = create<PlayerState>()(
         try {
           const { getQualityPreference } = await import("@/lib/api");
           const result = await getQualityPreference();
-          set({ preferredQuality: result.preferredQuality.toLowerCase() });
+          // 后端可能返回空对象或缺字段，统一兜底
+          const level = result?.preferredQuality?.toLowerCase();
+          set({ preferredQuality: level || "low" });
         } catch {
           set({ preferredQuality: "low" });
         }
