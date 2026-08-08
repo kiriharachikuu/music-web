@@ -52,18 +52,18 @@ const QUALITY_BADGE_LABEL: Record<string, string> = {
   default: "音质",
 };
 
-function MobileScrollingTitle({ title }: { title: string }) {
+function MobileHeaderScrollingTitle({ title }: { title: string }) {
   if (title.length <= 10) {
     return (
-      <h1 className="min-w-0 flex-1 truncate text-lg font-bold drop-shadow-sm">
+      <p className="min-w-0 truncate text-sm font-semibold">
         {title}
-      </h1>
+      </p>
     );
   }
 
   return (
     <div className="min-w-0 flex-1 overflow-hidden">
-      <div className="marquee-title text-lg font-bold drop-shadow-sm">
+      <div className="marquee-title text-sm font-semibold">
         {title}
       </div>
     </div>
@@ -297,16 +297,14 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           {/* PC 端占位让两侧按钮对称 */}
           <div className="hidden flex-1 md:block" />
           {/* 移动端：歌名 + 歌手（绝对居中，不受两侧按钮数量影响） */}
-          <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center justify-center px-16 text-center md:hidden">
-            <div className="flex items-center gap-1.5">
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center justify-center px-20 text-center md:hidden">
+            <div className="flex w-full min-w-0 items-center justify-center gap-1.5 overflow-hidden">
               {currentSong.trackType === "live_clip" && currentSong.sessionId && (
                 <LiveClipBadge
                   onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
                 />
               )}
-              <p className="truncate text-sm font-semibold">
-                {currentSong.title}
-              </p>
+              <MobileHeaderScrollingTitle title={currentSong.title} />
             </div>
             <p className="truncate text-xs text-white/60">
               {currentSong.artist}
@@ -460,7 +458,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                       />
                     </span>
                   )}
-                  <MobileScrollingTitle title={currentSong.title} />
+                  <h1 className="min-w-0 truncate text-lg font-bold drop-shadow-sm">
+                    {currentSong.title}
+                  </h1>
                 </div>
                 <p className="mt-1 truncate text-sm text-white/60">
                   {currentSong.artist}
