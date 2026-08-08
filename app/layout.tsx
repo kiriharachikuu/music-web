@@ -78,6 +78,45 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `(function(){var r=document.documentElement;r.style.setProperty('--safe-area-top','env(safe-area-inset-top,0px)');r.style.setProperty('--safe-area-bottom','env(safe-area-inset-bottom,0px)');r.style.setProperty('--safe-area-left','env(safe-area-inset-left,0px)');r.style.setProperty('--safe-area-right','env(safe-area-inset-right,0px)');})();` }} />
         {/* 首屏同步颜色主题，避免 SSR/hydration 后闪烁 */}
         <script dangerouslySetInnerHTML={{ __html: colorThemeInitScript }} />
+        {/*
+          TWA Service Worker 缓存清理：
+          - next-pwa 的 StaleWhileRevalidate 策略会缓存 JS bundle，
+            TWA 内的 WebView 因网络延迟经常命中老 bundle（包含 #185 旧代码），
+            导致死循环 + 整页无法点击。
+          - 每次 TWA 启动时强制清空所有 SW 缓存 + 重新注册，确保拿到最新代码。
+          - 仅当检测到 TWA UA 时执行（普通 PWA 不受影响）。
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+              try {
+                var ua = navigator.userAgent || '';
+                var isTWA = /XingToneTWA/i.test(ua) || (window.AndroidJSBridge && window.AndroidJSBridge.getAppVersionCode);
+                if (!isTWA) return;
+                if (!('serviceWorker' in navigator)) return;
+                var done = false;
+                function reload() {
+                  if (done) return;
+                  done = true;
+                  try { window.location.reload(); } catch(e) {}
+                }
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  var ps = regs.map(function(r){ return r.unregister(); });
+                  if (caches && caches.keys) {
+                    caches.keys().then(function(keys) {
+                      keys.forEach(function(k){ caches.delete(k); });
+                    });
+                  }
+                  return Promise.all(ps);
+                }).then(function() {
+                  if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then(reload);
+                  }
+                }).catch(function(){});
+              } catch(e) {}
+            })();`,
+          }}
+        />
       </head>
       <body className="min-h-full bg-background text-foreground">
         {/* 无障碍：跳转至主内容 */}
