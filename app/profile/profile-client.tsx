@@ -30,6 +30,7 @@ import { clearAuth, getToken, getUser, isAuthenticated, setUser } from "@/lib/au
 import { useAuthStore } from "@/lib/store/auth-store";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -353,13 +354,29 @@ export function ProfileClient() {
         })}
       </div>
 
-      {/* 子模块内容 */}
-      {activeTab === "favorites" && <FavoritesTab />}
-      {activeTab === "playlists" && <PlaylistsTab />}
-      {activeTab === "history" && <HistoryTab />}
-      {activeTab === "downloads" && <DownloadsTab />}
+      {/* 子模块内容：每个 Tab 用 ErrorBoundary 隔离，单个崩溃不影响整页 */}
+      {activeTab === "favorites" && (
+        <ErrorBoundary title="我喜欢的音乐加载失败">
+          <FavoritesTab />
+        </ErrorBoundary>
+      )}
+      {activeTab === "playlists" && (
+        <ErrorBoundary title="我的歌单加载失败">
+          <PlaylistsTab />
+        </ErrorBoundary>
+      )}
+      {activeTab === "history" && (
+        <ErrorBoundary title="历史播放加载失败">
+          <HistoryTab />
+        </ErrorBoundary>
+      )}
+      {activeTab === "downloads" && (
+        <ErrorBoundary title="下载管理加载失败">
+          <DownloadsTab />
+        </ErrorBoundary>
+      )}
       {activeTab === "settings" && (
-        <>
+        <ErrorBoundary title="设置加载失败">
           <SettingsTab onLogout={handleLogout} />
           <div className="rounded-2xl border border-primary/10 bg-card p-5">
             <p className="mb-4 text-sm font-semibold text-foreground/80">法律与信息</p>
@@ -369,7 +386,7 @@ export function ProfileClient() {
               <LegalLink icon={Scale} label="开源许可" href="/legal/open-source" />
             </div>
           </div>
-        </>
+        </ErrorBoundary>
       )}
     </section>
   );
