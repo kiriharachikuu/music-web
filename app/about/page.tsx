@@ -47,7 +47,7 @@ export default function AboutPage() {
                 XingTone 瞳瞳音乐
               </h1>
               <p className="text-sm leading-relaxed text-white/70 sm:text-base">
-                为星瞳而作的非商用开源音乐管理工具
+                为星瞳而作的非商用开源音乐工具
               </p>
             </div>
           </div>
@@ -92,7 +92,7 @@ export default function AboutPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="space-y-4">
-          <SectionHeader icon={Clock} title="版本更新" subtitle="默认展示最新版本，历史版本可展开查看" />
+          <SectionHeader icon={Clock} title="版本更新" subtitle="Version Update" />
           <ChangelogSection />
         </section>
 

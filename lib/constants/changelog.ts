@@ -43,6 +43,22 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.4.2",
+    versionCode: 11,
+    releaseDate: "2026-08-09",
+    title: "TWA 点击修复、下载管理稳定性与错误兜底",
+    changes: [
+      { type: "fix", content: "修复 TWA / PWA 按钮点击无响应：TWA 环境下主动清理 Service Worker 与 Cache Storage，避免旧 JS bundle 长期驻留" },
+      { type: "fix", content: "修复 React #418 hydration mismatch：AppShell 改为 client-only 加载，避免服务端与客户端首屏 DOM 不一致导致事件委托异常" },
+      { type: "fix", content: "修复下载管理页 React #185 最大更新深度错误：下载中任务 selector 增加结果缓存并配合浅比较，避免渲染死循环" },
+      { type: "fix", content: "修复下载管理列表封面不显示：在线模式下统一使用服务器封面 URL，不再依赖 TWA 本地 appassets 映射" },
+      { type: "fix", content: "修复下载管理异常数据导致页面崩溃：缺失 song 的下载记录会被跳过，formatBytes 增加 undefined / NaN / Infinity 防护" },
+      { type: "improvement", content: "新增个人中心 Tab 级错误隔离，单个 Tab 崩溃不影响其他 Tab 与整体个人中心" },
+      { type: "improvement", content: "新增个人中心移动端子路由错误页与全局 app/error.tsx 兜底，避免运行时错误直接白屏" },
+      { type: "improvement", content: "TWA 兼容性增强：Android WebView User-Agent 增加 XingToneTWA 标识，并配合无缓存策略降低旧资源命中概率" },
+    ],
+  },
+  {
     version: "1.4.1",
     versionCode: 10,
     releaseDate: "2026-08-08",
@@ -220,8 +236,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "1.4.1";
-export const APP_VERSION_CODE = 10;
+export const APP_VERSION = "1.4.2";
+export const APP_VERSION_CODE = 11;
 
 /**
  * 获取更新类型对应的显示标签
