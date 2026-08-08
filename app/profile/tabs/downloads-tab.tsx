@@ -19,7 +19,6 @@ import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/common/confirm-dialog";
 import { cn, resolveMediaUrl, formatDate } from "@/lib/utils";
-import { getPlatform } from "@/lib/platform/detect";
 import {
   useDownloadProgressStore,
   selectInFlightOrdered,
@@ -210,13 +209,10 @@ export function DownloadsTab() {
           <div className="overflow-hidden rounded-2xl border border-primary/10 bg-card/40 p-2 shadow-sm md:p-3">
             {downloads.map((item) => {
               if (!item || !item.song) return null;
-              const isTWA = getPlatform().isTWA;
-              const localCoverPath = item.localCoverPath;
-              // TWA 下使用 WebViewAssetLoader 映射的安全 URL
-              // （https://appassets.androidplatform.net/assets/covers/{songId}.{ext}）
-              const coverUrl = isTWA && localCoverPath
-                ? `https://appassets.androidplatform.net/assets/covers/${localCoverPath.split("/").pop()}`
-                : resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
+              // 优先使用本地封面路径（TWA 已下载到本地的封面文件），
+              // 退化到服务器 URL（在线访问 / 未下载场景）。
+              // 任何场景下都走 resolveMediaUrl 统一处理相对路径 → 后端绝对 URL。
+              const coverUrl = resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
               const isLoadingPlay = loadingPlayId === item.songId;
               return (
                 <div
