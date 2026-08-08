@@ -178,15 +178,27 @@ function MemberList({ members, compact = false }: { members: AboutMember[]; comp
     <div className="grid gap-2 rounded-2xl border border-border/60 bg-card p-3 shadow-sm">
       {members.map((member) => (
         <div key={member.name} className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-muted/60">
-          <span
-            className={cn(
-              "flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-bold text-white shadow-md",
-              compact ? "h-9 w-9 text-sm" : "h-11 w-11",
-              member.avatarColor
-            )}
-          >
-            {member.name.charAt(0)}
-          </span>
+          {member.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={member.avatarUrl}
+              alt={member.name}
+              className={cn(
+                "shrink-0 rounded-full object-cover shadow-md ring-1 ring-border/40",
+                compact ? "h-9 w-9" : "h-11 w-11"
+              )}
+            />
+          ) : (
+            <span
+              className={cn(
+                "flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-bold text-white shadow-md",
+                compact ? "h-9 w-9 text-sm" : "h-11 w-11",
+                member.avatarColor
+              )}
+            >
+              {member.name.charAt(0)}
+            </span>
+          )}
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{member.name}</p>
             <p className="truncate text-xs text-foreground/50">{member.role}</p>

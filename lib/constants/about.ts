@@ -62,18 +62,25 @@ export type AboutMember = {
   name: string;
   role: string;
   avatarColor: string;
+  /** 可选：填了则展示图片头像，未填则用字母 + avatarColor 兜底 */
+  avatarUrl?: string;
 };
 
 export const ABOUT_TEAM_MEMBERS: AboutMember[] = [
   {
     name: "不啦不啦小星瞳",
-    role: "项目负责人 · Flutter客户端开发",
+    role: "项目负责人",
     avatarColor: "from-primary/80 to-primary",
   },
   {
     name: "知空",
-    role: "视觉设计 · 前端开发",
+    role: "视觉设计 · 开发",
     avatarColor: "from-pink-500 to-rose-600",
+  },
+  {
+    name: "若叶",
+    role: "开发支持",
+    avatarColor: "from-sky-500 to-blue-600",
   },
 ];
 
