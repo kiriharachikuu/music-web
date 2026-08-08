@@ -3,10 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 
-import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AppShell } from "@/components/layout/app-shell";
 import { ConfirmProvider } from "@/components/common/confirm-dialog";
 import { BaiduTongji } from "@/components/common/baidu-tongji";
+import { ClientProviders } from "@/components/client-providers";
 import { colorThemeInitScript } from "@/lib/store/color-theme-store";
 
 const geistSans = Geist({
@@ -94,25 +94,16 @@ export default function RootLayout({
                 var isTWA = /XingToneTWA/i.test(ua) || (window.AndroidJSBridge && window.AndroidJSBridge.getAppVersionCode);
                 if (!isTWA) return;
                 if (!('serviceWorker' in navigator)) return;
-                var done = false;
-                function reload() {
-                  if (done) return;
-                  done = true;
-                  try { window.location.reload(); } catch(e) {}
-                }
+                // 静默清空 SW 注册与 Cache Storage（不 reload：reload 会触发 React hydration mismatch）
+                // 配合 WebView cacheMode = LOAD_NO_CACHE，下次导航即可拿到最新 bundle。
                 navigator.serviceWorker.getRegistrations().then(function(regs) {
-                  var ps = regs.map(function(r){ return r.unregister(); });
-                  if (caches && caches.keys) {
-                    caches.keys().then(function(keys) {
-                      keys.forEach(function(k){ caches.delete(k); });
-                    });
-                  }
-                  return Promise.all(ps);
-                }).then(function() {
-                  if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.ready.then(reload);
-                  }
+                  regs.forEach(function(r){ try { r.unregister(); } catch(e) {} });
                 }).catch(function(){});
+                if (window.caches && window.caches.keys) {
+                  window.caches.keys().then(function(keys) {
+                    keys.forEach(function(k){ window.caches.delete(k).catch(function(){}); });
+                  }).catch(function(){});
+                }
               } catch(e) {}
             })();`,
           }}
@@ -127,16 +118,11 @@ export default function RootLayout({
           跳转到主要内容
         </a>
         {/* next-themes：attribute=class 切换 .dark，suppressHydrationWarning 已在 <html> 声明 */}
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ClientProviders>
           <ConfirmProvider>
             <AppShell>{children}</AppShell>
           </ConfirmProvider>
-        </ThemeProvider>
+        </ClientProviders>
         <Suspense fallback={null}>
           <BaiduTongji />
         </Suspense>
