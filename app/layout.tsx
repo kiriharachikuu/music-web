@@ -1,13 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import "./globals.css";
 
-import { AppShell } from "@/components/layout/app-shell";
 import { ConfirmProvider } from "@/components/common/confirm-dialog";
 import { BaiduTongji } from "@/components/common/baidu-tongji";
 import { ClientProviders } from "@/components/client-providers";
 import { colorThemeInitScript } from "@/lib/store/color-theme-store";
+
+// AppShell 整体为 client component，依赖 usePathname / useSafeArea / 多个 zustand store，
+// 用 dynamic ssr:false 完全避免 hydration mismatch（React #418）。
+// 这意味着 SSR 时不渲染外壳，仅渲染 body 占位；hydration 后再挂载真实 Shell。
+// 代价：首屏 < 1s 内可能出现"无外壳"闪烁，但可避免 hydration 失败导致的事件丢失。
+const AppShell = dynamic(
+  () => import("@/components/layout/app-shell").then((m) => m.AppShell),
+  { ssr: false }
+);
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -109,7 +118,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full bg-background text-foreground">
+      <body suppressHydrationWarning className="min-h-full bg-background text-foreground">
         {/* 无障碍：跳转至主内容 */}
         <a
           href="#main-content"
