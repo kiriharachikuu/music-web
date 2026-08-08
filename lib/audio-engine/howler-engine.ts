@@ -107,11 +107,18 @@ async function preloadNextSong(
       src: [url],
       html5: true,
       preload: true,
-      volume: 0, // 静音，仅用于预加载
+      // 不再使用 volume: 0：iOS 会把 volume=0 的 audio 视为不活跃，
+      // 后续在非用户手势上下文里 play() 会被静默拦截。
+      // 改用 mute: true（仅静音不禁用），iOS 仍认为这是真实音频元素。
+      // Howler 2.x 在构造时只接受 mute，复用前再调用 mute(false) 解除。
+      mute: true,
     });
-    // 预加载实例也需补齐 playsinline，复用时直接可用
-    ensureIOSBackgroundPlay(preloadHowl);
     preloadUrl = url;
+    // 立即激活内部 audio 元素：Howler 默认懒创建 _node，
+    // 必须先 play() 一次再 pause()，让 audio 元素进入 DOM 并设好 playsinline，
+    // 否则后续 onHowlEnd 在 iOS 上调用 play() 会被拦截（用户没体感但不发声）
+    primeHowlerNode(preloadHowl);
+    ensureIOSBackgroundPlay(preloadHowl);
   } catch {
     // 预加载失败静默处理
   }
@@ -151,21 +158,55 @@ function clearPreload(): void {
  * 反复从 DOM 移除/添加会导致 iOS 重新评估自动播放策略，切歌时 play() 被拦截。
  * 让 audio 元素留在 DOM 中（隐藏），供 Howler 池复用。
  */
-function ensureIOSBackgroundPlay(h: HowlType): void {
+function ensureIOSBackgroundPlay(h: HowlType): boolean {
   try {
     const sounds = (h as unknown as {
       _sounds?: Array<{ _node?: HTMLAudioElement }>;
     })._sounds;
-    if (!sounds || !sounds[0] || !sounds[0]._node) return;
+    if (!sounds || !sounds[0] || !sounds[0]._node) return false;
     const node = sounds[0]._node;
     node.setAttribute("playsinline", "true");
     node.setAttribute("webkit-playsinline", "true");
+    // iOS 13+ 要求 element 必须已与用户产生过交互，否则 play() 会被静默拦截
+    // 这里把 element 标记为已在 DOM，绕过 WebKit 的游离节点检测
     if (!node.parentNode) {
       node.style.display = "none";
       document.body.appendChild(node);
     }
+    return true;
   } catch {
-    // Howler 内部 API 变化时静默失败，不影响正常播放
+    return false;
+  }
+}
+
+/**
+ * 强制让 Howler 创建内部的 HTMLAudioElement
+ *
+ * 根因：Howler 在第一次 play() 时才懒创建 audio 元素，
+ * 导致预加载阶段 ensureIOSBackgroundPlay() 是 no-op，
+ * 等到 onHowlEnd 真正要 play() 时元素才被创建出来，
+ * iOS 此时会因为元素刚刚创建 / 没有用户手势上下文而拦截播放。
+ *
+ * 通过调用一次 play() 立即 pause() 来"激活"Howl 的内部节点，
+ * 让 audio 元素提前进入 DOM 并设置好 playsinline，
+ * 后续 onHowlEnd 再 play() 就会被 iOS 视为已就绪的连续播放。
+ */
+function primeHowlerNode(h: HowlType): void {
+  try {
+    const id = h.play();
+    // 立即静音并暂停，零声音泄漏
+    h.mute(true);
+    h.pause();
+    // 复位到位置 0
+    try { h.seek(0); } catch { /* noop */ }
+    // 解除静音（保持后续 play() 时正常发声）
+    h.mute(false);
+    // 释放这一次 play() 触发的 id（Howler 2.x 中 stop(id) 即可彻底停止）
+    if (typeof id === "number") {
+      try { h.stop(id); } catch { /* noop */ }
+    }
+  } catch {
+    // 预激活动作失败静默处理，不影响主流程
   }
 }
 
@@ -291,8 +332,13 @@ function onHowlEnd(): void {
     currentDuration = nextHowl.duration() || 0;
     currentPosition = 0;
 
-    // iOS 后台播放属性
+    // iOS 后台播放属性：再次确保（preloadNextSong 已处理过，但 onHowlEnd 复用时
+    // 元素可能因 Howler 内部重启发生变化，再保险一次）
     ensureIOSBackgroundPlay(howl);
+
+    // 恢复音量与静音：预加载阶段用了 muted: true，这里解除静音并设置当前音量
+    try { howl.mute(false); } catch { /* noop */ }
+    howl.volume(currentVolume);
 
     // 注册事件（新 Howl 的 end 也走同步切换逻辑）
     registerHowlEvents(howl);
@@ -310,17 +356,36 @@ function onHowlEnd(): void {
       });
     }
 
-    // 恢复音量（预加载实例是静音的）
-    howl.volume(currentVolume);
-
-    // 同步开始播放
+    // iOS 切歌 play 拦截兜底：
+    // 根因是 iOS 在歌曲自然结束时触发的"end"事件不在用户手势栈里，
+    // 即便 audio 元素已激活，iOS 仍可能因时序问题短暂拦截 play()。
+    // 同步抛错 / 异步 playerror 时延迟 50ms 重试一次，绝大多数情况能恢复。
+    let retried = false;
+    const tryPlay = () => {
+      if (howl !== nextHowl) return; // 期间已被新 play() 接管
+      try {
+        nextHowl.play();
+      } catch {
+        if (!retried) {
+          retried = true;
+          setTimeout(tryPlay, 50);
+        } else {
+          // 重试仍失败：fallback 到正常 onEnd 流程
+          try { events?.onEnd(); } catch { /* noop */ }
+        }
+      }
+    };
+    // 监听 playerror：iOS 异步拦截时会触发此事件
     try {
-      howl.play();
-    } catch {
-      // play() 同步抛错时回退到 onEnd
-      events?.onEnd();
-      return;
-    }
+      nextHowl.on("playerror", () => {
+        if (retried) return;
+        retried = true;
+        setTimeout(tryPlay, 50);
+      });
+    } catch { /* noop */ }
+
+    // 同步开始播放（失败时由 tryPlay 内部兜底）
+    tryPlay();
 
     // 立即预加载下一首（后台连播依赖预加载提前就绪）
     const nextPreload = preloadCheckFn?.();
@@ -405,6 +470,8 @@ export function createHowlerEngine(
             loadHandlerRegistered = true;
           }
           howl.volume(currentVolume);
+          // 预加载阶段使用了 muted: true，consume 时需要解除静音
+          try { howl.mute(false); } catch { /* noop */ }
           try { howl.seek(opts?.startTime ?? 0); } catch { /* noop */ }
         } else {
           howl = new Howl({
