@@ -8,7 +8,7 @@ import {
   useDragControls,
   type PanInfo,
 } from "framer-motion";
-import { ChevronDown, Heart, ListMusic, Music2, Music, ChevronUp } from "lucide-react";
+import { ChevronDown, Heart, ListMusic, Music2, ChevronUp } from "lucide-react";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 import { AppImage } from "@/components/ui/app-image";
 
@@ -45,6 +45,31 @@ import { QualitySheet } from "./quality-sheet";
  * 8. 响应式：移动端单列（歌词 + 底部控制），PC 左右分栏（左封面 + 右歌词）
  */
 
+const QUALITY_BADGE_LABEL: Record<string, string> = {
+  high: "高音质",
+  medium: "中音质",
+  low: "低音质",
+  default: "音质",
+};
+
+function MobileScrollingTitle({ title }: { title: string }) {
+  if (title.length <= 14) {
+    return (
+      <h1 className="min-w-0 flex-1 truncate text-lg font-bold drop-shadow-sm">
+        {title}
+      </h1>
+    );
+  }
+
+  return (
+    <div className="min-w-0 flex-1 overflow-hidden">
+      <div className="marquee-title text-lg font-bold drop-shadow-sm">
+        {title}
+      </div>
+    </div>
+  );
+}
+
 /** 全屏播放页入口：由 isLyricPageOpen 控制 AnimatePresence */
 export function FullScreenPlayer() {
   const isOpen = usePlayerStore((s) => s.isLyricPageOpen);
@@ -71,6 +96,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
   const playMode = usePlayerStore((s) => s.playMode);
+  const currentQuality = usePlayerStore((s) => s.currentQuality);
 
   // ----- 播放器操作 -----
   const toggle = usePlayerStore((s) => s.toggle);
@@ -291,12 +317,12 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
             <motion.button
               type="button"
               onClick={() => setQualitySheetOpen(true)}
-              className="rounded-full p-2.5 text-white/60 transition-all hover:text-white hover:bg-white/10 active:scale-95 md:hidden"
+              className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1.5 text-[11px] font-semibold text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95 md:hidden"
               aria-label="音质选择"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Music className="h-5 w-5" />
+              {QUALITY_BADGE_LABEL[currentQuality] || "音质"}
             </motion.button>
             <motion.button
               type="button"
@@ -434,9 +460,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                       />
                     </span>
                   )}
-                  <h1 className="min-w-0 truncate text-lg font-bold drop-shadow-sm">
-                    {currentSong.title}
-                  </h1>
+                  <MobileScrollingTitle title={currentSong.title} />
                 </div>
                 <p className="mt-1 truncate text-sm text-white/60">
                   {currentSong.artist}
