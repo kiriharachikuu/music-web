@@ -52,7 +52,7 @@ export function QueuePanel() {
         className={cn(
           "fixed inset-y-0 right-0 z-40 hidden w-80 flex-col border-l border-primary/10 bg-background/80 backdrop-blur-xl transition-transform duration-300 ease-out lg:flex",
           "pt-safe pb-safe",
-          isQueueOpen ? "translate-x-0" : "translate-x-full"
+          isQueueOpen ? "translate-x-0" : "translate-x-full pointer-events-none"
         )}
         aria-hidden={!isQueueOpen}
         role="complementary"

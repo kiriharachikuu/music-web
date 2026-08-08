@@ -237,7 +237,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <UpdateDialog />
         <Toaster />
         {error && (
-          <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg">
+          <div className="pointer-events-none fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg">
             {error}
           </div>
         )}
@@ -301,7 +301,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* 播放器错误提示：fixed 底部居中，3 秒自动消失 */}
       {error && (
-        <div className="fixed bottom-[calc(7rem+var(--safe-area-bottom,0px))] left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg md:bottom-32">
+        <div className="pointer-events-none fixed bottom-[calc(7rem+var(--safe-area-bottom,0px))] left-1/2 z-[60] -translate-x-1/2 rounded-lg bg-red-500 px-4 py-2 text-sm text-white shadow-lg md:bottom-32">
           {error}
         </div>
       )}

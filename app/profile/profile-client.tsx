@@ -53,15 +53,10 @@ type Tab =
 
 const FEEDBACK_URL = "https://txc.qq.com/products/801342";
 
-const downloadsTab = isDownloadAvailable()
-  ? [{ key: "downloads" as Tab, label: "下载管理", icon: Download }]
-  : [];
-
-const TABS: { key: Tab; label: string; icon: typeof Heart }[] = [
+const BASE_TABS: { key: Tab; label: string; icon: typeof Heart }[] = [
   { key: "favorites", label: "我喜欢的音乐", icon: Heart },
   { key: "playlists", label: "我的歌单", icon: ListMusic },
   { key: "history", label: "历史播放", icon: History },
-  ...downloadsTab,
   { key: "settings", label: "设置", icon: Settings },
 ];
 
@@ -81,6 +76,7 @@ export function ProfileClient() {
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
   const [editOpen, setEditOpen] = React.useState(false);
+  const [downloadAvailable, setDownloadAvailable] = React.useState(false);
   // "下载 App" 入口仅在非 Android / 非桌面端 / 非 iOS PWA 时展示：
   // 当前已运行在桌面客户端、Android 增强壳或 iOS PWA（已添加到主屏的 Web）时，
   // 自身即为 App 或近似 App 体验，引导"下载 App"无意义
@@ -90,7 +86,19 @@ export function ProfileClient() {
     const p = getPlatform();
     const isIOSPwa = p.isIOS && p.isStandalone;
     setShowDownloadApp(!(p.isTWA || p.isElectron || isIOSPwa));
+    setDownloadAvailable(p.isTWA || p.isElectron);
   }, []);
+  const tabs = React.useMemo(
+    () =>
+      downloadAvailable
+        ? [
+            ...BASE_TABS.slice(0, 3),
+            { key: "downloads" as Tab, label: "下载管理", icon: Download },
+            ...BASE_TABS.slice(3),
+          ]
+        : BASE_TABS,
+    [downloadAvailable]
+  );
   const openLogin = useAuthStore((s) => s.openLogin);
 
   // 首次挂载拉取用户信息
@@ -220,7 +228,7 @@ export function ProfileClient() {
         <MenuLink icon={Heart} label="我喜欢的音乐" href="/profile/favorites" />
         <MenuLink icon={ListMusic} label="我的歌单" href="/profile/playlists" />
         <MenuLink icon={History} label="历史播放" href="/profile/history" />
-        {isDownloadAvailable() && (
+        {downloadAvailable && (
           <MenuLink icon={Download} label="下载管理" href="/profile/downloads" />
         )}
       </MenuSection>
@@ -321,7 +329,7 @@ export function ProfileClient() {
 
       {/* Tab 切换 */}
       <div className="flex items-center gap-5 overflow-x-auto border-b border-border no-scrollbar">
-        {TABS.map((t) => {
+        {tabs.map((t) => {
           const isActive = activeTab === t.key;
           return (
             <button
