@@ -212,10 +212,11 @@ export function DownloadsTab() {
               if (!item || !item.song) return null;
               const isTWA = getPlatform().isTWA;
               const localCoverPath = item.localCoverPath;
-              const coverUrl =
-                isTWA && localCoverPath
-                  ? `file://${localCoverPath}`
-                  : resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
+              // TWA 下使用 WebViewAssetLoader 映射的安全 URL
+              // （https://appassets.androidplatform.net/assets/covers/{songId}.{ext}）
+              const coverUrl = isTWA && localCoverPath
+                ? `https://appassets.androidplatform.net/assets/covers/${localCoverPath.split("/").pop()}`
+                : resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
               const isLoadingPlay = loadingPlayId === item.songId;
               return (
                 <div
