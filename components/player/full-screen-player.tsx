@@ -53,7 +53,7 @@ const QUALITY_BADGE_LABEL: Record<string, string> = {
 };
 
 function MobileHeaderScrollingTitle({ title }: { title: string }) {
-  if (title.length <= 10) {
+  if (title.length <= 14) {
     return (
       <p className="min-w-0 truncate text-sm font-semibold">
         {title}
