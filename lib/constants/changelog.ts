@@ -43,6 +43,26 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.4.1",
+    versionCode: 10,
+    releaseDate: "2026-08-08",
+    title: "iOS 后台连播、关于页与多项健壮性修复",
+    changes: [
+      { type: "fix", content: "iOS 端自动切歌后无法播放：移除 Howler 预激 play() 流程，改为提前把 audio 元素挂入 DOM 并设置 playsinline，避免污染 iOS 音频会话" },
+      { type: "fix", content: "iOS 端灵动岛显示暂停但进度条仍在动：onHowlPause 命中非末尾暂停时立即停止进度轮询并冻结 position，避免 UI 与实际状态错位" },
+      { type: "fix", content: "iOS 系统中断恢复后进度条卡死：play 事件触发时自动重启进度轮询，覆盖控制中心解除暂停 / AirPods 重新连接场景" },
+      { type: "fix", content: "预加载 Howl 实例使用 volume: 0 会被 iOS 视为不活跃导致后续 play() 被拦截：改用 mute: true 并在复用前 mute(false) 解除" },
+      { type: "fix", content: "onHowlEnd 同步切歌后 play() 同步抛错 / 异步 playerror 时增加 50ms 自动重试，命中大部分 iOS 临时拦截" },
+      { type: "fix", content: "修复 top-nav 路由切换时重复请求 /user/profile 的浪费带宽问题，改为仅挂载时拉取一次" },
+      { type: "fix", content: "修复 profile-client 中 profile.id 缺失时 .slice().toUpperCase() 抛 TypeError 的边界问题" },
+      { type: "fix", content: "修复 confirm-dialog 在 React StrictMode 下 setState updater 被调用两次导致 await confirm() 提前 resolve 两次的副作用" },
+      { type: "fix", content: "修复 login-sheet 在响应 body 为空 / 非 JSON 时 .json() 抛 SyntaxError 直接崩溃的问题" },
+      { type: "fix", content: "修复 player-store loadPreferredQuality 对后端空响应 / 缺字段时 .toLowerCase() 抛 TypeError 的兜底" },
+      { type: "improvement", content: "关于页开发人员 / 友情支持成员支持可选 avatarUrl，可使用图片头像，未填则继续用字母 + 渐变色兜底" },
+      { type: "improvement", content: "关于页更新日志改为只展示最新 3 条（首条默认展开、后两条折叠），点击「查看更多」跳转独立 /about/changelog 页面查看完整历史" },
+    ],
+  },
+  {
     version: "1.4.0",
     versionCode: 9,
     releaseDate: "2026-08-04",
@@ -200,8 +220,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "1.4.0";
-export const APP_VERSION_CODE = 9;
+export const APP_VERSION = "1.4.1";
+export const APP_VERSION_CODE = 10;
 
 /**
  * 获取更新类型对应的显示标签
