@@ -297,7 +297,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           {/* PC 端占位让两侧按钮对称 */}
           <div className="hidden flex-1 md:block" />
           {/* 移动端：歌名 + 歌手（绝对居中，不受两侧按钮数量影响） */}
-          <div className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col items-center justify-center px-20 text-center md:hidden">
+          <div className="pointer-events-none absolute left-14 right-28 top-1/2 flex -translate-y-1/2 flex-col items-center justify-center text-center md:hidden">
             <div className="flex w-full min-w-0 items-center justify-center gap-1.5 overflow-hidden">
               {currentSong.trackType === "live_clip" && currentSong.sessionId && (
                 <LiveClipBadge
