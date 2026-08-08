@@ -222,6 +222,15 @@
   .glass-dark {
     @apply bg-gray-900/60 backdrop-blur-xl;
   }
+
+  /* 下载管理：未知进度的脉冲条动画（indeterminate 状态） */
+  @keyframes indeterminate {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+  .animate-indeterminate {
+    animation: indeterminate 1.2s ease-in-out infinite;
+  }
   /* 播放栏进度条渐变填充 */
   .progress-fill {
     background: linear-gradient(

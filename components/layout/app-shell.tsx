@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { DesktopControlBridge } from "@/components/layout/desktop-control-bridge";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
+import { installDesktopProgressBridge } from "@/lib/download";
 import { cn } from "@/lib/utils";
 
 // 动态导入非首屏重型组件，减少初始 JS 包体积
@@ -62,6 +63,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // 守卫：自动播放恢复只在首次挂载执行一次（避免 React 严格模式双触发）
   const autoPlayRestoredRef = React.useRef(false);
+
+  React.useEffect(() => {
+    // Desktop 侧：把主进程下载进度事件桥接到 download-progress-store
+    // 幂等，重复挂载无副作用
+    installDesktopProgressBridge();
+  }, []);
 
   React.useEffect(() => {
     // 外层兜底：任何初始化阶段的同步错误都不能冒泡到 React ErrorBoundary，

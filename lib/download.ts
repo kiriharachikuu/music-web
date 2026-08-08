@@ -15,6 +15,7 @@ import { fetchAndCacheLyric, isLyricCached, fetchLyric } from "@/lib/db/lyric-ca
 import { getPlatform } from "@/lib/platform/detect";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { setupDownloadListeners, removeDownloadListeners } from "@/lib/jsbridge/native-events";
+import { useDownloadProgressStore } from "@/lib/store/download-progress-store";
 
 /**
  * XingTone —— 下载触发器
@@ -66,6 +67,35 @@ export function onDesktopDownloadProgress(
 }
 
 /**
+ * 把 Desktop 主进程下载进度同步到 download-progress-store
+ * - 应用启动时调用一次即可（模块级单例，幂等）
+ * - state: "completed" / "error" 时从 inFlight 移除（completed 由 listDownloads 接管展示）
+ */
+let _desktopProgressBridgeInstalled = false;
+export function installDesktopProgressBridge(): void {
+  if (_desktopProgressBridgeInstalled) return;
+  if (!isDesktop()) return;
+  const api = getDesktopAPI();
+  if (!api?.onDownloadProgress) return;
+  _desktopProgressBridgeInstalled = true;
+  api.onDownloadProgress((item) => {
+    const store = useDownloadProgressStore.getState();
+    if (item.state === "completed" || item.state === "error") {
+      if (item.state === "error") {
+        store.markError(item.id, item.error);
+        // 失败态短暂展示后清理，避免永久占据 inFlight
+        setTimeout(() => store.clear(item.id), 4000);
+      } else {
+        store.clear(item.id);
+      }
+      return;
+    }
+    // pending / downloading：更新进度（pending 默认 0）
+    store.updateProgress(item.id, item.progress ?? 0);
+  });
+}
+
+/**
  * 下载并缓存一首歌曲
  * @throws 网络错误或后端不可达时抛 Error
  */
@@ -86,6 +116,8 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     }
     const token = getToken();
     const fileName = `${song.artist} - ${song.title}`.replace(/[<>:"/\\|?*]/g, "_");
+    // 注册到进度 store（Desktop 侧由 onDownloadProgress 持续更新）
+    useDownloadProgressStore.getState().register(song);
     // 异步触发下载，不等待完成（UI 通过 onDownloadProgress 监听进度）
     api
       .downloadFile(url, `${fileName}.mp3`, {
@@ -131,14 +163,19 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
       } catch {}
     })();
 
+    // TWA 原生未回传中间进度，按 0% 占位直到完成/失败
+    useDownloadProgressStore.getState().register(song);
+
     return new Promise<DownloadResult>((resolve, reject) => {
       // 按 songId 注册回调，支持并发下载；Promise 完成后移除避免内存泄漏
       setupDownloadListeners(song.id, {
         onComplete: (sid, size) => {
+          useDownloadProgressStore.getState().clear(sid);
           removeDownloadListeners(sid);
           resolve({ cached: true, newlyDownloaded: true, size });
         },
         onError: (sid, msg) => {
+          useDownloadProgressStore.getState().markError(sid, msg);
           removeDownloadListeners(sid);
           reject(new Error(msg || "下载失败"));
         },
@@ -175,6 +212,9 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
 
   fetchAndCacheLyric(song.id).catch(() => {});
 
+  // 注册到进度 store；浏览器侧用流式读取计算 0~100 进度
+  useDownloadProgressStore.getState().register(song);
+
   let res: Response;
   try {
     res = await fetch(url, {
@@ -183,19 +223,53 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
       credentials: "include",
     });
   } catch {
+    useDownloadProgressStore.getState().markError(song.id, "网络请求失败");
     throw new Error("网络请求失败，请检查网络后重试");
   }
 
   if (!res.ok) {
+    useDownloadProgressStore.getState().markError(song.id, `HTTP ${res.status}`);
     throw new Error(`下载失败 (${res.status})`);
   }
 
-  const blob = await res.blob();
+  // 流式读取：边读边更新进度，最终拼装为 Blob
+  const contentLengthHeader = res.headers.get("content-length");
+  const totalBytes = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+  const reader = res.body?.getReader();
+  let blob: Blob;
+  if (reader) {
+    const chunks: BlobPart[] = [];
+    let received = 0;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        // 显式拷贝为独立 ArrayBuffer，避免 SharedArrayBuffer 类型不匹配
+        const copy = new Uint8Array(value.byteLength);
+        copy.set(value);
+        chunks.push(copy);
+        received += value.byteLength;
+        if (totalBytes > 0) {
+          useDownloadProgressStore
+            .getState()
+            .updateProgress(song.id, (received / totalBytes) * 100);
+        }
+      }
+    }
+    blob = new Blob(chunks, { type: res.headers.get("content-type") || "audio/mpeg" });
+  } else {
+    // 浏览器不支持流式读取时，回退为一次性读取
+    blob = await res.blob();
+  }
+
   if (blob.size === 0) {
+    useDownloadProgressStore.getState().markError(song.id, "音频内容为空");
     throw new Error("音频内容为空");
   }
 
   await cacheAudio(song, blob);
+  useDownloadProgressStore.getState().clear(song.id);
 
   return { cached: true, newlyDownloaded: true, size: blob.size };
 }
@@ -240,10 +314,14 @@ export async function isDownloaded(songId: string): Promise<boolean> {
   return isCached(songId);
 }
 
-/** 判断下载功能是否可用（TWA 与桌面客户端支持，浏览器也支持 IndexedDB 缓存） */
+/**
+ * 判断下载功能是否对外展示
+ * - 仅 Desktop（Electron 客户端）与 Android（TWA 增强壳）展示下载入口
+ * - 浏览器 / 浏览器 PWA / iOS Safari 不提供离线缓存，因此不展示
+ */
 export function isDownloadAvailable(): boolean {
   const p = getPlatform();
-  return p.isTWA || p.isElectron || true;
+  return p.isTWA || p.isElectron;
 }
 
 /**

@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -7,15 +8,29 @@ import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 import { Info, Download } from "lucide-react";
 import { AppImage } from "@/components/ui/app-image";
+import { getPlatform } from "@/lib/platform/detect";
 
 /**
  * PC 侧边栏（md 及以上显示）
  * - 固定左侧 w-64
  * - 毛玻璃 backdrop-blur-xl + 极淡主色描边
  * - 选中项：左侧 3px primary-700 竖条 + 文字 primary-700 + primary-50/10 背景
+ *
+ * "下载 App" 入口仅在非 Android / 非桌面端时展示：
+ * - 当前已运行在桌面客户端（Electron）或 Android 增强壳（TWA）时，自身即为 App，
+ *   引导"下载 App"会造成循环跳转，隐藏更自然。
  */
 export function Sidebar() {
   const pathname = usePathname();
+  // "下载 App" 入口仅在非 Android / 非桌面端时展示：
+  // 当前已运行在桌面客户端（Electron）或 Android 增强壳（TWA）时，自身即为 App，
+  // 引导"下载 App"会造成循环跳转，隐藏更自然。
+  // SSR 与首帧 hydration 一致为 true（默认显示），挂载后依据真实平台修正，避免 hydration mismatch
+  const [showDownloadApp, setShowDownloadApp] = React.useState(true);
+  React.useEffect(() => {
+    const p = getPlatform();
+    setShowDownloadApp(!(p.isTWA || p.isElectron));
+  }, []);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -85,21 +100,23 @@ export function Sidebar() {
 
       {/* 底部：下载 + 关于链接 */}
       <div className="border-t border-primary/10 px-3 py-3 space-y-1">
-        <Link
-          href="/download"
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-            isActive("/download")
-              ? "bg-primary/10 text-primary dark:text-primary/60"
-              : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
-          )}
-        >
-          {isActive("/download") && (
-            <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-primary" />
-          )}
-          <Download className="h-5 w-5 shrink-0" />
-          下载 App
-        </Link>
+        {showDownloadApp && (
+          <Link
+            href="/download"
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              isActive("/download")
+                ? "bg-primary/10 text-primary dark:text-primary/60"
+                : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground"
+            )}
+          >
+            {isActive("/download") && (
+              <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-primary" />
+            )}
+            <Download className="h-5 w-5 shrink-0" />
+            下载 App
+          </Link>
+        )}
         <Link
           href="/about"
           className={cn(

@@ -193,6 +193,48 @@ function unloadHowl(): void {
 }
 
 /**
+ * Howl "pause" 事件处理
+ *
+ * 关键：iOS Safari / 后台 WebKit 在歌曲自然播完时往往不触发 "end"，
+ * 而是触发 "pause"（位置卡在 duration 附近）。若直接派发 onPause
+ * 给 store，会导致后台连播中断、锁屏不切歌。
+ *
+ * 这里判断"位置已接近 duration 且 iOS"时按 onEnd 走同步切歌逻辑，
+ * 复用 onHowlEnd 的预加载切换路径，规避 iOS 后台 onEnd 不触发的坑。
+ */
+function onHowlPause(): void {
+  try {
+    if (typeof navigator === "undefined") return;
+    const ua = navigator.userAgent;
+    const isIOS = /iphone|ipad|ipod/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (!isIOS) {
+      // 非 iOS 平台：pause 即为用户/系统主动暂停，交给上层 store 同步 isPlaying
+      events?.onPause();
+      return;
+    }
+    // iOS：判断位置是否已接近 duration
+    let pos = 0;
+    try {
+      const p = howl?.seek();
+      pos = typeof p === "number" && Number.isFinite(p) ? p : currentPosition;
+    } catch {
+      pos = currentPosition;
+    }
+    const remain = (currentDuration || 0) - pos;
+    // 剩余 ≤ 0.5s 视为已播完：走 end 流程
+    if (currentDuration > 0 && remain <= 0.5) {
+      onHowlEnd();
+      return;
+    }
+    // 其它 pause：正常同步
+    events?.onPause();
+  } catch {
+    try { events?.onPause(); } catch { /* noop */ }
+  }
+}
+
+/**
  * 给 Howl 实例注册事件回调（不含 "load"，由调用方单独处理）
  * - 提取自 loadAndPlay，供同步切换复用
  * - "end" 事件使用命名函数 onHowlEnd，支持同步切歌
@@ -208,6 +250,7 @@ function registerHowlEvents(h: HowlType): void {
   h.on("play", () => {
     try { events?.onPlay(); } catch { /* noop */ }
   });
+  h.on("pause", onHowlPause);
 }
 
 /**

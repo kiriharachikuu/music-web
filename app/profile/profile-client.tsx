@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { getPlatform } from "@/lib/platform/detect";
 import { FavoritesTab } from "./tabs/favorites-tab";
 import { PlaylistsTab } from "./tabs/playlists-tab";
 import { HistoryTab } from "./tabs/history-tab";
@@ -80,6 +81,14 @@ export function ProfileClient() {
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
   const [editOpen, setEditOpen] = React.useState(false);
+  // "下载 App" 入口仅在非 Android / 非桌面端时展示：
+  // 当前已运行在桌面客户端或 Android 增强壳时，自身即为 App，引导"下载 App"无意义
+  // SSR 与首帧一致显示（true），挂载后根据真实平台决定，避免 hydration mismatch
+  const [showDownloadApp, setShowDownloadApp] = React.useState(true);
+  React.useEffect(() => {
+    const p = getPlatform();
+    setShowDownloadApp(!(p.isTWA || p.isElectron));
+  }, []);
   const openLogin = useAuthStore((s) => s.openLogin);
 
   // 首次挂载拉取用户信息
@@ -209,28 +218,26 @@ export function ProfileClient() {
         <MenuLink icon={Heart} label="我喜欢的音乐" href="/profile/favorites" />
         <MenuLink icon={ListMusic} label="我的歌单" href="/profile/playlists" />
         <MenuLink icon={History} label="历史播放" href="/profile/history" />
-      </MenuSection>
-
-      {/* 下载管理 */}
-      <MenuSection title="下载与设置">
         {isDownloadAvailable() && (
           <MenuLink icon={Download} label="下载管理" href="/profile/downloads" />
         )}
-        <MenuLink icon={Settings} label="设置" href="/profile/settings" />
       </MenuSection>
 
-      {/* 其他 */}
-      <MenuSection title="其他">
-        <MenuLink icon={Info} label="关于项目" href="/about" />
-        <MenuLink icon={FileText} label="用户协议" href="/legal/user-agreement" />
-        <MenuLink icon={AlertTriangle} label="免责声明" href="/legal/disclaimer" />
-        <MenuLink icon={Scale} label="开源许可" href="/legal/open-source" />
-        <MenuLink icon={Smartphone} label="下载 App" href="/download" />
+      {/* 其它：设置、反馈、法律与下载引导 */}
+      <MenuSection title="更多">
+        <MenuLink icon={Settings} label="设置" href="/profile/settings" />
         <MenuItem
           icon={MessageCircle}
           label="意见反馈"
           onClick={() => window.open(FEEDBACK_URL, "_blank")}
         />
+        <MenuLink icon={Info} label="关于项目" href="/about" />
+        <MenuLink icon={FileText} label="用户协议" href="/legal/user-agreement" />
+        <MenuLink icon={AlertTriangle} label="免责声明" href="/legal/disclaimer" />
+        <MenuLink icon={Scale} label="开源许可" href="/legal/open-source" />
+        {showDownloadApp && (
+          <MenuLink icon={Smartphone} label="下载 App" href="/download" />
+        )}
         {profile.role === "ADMIN" && (
           <MenuItem
             icon={Shield}
