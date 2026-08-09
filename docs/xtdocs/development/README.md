@@ -19,8 +19,8 @@ XT-Music/
 | 模块 | 文档 | 技术栈 | 端口 |
 |------|------|--------|------|
 | 后端服务 | [后端开发指南](backend-guide.md) | NestJS 11, Prisma, SQLite | 3000 |
-| 前端用户端 | [前端开发指南](frontend-guide.md) | Next.js 15, TypeScript, Howler.js | 3000/3001 |
-| 管理后台 | [管理后台开发指南](admin-guide.md) | Next.js 14, Recharts, zod | 3001 |
+| 前端用户端 | [前端开发指南](frontend-guide.md) | Next.js 15, TypeScript, Howler.js | 3001 |
+| 管理后台 | [管理后台开发指南](admin-guide.md) | Next.js 14, Recharts, zod | 3002 |
 | Android 客户端 | [Android 开发指南](android-guide.md) | Kotlin, Media3, JSBridge | - |
 | Flutter 参考 | [Flutter 开发指南](flutter-guide.md) | Flutter, Riverpod, Dio | - |
 
@@ -104,14 +104,18 @@ XT-Music/
 ## 常见问题
 
 ### 端口冲突
-- 默认端口：后端 3000、前端 3000、管理后台 3001
-- 本地三端同跑时建议：后端 3000、music-web 3001、music-admin 3002
+- 默认端口：后端 3000、music-web 3001、music-admin 3002
+- 实际 `package.json` 中三个子项目均未显式指定端口，按以下方式启动即可：
+  - `cd music-server && npm run start:dev` → 3000
+  - `cd music-web && npm run dev -- -p 3001` → 3001
+  - `cd music-admin && npm run dev -- -p 3002` → 3002
 - 修改后端 `CORS_ORIGINS` 以适配本地开发
 
 ### 数据库问题
-- SQLite 为文件式数据库，位于 `music-server/data/dev.db`
-- 如需重置：删除 `dev.db` 后执行 `npx prisma db push`
-- 数据备份：使用 `sqlite3 data/dev.db ".backup backup.db"`
+- SQLite 为文件式数据库，位于 `music-server/prisma/dev.db`
+  - 数据库路径相对 `prisma/schema.prisma` 解析，`DATABASE_URL=file:./dev.db` 实际指向 `prisma/dev.db`
+- 如需重置：删除 `prisma/dev.db` 后执行 `npx prisma db push`
+- 数据备份：使用 `sqlite3 prisma/dev.db ".backup prisma/dev.db.backup"`
 
 ### 更多信息
 各模块的详细开发指南请点击上方链接查看。

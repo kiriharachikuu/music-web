@@ -7,9 +7,11 @@
 | 模块 | 默认端口 | 环境变量前缀 | 推荐部署方式 |
 |------|---------|-------------|-------------|
 | music-server | 3000 | 无 | Docker / 原生 Node |
-| music-web | 3000 (dev) | NEXT_PUBLIC_ | Vercel / Docker |
-| music-admin | 3001 (dev) | NEXT_PUBLIC_ | Vercel / Docker |
+| music-web | 3001 (dev) | NEXT_PUBLIC_ | Vercel / Docker |
+| music-admin | 3002 (dev) | NEXT_PUBLIC_ | Vercel / Docker |
 | music-twa | - | - | APK/AAB 分发 |
+
+> 上述端口为本地开发推荐配置；生产环境一般通过反向代理对外暴露 80/443，Node 端口仅监听 127.0.0.1。具体见各部署文档。
 
 ## 部署方案
 

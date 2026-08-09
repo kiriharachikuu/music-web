@@ -268,13 +268,13 @@ kill <PID>
 ### 数据库错误
 ```bash
 # 检查数据库文件是否存在
-ls -la data/
+ls -la prisma/
 
 # 检查文件权限
-chmod -R 755 data/ uploads/
+chmod -R 755 prisma/ uploads/
 
 # 重新初始化数据库（会清空数据！）
-rm data/dev.db
+rm prisma/dev.db
 npx prisma db push
 npx prisma db seed
 ```

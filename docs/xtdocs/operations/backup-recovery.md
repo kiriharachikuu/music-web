@@ -6,7 +6,7 @@
 
 | 数据类型 | 位置 | 备份频率 | 保留时间 |
 |----------|------|---------|---------|
-| SQLite 数据库 | `music-server/data/dev.db` | 每日 | 30 天 |
+| SQLite 数据库 | `music-server/prisma/dev.db` | 每日 | 30 天 |
 | 上传文件 | `music-server/uploads/` | 每日 | 30 天 |
 | 配置文件 | `music-server/.env` | 变更时 | 永久 |
 | Nginx 配置 | `/etc/nginx/` | 变更时 | 永久 |
@@ -20,13 +20,13 @@
 cd music-server
 
 # 方法一：直接复制（简单快速）
-cp data/dev.db data/dev.db.backup-$(date +%Y%m%d_%H%M%S)
+cp prisma/dev.db prisma/dev.db.backup-$(date +%Y%m%d_%H%M%S)
 
 # 方法二：使用 SQLite 备份命令（更安全）
-sqlite3 data/dev.db ".backup data/dev.db.backup-$(date +%Y%m%d_%H%M%S)"
+sqlite3 prisma/dev.db ".backup prisma/dev.db.backup-$(date +%Y%m%d_%H%M%S)"
 
 # 方法三：导出为 SQL（跨版本兼容）
-sqlite3 data/dev.db ".dump" > data/dev.db.backup-$(date +%Y%m%d_%H%M%S).sql
+sqlite3 prisma/dev.db ".dump" > prisma/dev.db.backup-$(date +%Y%m%d_%H%M%S).sql
 ```
 
 ### 备份上传文件
@@ -74,8 +74,8 @@ mkdir -p $BACKUP_DIR/$DAY
 echo "[$(date)] 开始备份..."
 
 # 1. 备份数据库
-if [ -f "$SERVER_DIR/data/dev.db" ]; then
-    sqlite3 $SERVER_DIR/data/dev.db ".backup $BACKUP_DIR/$DAY/dev_$DATE.db"
+if [ -f "$SERVER_DIR/prisma/dev.db" ]; then
+    sqlite3 $SERVER_DIR/prisma/dev.db ".backup $BACKUP_DIR/$DAY/dev_$DATE.db"
     echo "[$(date)] 数据库备份完成: dev_$DATE.db"
 else
     echo "[$(date)] 警告: 数据库文件不存在"
@@ -144,10 +144,10 @@ docker-compose stop server
 cd music-server
 
 # 方法一：从 db 文件恢复
-cp data/dev.db.backup-YYYYMMDD_HHMMSS data/dev.db
+cp prisma/dev.db.backup-YYYYMMDD_HHMMSS prisma/dev.db
 
 # 方法二：从 SQL 文件恢复
-sqlite3 data/dev.db < data/dev.db.backup-YYYYMMDD_HHMMSS.sql
+sqlite3 prisma/dev.db < prisma/dev.db.backup-YYYYMMDD_HHMMSS.sql
 ```
 
 ### 3. 恢复上传文件
@@ -166,7 +166,7 @@ cp env.backup-YYYYMMDD .env
 ### 5. 修复文件权限
 
 ```bash
-chmod -R 755 data/ uploads/
+chmod -R 755 prisma/ uploads/
 chmod 644 .env
 ```
 
@@ -259,9 +259,9 @@ rclone sync /www/backup/xingtone oss:your-bucket/xingtone-backup
 1. 停止服务
 2. 尝试使用 SQLite 修复：
    ```bash
-   sqlite3 data/dev.db ".recover" | sqlite3 data/dev.db.recovered
-   mv data/dev.db.recovered data/dev.db
-   ```
+sqlite3 prisma/dev.db ".recover" | sqlite3 prisma/dev.db.recovered
+mv prisma/dev.db.recovered prisma/dev.db
+```
 3. 如修复失败，从备份恢复
 
 ## 常见问题
@@ -282,10 +282,10 @@ rclone sync /www/backup/xingtone oss:your-bucket/xingtone-backup
 
 ```bash
 # 计算 MD5
-md5sum data/dev.db
+md5sum prisma/dev.db
 
 # 备份后对比 MD5
-md5sum data/dev.db.backup
+md5sum prisma/dev.db.backup
 ```
 
 ### 备份文件需要加密吗？

@@ -198,7 +198,7 @@ docker-compose stop server
 ```bash
 cd music-server
 # 停止服务后再恢复数据库
-cp data/dev.db.backup-YYYYMMDD_HHMMSS data/dev.db
+cp prisma/dev.db.backup-YYYYMMDD_HHMMSS prisma/dev.db
 ```
 
 ### 3. 回退代码

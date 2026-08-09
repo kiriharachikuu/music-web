@@ -94,13 +94,13 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=file:./data/dev.db
+      - DATABASE_URL=file:./prisma/dev.db
       - PORT=3000
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGINS=${CORS_ORIGINS}
       - TRUST_PROXY=true
     volumes:
-      - ./music-server/data:/app/data
+      - ./music-server/prisma:/app/prisma
       - ./music-server/uploads:/app/uploads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]

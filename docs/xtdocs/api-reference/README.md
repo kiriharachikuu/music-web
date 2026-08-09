@@ -825,25 +825,83 @@ curl "http://localhost:3000/api/search?q=周杰伦&sort=plays&page=1&pageSize=20
 
 检查最新应用版本（公开，可在登录前调用）。
 
-**参数：** `channel`（stable/beta）、`platform`（android/ios/desktop）、`versionCode`（当前版本号）。
+**参数：** `channel`（stable/beta，默认 stable）、`platform`（android/ios/desktop，默认 android）、`versionCode`（当前版本号，可选；传入时用于计算 `hasUpdate` 与 `forceUpdate`）。
 
 **响应 data：**
 
 ```json
 {
-  "version": "1.1.0",
-  "versionCode": 2,
-  "changelog": "更新日志",
-  "downloadUrl": "string",
-  "fileSize": 12345678,
-  "md5": "string",
-  "forceUpdate": false
+  "hasUpdate": true,
+  "forceUpdate": false,
+  "latest": {
+    "id": "string",
+    "versionCode": 13,
+    "versionName": "1.3.3",
+    "title": "新版本发布",
+    "content": ["[新增] xxx", "[优化] yyy", "[修复] zzz"],
+    "downloadUrl": "https://example.com/app.apk",
+    "fileSize": 12345678,
+    "md5": "string",
+    "forceUpdate": false,
+    "minVersionCode": 1,
+    "channel": "stable",
+    "platform": "android",
+    "releaseDate": "2026-08-01T00:00:00.000Z"
+  }
 }
 ```
 
+> 当没有发布版本时 `latest` 为 `null`，`hasUpdate` 为 `false`。
+
 #### HEAD /app/version/download/:id（需鉴权）
 
-记录下载次数（HEAD 请求，防止匿名刷量）。
+记录下载次数（HEAD 请求，防止匿名刷量）。前端调用示例：
+
+```ts
+await fetch(`${API_BASE}/app/version/download/${versionId}`, {
+  method: "HEAD",
+  credentials: "include",
+  headers: { Authorization: `Bearer ${token}` },
+});
+```
+
+---
+
+### 平台更新日志模块
+
+> 自 v1.4.3 起，Web 平台版本（music-web）独立于 Android App 版本进行管理与发布。`/app/version` 用于 App 端，平台 changelog 使用 `/platform-changelogs`。
+
+#### GET /platform-changelogs
+
+拉取 Web 平台（music-web）已发布的更新日志，按 `versionCode` 倒序。
+
+**参数：** `limit`（可选，默认 10，最多 50）。
+
+**响应 data：**
+
+```json
+[
+  {
+    "id": "string",
+    "versionCode": 12,
+    "versionName": "1.4.3",
+    "title": "平台更新",
+    "content": ["[新增] xxx", "[修复] yyy"],
+    "status": "published",
+    "releaseDate": "2026-08-01T00:00:00.000Z"
+  }
+]
+```
+
+#### 平台更新日志管理（仅 ADMIN）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /admin/platform-changelogs | 列表（`page`, `limit`, `status`） |
+| GET | /admin/platform-changelogs/:id | 详情 |
+| POST | /admin/platform-changelogs | 创建（`versionCode`, `versionName`, `title`, `content`[]） |
+| PUT | /admin/platform-changelogs/:id | 更新 |
+| DELETE | /admin/platform-changelogs/:id | 删除 |
 
 ---
 

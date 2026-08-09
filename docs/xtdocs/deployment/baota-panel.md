@@ -309,5 +309,5 @@ fi
 - 检查 PHP 禁用函数中 `putenv` 是否被禁用
 
 ### 数据库损坏
-- 使用 SQLite 命令修复：`sqlite3 dev.db ".recover" | sqlite3 recovered.db`
+- 使用 SQLite 命令修复：`sqlite3 prisma/dev.db ".recover" | sqlite3 prisma/dev.db.recovered`
 - 从备份中恢复

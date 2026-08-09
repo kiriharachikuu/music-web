@@ -75,7 +75,7 @@ services:
   web:
     build: ./music-web
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - NEXT_PUBLIC_API_BASE=https://your-api-domain.com/api
       - NEXT_PUBLIC_ADMIN_URL=https://your-admin-domain.com
@@ -84,42 +84,44 @@ services:
 
 ## 方案三：Nginx 静态托管（不推荐）
 
-Next.js 推荐使用 Node.js 运行时以获得最佳性能（SSR/ISR）。但如确实需要纯静态部署：
+Next.js 推荐使用 Node.js 运行时以获得最佳性能（SSR/ISR）。本项目使用 next-pwa 实现了 PWA 能力，需要在 Node 运行时中处理 Service Worker 注册，**不建议静态导出**。如确需纯静态部署，请改用 Next.js 静态导出（`next.config.mjs` 中添加 `output: 'export'`），但部分依赖 SSR 的页面（如 `/about/changelog` 拉取平台 changelog）将无法工作。
 
-### 1. 构建静态文件
+### 1. 改用 Node 运行时（推荐）
 
 ```bash
 cd music-web
+npm install
 npm run build
-npm run export
+npm run start
+# 默认监听 0.0.0.0:3000
 ```
 
-> 注意：需要在 `next.config.js` 中配置 `output: 'export'`，且某些 SSR 功能可能不可用。
-
-### 2. Nginx 配置
+### 2. Nginx 反向代理（推荐）
 
 ```nginx
 server {
     listen 80;
     server_name your-domain.com;
 
-    root /var/www/xingtone-web;
-    index index.html;
-
     # Gzip 压缩
     gzip on;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
     gzip_min_length 1024;
 
-    # 缓存静态资源
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # SPA 路由回退
+    # 反向代理到 Node 运行时
     location / {
-        try_files $uri $uri/ /index.html;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # 缓存静态资源
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
     }
 }
 ```

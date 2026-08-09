@@ -122,7 +122,7 @@ cp .env.example .env
 
 | 变量名 | 必填 | 说明 |
 |--------|------|------|
-| `DATABASE_URL` | 是 | SQLite 数据库文件路径，默认 `file:./dev.db` |
+| `DATABASE_URL` | 是 | SQLite 数据库文件路径，默认 `file:./dev.db`（相对 `prisma/schema.prisma`，实际指向 `prisma/dev.db`） |
 | `PORT` | 否 | 服务端口，默认 3000 |
 | `JWT_SECRET` | 是 | JWT 签名密钥（生产必须替换） |
 | `JWT_EXPIRES` | 否 | JWT 过期时间，默认 `7d` |

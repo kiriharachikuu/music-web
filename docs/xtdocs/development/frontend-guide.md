@@ -46,7 +46,7 @@ npm install
 
 ```env
 NEXT_PUBLIC_API_BASE=http://localhost:3000/api
-NEXT_PUBLIC_ADMIN_URL=http://localhost:3001
+NEXT_PUBLIC_ADMIN_URL=http://localhost:3002
 ```
 
 环境变量说明：
@@ -74,15 +74,19 @@ npm run start
 
 ## 页面路由
 
+> 注：以下为 `app/` 下的实际 Next.js App Router 路径，使用了分组文件夹 `[id]` 等动态路由。前缀 `/app` 已省略。
+
 | 路径 | 说明 |
 |------|------|
 | `/` | 发现页 |
 | `/search` | 搜索页 |
 | `/rankings` | 排行榜 |
 | `/library` | 音乐库 |
-| `/album/:id` | 专辑详情 |
-| `/artist/:id` | 歌手详情 |
-| `/playlist/:id` | 歌单详情 |
+| `/album/[id]` | 专辑详情 |
+| `/artist/[id]` | 歌手详情（含 `/songs`、`/clips` 子页） |
+| `/playlist/[id]` | 歌单详情 |
+| `/live-sessions`、`/live-session/[id]` | 直播场次列表与详情 |
+| `/daily-recommend/songs`、`/daily-recommend/clips` | 每日推荐 |
 | `/profile` | 个人中心（含未登录引导） |
 | `/profile/favorites` | 我的收藏 |
 | `/profile/playlists` | 我的歌单 |
@@ -90,73 +94,112 @@ npm run start
 | `/profile/downloads` | 下载管理 |
 | `/profile/settings` | 设置 |
 | `/download` | 下载页面 |
-| `/about` | 项目介绍 |
+| `/about`、`/about/changelog` | 项目介绍与更新日志 |
 | `/login` | 登录 / 注册 |
+| `/forgot-password` | 忘记密码 |
+| `/legal/*` | 法律声明、开源许可、用户协议 |
 
 ## 项目结构
 
+> 项目已重构为功能模块化结构（不再使用 `(dashboard)` 分组）。以下为 `music-web/` 根下的实际结构（已剔除 `node_modules` / `.next` / `docs`）：
+
 ```
-app/
-├── (dashboard)/         # 各页面路由（发现/搜索/音乐库等）
-│   ├── page.tsx        # 发现页
-│   ├── search/
-│   ├── rankings/
-│   ├── library/
-│   └── profile/
-├── login/              # 登录/注册（独立页面，不含外壳）
-├── about/              # 项目介绍
-├── download/           # 下载页面
-├── album/              # 专辑详情
-├── artist/             # 歌手详情
-├── playlist/           # 歌单详情
-├── error.tsx           # 错误边界
-├── global-error.tsx    # 全局错误
-├── globals.css        # TailwindCSS + 自定义工具类
-├── layout.tsx          # 根布局
-├── loading.tsx         # 加载状态
-└── not-found.tsx       # 404 页面
-
-components/
-├── auth/               # 登录相关组件
-│   ├── login-dialog.tsx
-│   └── login-sheet.tsx
-├── common/             # 通用业务组件
-│   ├── album-card.tsx
-│   ├── banner-carousel.tsx
-│   ├── playlist-card.tsx
-│   ├── song-list.tsx
-│   └── ...
-├── layout/             # 布局组件
-│   ├── app-shell.tsx
-│   ├── mini-player.tsx
-│   ├── mobile-tab-bar.tsx
-│   └── sidebar.tsx
-├── player/             # 播放器组件
-│   ├── fullscreen-player.tsx
-│   └── lyrics-view.tsx
-├── profile/            # 个人中心组件
-│   ├── edit-profile-dialog.tsx
-│   └── edit-profile-sheet.tsx
-└── ui/                 # shadcn/ui 基础组件
-
-lib/
-├── api.ts              # API 请求层（含 Authorization 注入）
-├── auth.ts             # JWT token 存储
-├── store/              # Zustand store
-│   ├── auth-store.ts
-│   └── player-store.ts
-├── jsbridge/           # Android JSBridge 封装
-│   ├── android-bridge.ts
-│   ├── native-events.ts
-│   └── audio-engine.ts
-├── types.ts            # TypeScript 类型定义
-├── nav.ts              # 导航配置
-└── utils.ts            # 工具函数
-
-public/
-├── icons/              # PWA 图标（192/512）
-├── manifest.json       # PWA Manifest
-└── sw.js               # Service Worker
+music-web/
+├── app/                       # Next.js App Router 页面
+│   ├── (dashboard)/           # 注：旧版本中曾使用该分组，目前 app/ 下不再有 (dashboard) 目录
+│   ├── about/                 # 项目介绍（含 changelog 列表、平台版本徽标）
+│   ├── album/[id]/            # 专辑详情
+│   ├── artist/[id]/           # 歌手详情（songs/clips 子页）
+│   ├── daily-recommend/       # 每日推荐
+│   ├── download/              # 下载页
+│   ├── forgot-password/       # 忘记密码
+│   ├── legal/                 # 法律页面（disclaimer/open-source/user-agreement）
+│   ├── library/               # 音乐库
+│   ├── live-session/[id]/     # 直播场次详情
+│   ├── live-sessions/         # 直播场次列表
+│   ├── login/                 # 登录/注册（独立页面，不含外壳）
+│   ├── playlist/[id]/         # 歌单详情
+│   ├── profile/               # 个人中心（tabs 包含 favorites/playlists/history/downloads/settings）
+│   ├── rankings/              # 排行榜
+│   ├── search/                # 搜索
+│   ├── discover-client.tsx    # 发现页客户端入口
+│   ├── error.tsx              # 错误边界
+│   ├── global-error.tsx       # 全局错误
+│   ├── globals.css            # TailwindCSS + 自定义工具类
+│   ├── layout.tsx             # 根布局
+│   ├── loading.tsx            # 加载状态
+│   └── not-found.tsx          # 404 页面
+│
+├── components/
+│   ├── about/                 # 关于页相关（platform-version-badge）
+│   ├── auth/                  # 登录弹窗/抽屉
+│   ├── common/                # 通用业务组件
+│   │   ├── album-card.tsx
+│   │   ├── banner-carousel.tsx
+│   │   ├── playlist-card.tsx
+│   │   ├── song-list.tsx
+│   │   ├── live-clip-badge.tsx
+│   │   ├── live-session-card.tsx
+│   │   ├── song-card.tsx
+│   │   ├── update-dialog.tsx
+│   │   └── ...
+│   ├── layout/                # 布局组件（app-shell、mini-player、mobile-tab-bar、sidebar、queue-panel 等）
+│   ├── player/                # 播放器组件
+│   │   ├── full-screen-player.tsx
+│   │   ├── full-screen-controls.tsx
+│   │   ├── lyrics-view.tsx
+│   │   ├── media-session-manager.tsx
+│   │   ├── progress-bar.tsx
+│   │   ├── quality-selector.tsx
+│   │   ├── quality-sheet.tsx
+│   │   └── queue-sheet.tsx
+│   ├── theme/                 # 主题相关
+│   ├── ui/                    # shadcn/ui 基础组件
+│   ├── app-shell-client.tsx
+│   ├── client-providers.tsx
+│   └── error-boundary.tsx
+│
+├── lib/
+│   ├── api.ts                 # API 请求层（含 Authorization 注入）
+│   ├── api/                   # 子模块（app-version）
+│   ├── audio-engine/          # 播放引擎抽象层（engine/factory/howler-engine/native-engine）
+│   ├── auth.ts                # JWT token 存储
+│   ├── constants/             # about/changelog 常量
+│   ├── db/                    # IndexedDB 缓存（audio-cache/lyric-cache）
+│   ├── download.ts            # 下载管理
+│   ├── hooks/                 # use-is-mobile / use-safe-area / use-keyboard-offset
+│   ├── jsbridge/              # Android JSBridge 封装（android-bridge / native-events）
+│   ├── lrc-parser.ts          # LRC 歌词解析
+│   ├── media-session.ts       # MediaSession 桥接
+│   ├── platform/              # 平台检测（detect/index）
+│   ├── runtime/               # 版本检查等
+│   ├── store/                 # Zustand store
+│   │   ├── auth-store.ts
+│   │   ├── player-store.ts
+│   │   ├── favorites-store.ts
+│   │   ├── color-theme-store.ts
+│   │   ├── download-progress-store.ts
+│   │   ├── settings-store.ts
+│   │   ├── toast-store.ts
+│   │   └── update-prompt-store.ts
+│   ├── types.ts               # TypeScript 类型定义
+│   ├── nav.ts                 # 导航配置
+│   ├── utils.ts               # 工具函数
+│   ├── daily-snapshot.ts      # 每日推荐快照
+│   └── desktop-api.d.ts       # 桌面控制桥接类型
+│
+├── public/
+│   ├── icons/                 # PWA 图标（192/512、apple-touch-icon）
+│   ├── character.png
+│   ├── favicon.ico
+│   ├── manifest.json          # PWA Manifest
+│   └── version.json
+│
+├── docs/xtdocs/               # 文档（与 music-web 同仓库）
+├── next.config.mjs
+├── tailwind.config.ts
+├── postcss.config.mjs
+└── tsconfig.json
 ```
 
 ## 音频播放架构

@@ -183,8 +183,8 @@ sudo systemctl restart sshd
 
 1. **文件权限**
    ```bash
-   chmod 600 data/dev.db
-   chown www:www data/dev.db
+   chmod 600 prisma/dev.db
+   chown www:www prisma/dev.db
    ```
 
 2. **防止下载**
