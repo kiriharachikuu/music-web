@@ -406,8 +406,14 @@
 
   /* MiniPlayer 主题皮肤：悬浮卡片，背景渐变 + 主色描边 + 阴影 */
   .mp-themed-shell {
-    /* 移动端：上移避开底部皮肤异形；PC 端：使用默认 64px 偏移 */
-    bottom: calc(3.5rem + var(--safe-area-bottom, 0px));
+    /* 移动端：上移 3.5rem（TabBar 高度）+ 12px 留白，避免粘连 */
+    bottom: calc(3.5rem + 12px + var(--safe-area-bottom, 0px));
+  }
+  @media (max-width: 767px) and (orientation: landscape) {
+    /* 横屏时 TabBar 12 (h-12) + 12px 留白 */
+    .mp-themed-shell {
+      bottom: calc(3rem + 12px + var(--safe-area-bottom, 0px));
+    }
   }
   @media (min-width: 768px) {
     .mp-themed-shell {
@@ -429,6 +435,24 @@
     box-shadow:
       0 10px 28px rgba(0, 0, 0, 0.12),
       0 0 0 1px hsl(var(--primary) / 0.06);
+  }
+
+  /* MiniPlayer 主题皮肤：内容页面留出底部空间
+   * 移动端：播放器高度 ~60px + 6px 顶部 margin + 12px 间距 + TabBar 56px + safe-area
+   * PC 端：播放器高度 ~64px，紧贴底部
+   */
+  .pb-mp-themed {
+    padding-bottom: calc(3.5rem + 12px + 78px + var(--safe-area-bottom, 0px));
+  }
+  @media (max-width: 767px) and (orientation: landscape) {
+    .pb-mp-themed {
+      padding-bottom: calc(3rem + 12px + 70px + var(--safe-area-bottom, 0px));
+    }
+  }
+  @media (min-width: 768px) {
+    .pb-mp-themed {
+      padding-bottom: 80px;
+    }
   }
 
   .mp-themed-cover {

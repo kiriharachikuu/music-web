@@ -8,7 +8,7 @@ import {
   useDragControls,
   type PanInfo,
 } from "framer-motion";
-import { ChevronDown, Heart, ListMusic, Music2, ChevronUp } from "lucide-react";
+import { ChevronDown, Heart, ListMusic, Music2, ChevronUp, MoreHorizontal } from "lucide-react";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 import { AppImage } from "@/components/ui/app-image";
 
@@ -282,8 +282,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           <div className="h-1.5 w-12 rounded-full bg-white/30" />
         </div>
 
-        {/* 顶部信息栏：关闭按钮 + 移动端歌名歌手 + 队列按钮 */}
-        <header className="relative flex shrink-0 items-center justify-between px-4 py-3 md:px-8">
+        {/* 顶部信息栏：仅下拉关闭按钮 + 移动端歌名歌手（绝对居中） */}
+        <header className="relative flex shrink-0 items-center px-4 py-3 md:px-8">
           <motion.button
             type="button"
             onClick={onClose}
@@ -294,45 +294,24 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
           >
             <ChevronDown className="h-5 w-5" />
           </motion.button>
-          {/* PC 端占位让两侧按钮对称 */}
-          <div className="hidden flex-1 md:block" />
-          {/* 移动端：歌名 + 歌手（绝对居中，不受两侧按钮数量影响） */}
-          <div className="pointer-events-none absolute left-30 right-30 top-1/2 flex -translate-y-1/2 flex-col items-center justify-center text-center md:hidden">
-            <div className="flex w-full min-w-0 items-center justify-center gap-1.5 overflow-hidden">
-              {currentSong.trackType === "live_clip" && currentSong.sessionId && (
-                <LiveClipBadge
-                  onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
-                />
-              )}
-              <MobileHeaderScrollingTitle title={currentSong.title} />
+          {/* 移动端：歌名 + 歌手，屏幕绝对居中（无视左右按钮数量） */}
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center md:hidden">
+            <div className="flex max-w-[70%] flex-col items-center justify-center px-2 text-center">
+              <div className="flex min-w-0 max-w-full items-center justify-center gap-1.5 overflow-hidden">
+                {currentSong.trackType === "live_clip" && currentSong.sessionId && (
+                  <LiveClipBadge
+                    onClick={() => router.push(`/live-session/${currentSong.sessionId}`)}
+                  />
+                )}
+                <MobileHeaderScrollingTitle title={currentSong.title} />
+              </div>
+              <p className="truncate text-xs text-white/60">
+                {currentSong.artist}
+              </p>
             </div>
-            <p className="truncate text-xs text-white/60">
-              {currentSong.artist}
-            </p>
           </div>
-          <div className="flex items-center gap-1">
-            {/* 移动端音质按钮 */}
-            <motion.button
-              type="button"
-              onClick={() => setQualitySheetOpen(true)}
-              className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1.5 text-[11px] font-semibold text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95 md:hidden"
-              aria-label="音质选择"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {QUALITY_BADGE_LABEL[currentQuality] || "音质"}
-            </motion.button>
-            <motion.button
-              type="button"
-              onClick={() => setQueueOpen(true)}
-              className="rounded-full p-2.5 text-white/60 transition-all hover:text-white hover:bg-white/10 active:scale-95"
-              aria-label="播放队列"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ListMusic className="h-5 w-5" />
-            </motion.button>
-          </div>
+          {/* PC 端占位让左右对称 */}
+          <div className="ml-auto hidden md:block" />
         </header>
 
         {/* ===== 主区：PC 左右分栏，移动端封面/歌词交叉淡入淡出 ===== */}
@@ -499,7 +478,40 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
         </main>
 
         {/* ===== 底部控制区 ===== */}
-        <div className="shrink-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-10 pb-safe">
+        <div className="shrink-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-8 pb-safe">
+          <div className="mx-auto mb-3 flex w-full max-w-xs items-center justify-center gap-4 px-6 md:hidden">
+            <button
+              type="button"
+              onClick={() => setQualitySheetOpen(true)}
+              className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95"
+              aria-label="音质选择"
+            >
+              {QUALITY_BADGE_LABEL[currentQuality] || "音质"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setQueueOpen(true)}
+              className="rounded-full border border-white/15 bg-white/10 p-2.5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95"
+              aria-label="播放队列"
+            >
+              <ListMusic className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleFavorite}
+              className="rounded-full border border-white/15 bg-white/10 p-2.5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95"
+              aria-label={isFavorite ? "取消喜欢" : "喜欢"}
+            >
+              <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-white/15 bg-white/10 p-2.5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95"
+              aria-label="更多操作"
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+          </div>
           <FullScreenControls
             isPlaying={isPlaying}
             currentTime={currentTime}
