@@ -559,35 +559,31 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
         </div>
       )}
 
-      {/* App 更新 */}
-      <div className="space-y-2 rounded-2xl border border-primary/10 bg-card/40 px-4 py-3.5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary dark:text-primary/70">
-              <Smartphone className="h-4 w-4" />
-            </span>
-            <div>
-              <p className="text-sm font-medium">App 更新</p>
-              <p className="text-xs text-muted-foreground">当前版本 v{APP_VERSION}</p>
+      {/* Android App 更新（仅 TWA 客户端显示） */}
+      {isTWA && (
+        <div className="space-y-2 rounded-2xl border border-primary/10 bg-card/40 px-4 py-3.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary dark:text-primary/70">
+                <Smartphone className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-medium">Android App 更新</p>
+                <p className="text-xs text-muted-foreground">当前客户端版本 v{APP_VERSION}</p>
+              </div>
             </div>
+            <Button
+              variant="outline"
+              onClick={handleCheckAppUpdate}
+              disabled={checkingAppUpdate}
+              className="rounded-full px-4 text-sm"
+            >
+              {checkingAppUpdate && <Loader2 className="h-4 w-4 animate-spin" />}
+              检查更新
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            onClick={handleCheckAppUpdate}
-            disabled={checkingAppUpdate}
-            className="rounded-full px-4 text-sm"
-          >
-            {checkingAppUpdate && <Loader2 className="h-4 w-4 animate-spin" />}
-            检查更新
-          </Button>
         </div>
-        <Link
-          href="/about/changelog"
-          className="ml-10 text-xs font-medium text-primary hover:underline"
-        >
-          查看完整更新日志
-        </Link>
-      </div>
+      )}
 
       {/* 清除缓存 */}
       <SettingsRow icon={Trash2} title="清除缓存">
