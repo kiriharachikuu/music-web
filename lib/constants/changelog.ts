@@ -43,6 +43,25 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.4.3",
+    versionCode: 12,
+    releaseDate: "2026-08-09",
+    title: "平台功能扩展、移动端播放体验与更新能力优化",
+    changes: [
+      { type: "feature", content: "新增离线缓存音质设置，支持标准、较高、无损兜底与跟随在线音质策略" },
+      { type: "feature", content: "排行榜新增综合 / 单曲 / 歌切筛选，并与 URL 参数同步，便于分享与返回恢复" },
+      { type: "feature", content: "新增找回密码页面，支持短信 / 邮箱验证码入口与重置密码流程兜底提示" },
+      { type: "feature", content: "设置页新增手动检查 App 更新入口，发现新版时展示版本摘要、下载按钮与下载进度反馈" },
+      { type: "improvement", content: "歌切封面优先同步直播场次封面，歌曲列表、卡片与虚拟列表统一使用歌切封面回退规则" },
+      { type: "improvement", content: "下载管理页展示缓存音质、文件大小与缓存时间，并支持跨平台删除单首缓存与清理失效记录" },
+      { type: "improvement", content: "平台更新检测改为轮询 Web 版本文件，发现新版本后提示刷新并清理浏览器缓存" },
+      { type: "improvement", content: "移动端播放队列改为上拉抽屉，保留桌面端右侧队列面板交互" },
+      { type: "improvement", content: "全屏播放器移动端音质入口改为文字徽章，顶部标题居中并优化底部操作区布局" },
+      { type: "fix", content: "修复排行榜歌切行重复显示 LIVE 标签的问题" },
+      { type: "fix", content: "修复 TWA 平台更新刷新时缺少 reloadWebView 原生桥接的问题" },
+    ],
+  },
+  {
     version: "1.4.2",
     versionCode: 11,
     releaseDate: "2026-08-09",
@@ -236,8 +255,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "1.4.2";
-export const APP_VERSION_CODE = 11;
+export const APP_VERSION = "1.4.3";
+export const APP_VERSION_CODE = 12;
 
 /**
  * 获取更新类型对应的显示标签
