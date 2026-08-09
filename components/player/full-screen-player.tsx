@@ -288,10 +288,10 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       transition={{ type: "tween", duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
       onAnimationComplete={() => setEntered(true)}
       style={{ willChange: "transform" }}
-      // 拖拽关闭：仅 dragControls 启动，禁用默认 dragListener
-      drag="y"
-      dragControls={dragControls}
+      // 拖拽关闭：仅手柄区域通过 dragControls.start 启动，
+      // 不在容器上挂 drag listener，避免拦截底部控制按钮的点击事件
       dragListener={false}
+      dragControls={dragControls}
       dragConstraints={{ top: 0, bottom: 0 }}
       dragElastic={{ top: 0, bottom: 0.5 }}
       dragMomentum={false}
