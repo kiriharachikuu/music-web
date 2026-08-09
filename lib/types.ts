@@ -6,6 +6,7 @@
  * - 播放器使用的 Song 直接从 player-store 复用，并在此 re-export
  */
 import type { Song as PlayerSong } from "@/lib/store/player-store";
+import { resolveClipCover } from "@/lib/utils";
 
 // ===== 基础实体（对照 Prisma 模型） =====
 
@@ -362,8 +363,8 @@ export function toPlayerSong(s: ApiSong | Track): PlayerSong {
       title: s.title,
       artist: s.artist,
       album: albumLabel,
-      // 兼容 LiveClipTrack(cover) 和 ApiSong(coverUrl) 两种格式
-      cover: s.cover ?? (s as unknown as ApiSong).coverUrl ?? (s as unknown as ApiSong).sessionCover ?? undefined,
+      // 歌切封面统一回退：cover → coverUrl → sessionCover → session.cover
+      cover: resolveClipCover(s as unknown as Parameters<typeof resolveClipCover>[0]) ?? undefined,
       sessionCover: (s as unknown as ApiSong).sessionCover,
       // 兼容 LiveClipTrack(url) 和 ApiSong(fileUrl) 两种格式
       url: s.url ?? (s as unknown as ApiSong).fileUrl,
