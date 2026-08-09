@@ -8,16 +8,20 @@ import {
   useDragControls,
   type PanInfo,
 } from "framer-motion";
-import { ChevronDown, Heart, ListMusic, Music2, ChevronUp, MoreHorizontal } from "lucide-react";
+import { Check, ChevronDown, Download, Heart, ListMusic, Loader2, Music2, ChevronUp, MoreHorizontal } from "lucide-react";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 import { AppImage } from "@/components/ui/app-image";
 
 import {
   usePlayerStore,
   type PlayMode,
+  type Song,
 } from "@/lib/store/player-store";
 import { useFavoritesStore } from "@/lib/store/favorites-store";
 import { getCachedLyric, fetchAndCacheLyric } from "@/lib/db/lyric-cache";
+import { downloadSong, isDownloaded } from "@/lib/download";
+import { getPlatform } from "@/lib/platform/detect";
+import type { ApiSong } from "@/lib/types";
 import { LyricsView } from "./lyrics-view";
 import { QueueSheet } from "./queue-sheet";
 import { FullScreenControls } from "./full-screen-controls";
@@ -45,12 +49,24 @@ import { QualitySheet } from "./quality-sheet";
  * 8. 响应式：移动端单列（歌词 + 底部控制），PC 左右分栏（左封面 + 右歌词）
  */
 
-const QUALITY_BADGE_LABEL: Record<string, string> = {
-  high: "高音质",
-  medium: "中音质",
-  low: "低音质",
-  default: "音质",
-};
+function toDownloadableSong(song: Song): ApiSong {
+  return {
+    id: song.id,
+    title: song.title,
+    artist: song.artist,
+    albumName: song.album,
+    duration: song.duration ?? 0,
+    fileUrl: song.url,
+    coverUrl: song.cover,
+    lyricUrl: null,
+    releaseDate: "",
+    plays: 0,
+    status: "PUBLISHED",
+    trackType: song.trackType,
+    sessionId: song.sessionId,
+    sessionName: song.sessionName,
+  };
+}
 
 function MobileHeaderScrollingTitle({ title }: { title: string }) {
   if (title.length <= 14) {
@@ -96,7 +112,6 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
   const playMode = usePlayerStore((s) => s.playMode);
-  const currentQuality = usePlayerStore((s) => s.currentQuality);
 
   // ----- 播放器操作 -----
   const toggle = usePlayerStore((s) => s.toggle);
@@ -156,6 +171,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   const [queueOpen, setQueueOpen] = React.useState(false);
   // ----- 移动端音质抽屉状态 -----
   const [qualitySheetOpen, setQualitySheetOpen] = React.useState(false);
+  const [showAndroidDownload, setShowAndroidDownload] = React.useState(false);
+  const [downloaded, setDownloaded] = React.useState(false);
+  const [downloading, setDownloading] = React.useState(false);
   const [entered, setEntered] = React.useState(false);
 
   // ----- 移动端封面/歌词视图切换 -----
@@ -201,6 +219,40 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
       await toggleFavoriteClip(currentSong.id);
     } else {
       await toggleLike(currentSong.id);
+    }
+  };
+
+  React.useEffect(() => {
+    setShowAndroidDownload(getPlatform().isTWA);
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setDownloaded(false);
+    setDownloading(false);
+    if (!currentSong || !showAndroidDownload) return;
+    isDownloaded(currentSong.id)
+      .then((value) => {
+        if (!cancelled) setDownloaded(value);
+      })
+      .catch(() => {
+        if (!cancelled) setDownloaded(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSong?.id, showAndroidDownload]);
+
+  const handleDownload = async () => {
+    if (!currentSong || downloading || downloaded) return;
+    setDownloading(true);
+    try {
+      await downloadSong(toDownloadableSong(currentSong));
+      setDownloaded(true);
+    } catch (error) {
+      console.error("下载失败", error);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -491,8 +543,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
             onCyclePlayMode={cyclePlayMode}
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
+            onOpenQualitySheet={() => setQualitySheetOpen(true)}
           />
-          <div className="mx-auto mt-4 flex w-full max-w-sm items-center justify-around px-8 pb-3 md:hidden">
+          <div className="mx-auto mt-4 flex w-full max-w-xs items-center justify-around px-8 pb-3 md:hidden">
             <button
               type="button"
               onClick={toggleFavorite}
@@ -503,20 +556,29 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
             </button>
             <button
               type="button"
-              onClick={() => setQualitySheetOpen(true)}
-              className="rounded-full px-2.5 py-2 text-xs font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95"
-              aria-label="音质选择"
-            >
-              {QUALITY_BADGE_LABEL[currentQuality] || "音质"}
-            </button>
-            <button
-              type="button"
               onClick={() => setQueueOpen(true)}
               className="rounded-full p-2.5 text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95"
               aria-label="播放队列"
             >
               <ListMusic className="h-5 w-5" />
             </button>
+            {showAndroidDownload && (
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={downloading || downloaded}
+                className="rounded-full p-2.5 text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95 disabled:text-primary/80"
+                aria-label={downloaded ? "已下载" : downloading ? "下载中" : "下载"}
+              >
+                {downloading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : downloaded ? (
+                  <Check className="h-5 w-5" />
+                ) : (
+                  <Download className="h-5 w-5" />
+                )}
+              </button>
+            )}
             <button
               type="button"
               className="rounded-full p-2.5 text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95"

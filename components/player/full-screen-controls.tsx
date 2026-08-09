@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import {
   Heart,
+  Music2,
   Pause,
   Play,
   Repeat,
@@ -34,6 +35,7 @@ export interface FullScreenControlsProps {
   onCyclePlayMode: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  onOpenQualitySheet?: () => void;
 }
 
 export function FullScreenControls({
@@ -48,6 +50,7 @@ export function FullScreenControls({
   onCyclePlayMode,
   isFavorite,
   onToggleFavorite,
+  onOpenQualitySheet,
 }: FullScreenControlsProps) {
   const playModeLabel =
     playMode === "single"
@@ -164,12 +167,25 @@ export function FullScreenControls({
             <SkipForward className="h-7 w-7" fill="currentColor" />
           </motion.button>
 
-          {/* 喜欢音乐 */}
+          {/* 移动端：音质；PC 端：喜欢音乐 */}
+          <motion.button
+            type="button"
+            onClick={onOpenQualitySheet || onToggleFavorite}
+            className={cn(
+              "rounded-full p-2.5 transition-all md:hidden",
+              "text-white/60 hover:text-white hover:bg-white/10"
+            )}
+            aria-label="音质选择"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Music2 className="h-5 w-5" />
+          </motion.button>
           <motion.button
             type="button"
             onClick={onToggleFavorite}
             className={cn(
-              "rounded-full p-2.5 transition-all",
+              "hidden rounded-full p-2.5 transition-all md:inline-flex",
               isFavorite
                 ? "text-primary"
                 : "text-white/60 hover:text-white hover:bg-white/10"
@@ -183,7 +199,7 @@ export function FullScreenControls({
             <Heart className="h-5 w-5" fill={isFavorite ? "currentColor" : "none"} />
           </motion.button>
 
-          {/* 音质选择器：仅 PC 端显示，移动端在顶部 header 区域 */}
+          {/* 音质选择器：仅 PC 端显示 */}
           <div className="hidden md:block">
             <QualitySelector />
           </div>
