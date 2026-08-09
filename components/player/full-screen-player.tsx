@@ -479,39 +479,6 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
         {/* ===== 底部控制区 ===== */}
         <div className="shrink-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent pt-8 pb-safe">
-          <div className="mx-auto mb-3 flex w-full max-w-xs items-center justify-center gap-4 px-6 md:hidden">
-            <button
-              type="button"
-              onClick={() => setQualitySheetOpen(true)}
-              className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95"
-              aria-label="音质选择"
-            >
-              {QUALITY_BADGE_LABEL[currentQuality] || "音质"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setQueueOpen(true)}
-              className="rounded-full border border-white/15 bg-white/10 p-2.5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95"
-              aria-label="播放队列"
-            >
-              <ListMusic className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={toggleFavorite}
-              className="rounded-full border border-white/15 bg-white/10 p-2.5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95"
-              aria-label={isFavorite ? "取消喜欢" : "喜欢"}
-            >
-              <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
-            </button>
-            <button
-              type="button"
-              className="rounded-full border border-white/15 bg-white/10 p-2.5 text-white/80 transition-all hover:bg-white/15 hover:text-white active:scale-95"
-              aria-label="更多操作"
-            >
-              <MoreHorizontal className="h-5 w-5" />
-            </button>
-          </div>
           <FullScreenControls
             isPlaying={isPlaying}
             currentTime={currentTime}
@@ -525,6 +492,39 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
           />
+          <div className="mx-auto mt-4 flex w-full max-w-sm items-center justify-around px-8 pb-3 md:hidden">
+            <button
+              type="button"
+              onClick={toggleFavorite}
+              className="rounded-full p-2.5 text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95"
+              aria-label={isFavorite ? "取消喜欢" : "喜欢"}
+            >
+              <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setQualitySheetOpen(true)}
+              className="rounded-full px-2.5 py-2 text-xs font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95"
+              aria-label="音质选择"
+            >
+              {QUALITY_BADGE_LABEL[currentQuality] || "音质"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setQueueOpen(true)}
+              className="rounded-full p-2.5 text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95"
+              aria-label="播放队列"
+            >
+              <ListMusic className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              className="rounded-full p-2.5 text-white/55 transition-all hover:bg-white/10 hover:text-white active:scale-95"
+              aria-label="更多操作"
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
