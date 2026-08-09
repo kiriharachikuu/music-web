@@ -265,3 +265,24 @@ export async function getRankings(type: LeaderboardType = "all"): Promise<Rankin
   const query = params.toString() ? `?${params.toString()}` : "";
   return api.get<RankingsData>(`/rankings${query}`);
 }
+
+/** 平台 Web 端更新日志条目（来自后端 /platform-changelogs） */
+export interface PlatformChangelogEntry {
+  id: string;
+  version: string;
+  versionCode: number;
+  releaseDate: string;
+  title?: string | null;
+  content: string[];
+  status: "draft" | "published";
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 拉取已发布的平台更新日志（公开接口，无 /auth 路径，request 不自动加 token） */
+export async function getPlatformChangelogs(limit?: number): Promise<PlatformChangelogEntry[]> {
+  const params = new URLSearchParams();
+  if (limit && limit > 0) params.set("limit", String(limit));
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return api.get<PlatformChangelogEntry[]>(`/platform-changelogs${query}`);
+}

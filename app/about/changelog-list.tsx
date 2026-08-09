@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ChevronDown } from "lucide-react";
 
 import {
@@ -11,6 +11,7 @@ import {
   type VersionEntry,
 } from "@/lib/constants/changelog";
 import { cn } from "@/lib/utils";
+import { getPlatformChangelogs, type PlatformChangelogEntry } from "@/lib/api";
 
 interface ChangelogListProps {
   /** 要展示的版本列表，传空或不传则使用全部 CHANGELOG */
@@ -19,6 +20,10 @@ interface ChangelogListProps {
   defaultOpenVersions?: string[];
   /** 列表整体是否被某容器截断时，传 true 会让最后一项去掉底部圆角 */
   contained?: boolean;
+  /** 是否从后端 /platform-changelogs 拉取最新版本并拼接到静态 CHANGELOG 头部 */
+  mergeRemote?: boolean;
+  /** 自定义远程数据（用于测试或 SSR 注入） */
+  remoteEntries?: PlatformChangelogEntry[];
 }
 
 /**
@@ -31,10 +36,58 @@ export function ChangelogList({
   entries = CHANGELOG,
   defaultOpenVersions,
   contained = false,
+  mergeRemote = false,
+  remoteEntries,
 }: ChangelogListProps) {
+  const [remote, setRemote] = useState<PlatformChangelogEntry[] | null>(remoteEntries ?? null);
+
+  useEffect(() => {
+    if (!mergeRemote || remoteEntries) return;
+    let cancelled = false;
+    getPlatformChangelogs()
+      .then((list) => {
+        if (!cancelled) setRemote(list);
+      })
+      .catch(() => {
+        // 后端暂未提供数据时静默降级
+        if (!cancelled) setRemote([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [mergeRemote, remoteEntries]);
+
+  const mergedEntries = useMemo<VersionEntry[]>(() => {
+    if (!mergeRemote) return entries;
+    const remoteList = remote ?? [];
+    const remoteAsEntries: VersionEntry[] = remoteList.map((r) => ({
+      version: r.version,
+      versionCode: r.versionCode,
+      releaseDate: r.releaseDate,
+      title: r.title ?? undefined,
+      // 后端 content 默认全为新增特性；前缀 [优化] / [修复] / [移除] 可被解析成对应类型
+      changes: r.content.map((line) => parseChangeItem(line)),
+    }));
+    // 用 remote 版本号去重静态 CHANGELOG（默认场景）
+    const base = entries === CHANGELOG ? CHANGELOG : entries;
+    const filtered = base.filter((v) => !remoteAsEntries.some((r) => r.version === v.version));
+    return [...remoteAsEntries, ...filtered];
+  }, [entries, mergeRemote, remote]);
+
   const [openVersions, setOpenVersions] = useState<Set<string>>(
-    () => new Set(defaultOpenVersions ?? [entries[0]?.version].filter(Boolean))
+    () => new Set(defaultOpenVersions ?? [mergedEntries[0]?.version].filter(Boolean))
   );
+
+  // 当合并后的最新版本变化时，自动把第一条加入展开集合
+  useEffect(() => {
+    if (defaultOpenVersions) return;
+    setOpenVersions((current) => {
+      if (current.size > 0) return current;
+      const first = mergedEntries[0]?.version;
+      if (!first) return current;
+      return new Set([first]);
+    });
+  }, [mergedEntries, defaultOpenVersions]);
 
   function toggleVersion(version: string) {
     setOpenVersions((current) => {
@@ -50,7 +103,7 @@ export function ChangelogList({
 
   return (
     <div className={cn("space-y-3", contained && "last:pb-0")}>
-      {entries.map((entry, idx) => {
+      {mergedEntries.map((entry, idx) => {
         const isLatest = idx === 0;
         const isOpen = openVersions.has(entry.version);
         const grouped = {
@@ -162,4 +215,23 @@ function ChangeGroup({
       </ul>
     </div>
   );
+}
+
+/** 解析后端纯文本 changelog 行；支持 [优化]/[修复]/[移除]/[新增] 前缀分类 */
+function parseChangeItem(line: string): ChangeItem {
+  const trimmed = line.trim();
+  if (trimmed.startsWith("[优化]")) {
+    return { type: "improvement", content: trimmed.replace("[优化]", "").trim() };
+  }
+  if (trimmed.startsWith("[修复]")) {
+    return { type: "fix", content: trimmed.replace("[修复]", "").trim() };
+  }
+  if (trimmed.startsWith("[移除]")) {
+    return { type: "removed", content: trimmed.replace("[移除]", "").trim() };
+  }
+  if (trimmed.startsWith("[新增]")) {
+    return { type: "feature", content: trimmed.replace("[新增]", "").trim() };
+  }
+  // 默认归为新增功能（与历史 CHANGELOG 风格一致）
+  return { type: "feature", content: trimmed };
 }

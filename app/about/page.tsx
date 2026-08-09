@@ -19,6 +19,7 @@ import {
 } from "@/lib/constants/about";
 import { APP_VERSION, CHANGELOG, formatReleaseDate } from "@/lib/constants/changelog";
 import { cn } from "@/lib/utils";
+import { PlatformVersionBadge } from "@/components/about/platform-version-badge";
 
 export const metadata: Metadata = {
   title: "关于 XingTone",
