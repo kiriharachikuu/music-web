@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="xingtone-official">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>XingTone · 移动端主题皮肤演示</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; min-height: 100vh; background: #05070c; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; color: hsl(var(--foreground)); }
+    a { color: inherit; text-decoration: none; }
+    button { border: 0; padding: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+    img, svg { display: block; }
+
+    :root {
+      --safe-area-top: 20px;
+      --safe-area-bottom: 0px;
+      --background: 0 0% 98%;
+      --foreground: 0 0% 10%;
+      --card: 0 0% 100%;
+      --card-foreground: 0 0% 10%;
+      --primary: 273 100% 50%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 0 0% 96%;
+      --muted-foreground: 0 0% 35%;
+      --accent: 273 30% 96%;
+      --accent-foreground: 273 100% 30%;
+      --border: 273 30% 90%;
+      --ring: 273 100% 50%;
+      --radius: 0.75rem;
+
+      --theme-head-bg: none;
+      --theme-tail-bg: none;
+      --theme-preview: none;
+      --theme-tab-discover: none;
+      --theme-tab-discover-active: none;
+      --theme-tab-ranking: none;
+      --theme-tab-ranking-active: none;
+      --theme-tab-library: none;
+      --theme-tab-library-active: none;
+      --theme-tab-profile: none;
+      --theme-tab-profile-active: none;
+    }
+
+    [data-theme="xingtone-official"] {
+      --background: 210 50% 97%;
+      --foreground: 220 38% 13%;
+      --card: 0 0% 100%;
+      --card-foreground: 220 38% 13%;
+      --primary: 204 56% 49%;
+      --primary-foreground: 0 0% 100%;
+      --muted: 210 35% 92%;
+      --muted-foreground: 215 18% 43%;
+      --accent: 59 100% 61%;
+      --accent-foreground: 220 38% 13%;
+      --border: 204 34% 84%;
+      --ring: 204 56% 49%;
+      --theme-head-bg: url("./theme-demo-assets/head_bg.jpg");
+      --theme-tail-bg: url("./theme-demo-assets/tail_bg.png");
+      --theme-preview: url("./theme-demo-assets/cover_preview.jpg");
+      --theme-tab-discover: url("./theme-demo-assets/icons/discover-before.png");
+      --theme-tab-discover-active: url("./theme-demo-assets/icons/discover-after.png");
+      --theme-tab-ranking: url("./theme-demo-assets/icons/ranking-before.png");
+      --theme-tab-ranking-active: url("./theme-demo-assets/icons/ranking-after.png");
+      --theme-tab-library: url("./theme-demo-assets/icons/library-before.png");
+      --theme-tab-library-active: url("./theme-demo-assets/icons/library-after.png");
+      --theme-tab-profile: url("./theme-demo-assets/icons/me-before.png");
+      --theme-tab-profile-active: url("./theme-demo-assets/icons/me-after.png");
+    }
+
+    [data-theme="xingtone-purple"] { --primary: 273 100% 56%; --accent: 320 80% 70%; --theme-head-bg: linear-gradient(135deg, #271148, #7c3aed 55%, #e879f9); --theme-tail-bg: linear-gradient(180deg, hsl(273 80% 96% / .65), hsl(0 0% 100% / .98)); }
+    [data-theme="sky"] { --primary: 214 100% 58%; --accent: 180 80% 60%; --theme-head-bg: linear-gradient(135deg, #0284c7, #38bdf8 58%, #a7f3d0); --theme-tail-bg: linear-gradient(180deg, hsl(204 90% 96% / .8), hsl(0 0% 100% / .98)); }
+    [data-theme="pink"] { --primary: 350 80% 65%; --accent: 30 100% 70%; --theme-head-bg: linear-gradient(135deg, #fb7185, #f9a8d4 58%, #fed7aa); --theme-tail-bg: linear-gradient(180deg, hsl(350 90% 96% / .8), hsl(0 0% 100% / .98)); }
+
+    .stage { min-height: 100vh; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 50% 28%, #174061, #05070c 62%); }
+    .phone { position: relative; width: min(390px, 100vw); height: min(844px, 100vh); overflow: hidden; border-radius: 34px; background: hsl(var(--background)); box-shadow: 0 34px 90px rgba(0,0,0,.7); }
+
+    /* 只模拟手机壳定位。内部结构严格对应当前移动端：TopNav + children + MiniPlayer + MobileTabBar。 */
+    .app-root { position: absolute; inset: 0; overflow: hidden; background: hsl(var(--background)); }
+    .app-root::before { content: ""; position: absolute; inset: 0 0 auto; height: 190px; background-image: var(--theme-head-bg); background-size: cover; background-position: center top; opacity: .9; pointer-events: none; }
+    .app-root::after { content: ""; position: absolute; inset: 120px 0 auto; height: 120px; background: linear-gradient(180deg, hsl(var(--background) / 0), hsl(var(--background))); pointer-events: none; }
+
+    /* TopNav：对应 components/layout/top-nav.tsx。皮肤只在 ::before，搜索/头像结构不变。 */
+    .top-nav { position: absolute; inset: 0 0 auto; z-index: 30; border-bottom: 1px solid transparent; background: hsl(var(--background) / .60); backdrop-filter: blur(12px); overflow: hidden; }
+    .top-nav::before { content: ""; position: absolute; inset: 0; background-image: var(--theme-head-bg); background-size: cover; background-position: center top; opacity: .78; z-index: -2; }
+    .top-nav::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, hsl(var(--background) / .08), hsl(var(--background) / .58)); z-index: -1; }
+    .safe-top { height: var(--safe-area-top); }
+    .top-nav-row { display: flex; height: 56px; width: 100%; align-items: center; gap: 12px; padding: 0 16px; }
+    .top-nav-main { display: flex; flex: 1; min-width: 0; align-items: center; gap: 12px; }
+    .search-link { flex: 1; min-width: 0; }
+    .search-box { display: flex; height: 40px; width: 100%; align-items: center; gap: 8px; border-radius: 999px; border: 1px solid hsl(var(--border)); background: hsl(var(--foreground) / .05); padding: 0 16px; font-size: 14px; color: hsl(var(--foreground) / .5); backdrop-filter: blur(10px); }
+    [data-theme="xingtone-official"] .search-box { background: hsl(0 0% 100% / .86); box-shadow: 0 8px 22px rgba(5, 48, 83, .12); }
+    .search-box span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .avatar-button { display: flex; width: 40px; height: 40px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 999px; background: hsl(var(--foreground) / .05); }
+    .avatar { width: 40px; height: 40px; border-radius: 999px; border: 2px solid hsl(var(--primary) / .3); background: var(--theme-preview) center/cover, hsl(var(--primary) / .1); }
+
+    /* children：模拟 XingTone 移动端首页内容，不使用 B 站信息流结构。 */
+    .page { position: absolute; inset: 0; overflow-y: auto; padding: calc(var(--safe-area-top) + 76px) 14px 136px; scrollbar-width: none; }
+    .page::-webkit-scrollbar { display: none; }
+    .hero { position: relative; overflow: hidden; min-height: 150px; border-radius: 24px; padding: 20px; color: white; background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / .58)); box-shadow: 0 18px 40px hsl(var(--primary) / .22); }
+    .hero::before { content: ""; position: absolute; inset: 0; background-image: var(--theme-head-bg); background-size: cover; background-position: center; opacity: .92; }
+    .hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,0,.46), rgba(0,0,0,.08)); }
+    .hero-content { position: relative; z-index: 1; max-width: 220px; }
+    .eyebrow { font-size: 12px; opacity: .86; }
+    .hero-title { margin: 6px 0 8px; font-size: 24px; line-height: 1.15; font-weight: 900; }
+    .hero-desc { font-size: 13px; line-height: 1.5; opacity: .9; }
+    .section-title { display: flex; align-items: center; justify-content: space-between; margin: 18px 2px 10px; font-size: 17px; font-weight: 800; }
+    .more { font-size: 12px; font-weight: 500; color: hsl(var(--muted-foreground)); }
+    .playlist-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .playlist-card { min-width: 0; }
+    .cover { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 14px; background: hsl(var(--primary) / .12); box-shadow: 0 8px 20px rgba(0,0,0,.08); }
+    .cover.theme-cover { background: var(--theme-preview) center/cover; }
+    .cover.gradient-1 { background: linear-gradient(135deg, #1d4ed8, #9333ea); }
+    .cover.gradient-2 { background: linear-gradient(135deg, #06b6d4, #2563eb); }
+    .cover-play { position: absolute; right: 7px; bottom: 7px; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+    .playlist-title { margin-top: 7px; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 12px; line-height: 1.35; }
+    .song-list { display: flex; flex-direction: column; gap: 8px; }
+    .song-row { display: flex; align-items: center; gap: 10px; border-radius: 16px; border: 1px solid hsl(var(--border) / .72); background: hsl(var(--card) / .78); padding: 9px; backdrop-filter: blur(12px); }
+    .song-cover { width: 48px; height: 48px; flex-shrink: 0; border-radius: 12px; background: var(--theme-preview) center/cover; }
+    .song-cover.alt { background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent))); }
+    .song-info { flex: 1; min-width: 0; }
+    .song-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 700; }
+    .song-artist { margin-top: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; color: hsl(var(--muted-foreground)); }
+    .song-play { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; color: hsl(var(--primary)); }
+
+    /* MiniPlayer：对应 components/layout/mini-player.tsx，保持 bottom 位于 TabBar 上方。 */
+    .mini-player-shell { position: absolute; inset: auto 10px 96px; z-index: 40; }
+    .mini-player { overflow: hidden; border: 1px solid hsl(var(--primary) / .12); border-radius: 18px; background: hsl(var(--background) / .82); backdrop-filter: blur(18px); box-shadow: 0 10px 28px rgba(0,0,0,.12); }
+    .mini-inner { display: flex; align-items: center; gap: 12px; padding: 8px 12px; }
+    .mini-cover { width: 44px; height: 44px; flex-shrink: 0; overflow: hidden; border-radius: 12px; background: var(--theme-preview) center/cover, hsl(var(--primary) / .1); }
+    .mini-main { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 4px; }
+    .mini-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .mini-title-wrap { min-width: 0; }
+    .mini-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 700; }
+    .mini-artist { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; color: hsl(var(--foreground) / .5); }
+    .progress-hit { padding: 8px 0; margin: -8px 0; }
+    .progress-track { height: 4px; overflow: hidden; border-radius: 999px; background: hsl(var(--foreground) / .1); }
+    .progress-fill { height: 100%; width: 42%; border-radius: inherit; background: linear-gradient(90deg, hsl(var(--primary) / .8), hsl(var(--primary))); }
+    .mini-actions { display: flex; flex-shrink: 0; align-items: center; gap: 4px; }
+    .mini-play { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border-radius: 999px; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); box-shadow: 0 6px 16px hsl(var(--primary) / .28); }
+    .mini-icon { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; color: hsl(var(--foreground) / .7); }
+
+    /* MobileTabBar：XingTone 结构，演示改为四个入口；皮肤层不改变路由语义。 */
+    .mobile-tabbar { position: absolute; inset: auto 0 0; z-index: 30; display: flex; height: 84px; flex-direction: column; overflow: visible; border-top: 0; background: transparent; }
+    .mobile-tabbar::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 84px; background-image: var(--theme-tail-bg); background-size: auto 84px; background-position: center bottom; background-repeat: no-repeat; opacity: .98; pointer-events: none; }
+    .tabbar-inner { position: relative; z-index: 1; display: flex; height: 84px; align-items: stretch; overflow: visible; padding-top: 0; }
+    .tab-link { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0; padding-bottom: 7px; font-size: 11px; font-weight: 600; color: hsl(var(--foreground) / .55); }
+    .tab-link.active { color: hsl(var(--accent)); }
+    .tab-icon { display: flex; width: 58px; height: 58px; align-items: center; justify-content: center; transform: translateY(-31px); margin-bottom: -29px; }
+    .theme-icon { width: 52px; height: 52px; background-size: contain; background-position: center; background-repeat: no-repeat; filter: drop-shadow(0 7px 12px rgba(0,0,0,.3)); }
+    .icon-discover { background-image: var(--theme-tab-discover); }
+    .active .icon-discover { background-image: var(--theme-tab-discover-active); }
+    .icon-ranking { background-image: var(--theme-tab-ranking); }
+    .active .icon-ranking { background-image: var(--theme-tab-ranking-active); }
+    .icon-library { background-image: var(--theme-tab-library); }
+    .active .icon-library { background-image: var(--theme-tab-library-active); }
+    .icon-profile { background-image: var(--theme-tab-profile); }
+    .active .icon-profile { background-image: var(--theme-tab-profile-active); }
+    .safe-bottom { position: relative; z-index: 1; height: var(--safe-area-bottom); }
+
+    .controls { position: fixed; top: 12px; right: 12px; z-index: 100; width: 188px; border-radius: 12px; border: 1px solid hsl(var(--primary) / .35); background: rgba(5,10,18,.78); padding: 8px; color: white; backdrop-filter: blur(14px); }
+    .control-title { margin-bottom: 6px; font-size: 11px; opacity: .75; }
+    .theme-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .theme-btn { position: relative; height: 38px; overflow: hidden; border-radius: 8px; border: 2px solid transparent; background: linear-gradient(135deg, hsl(var(--a)), hsl(var(--b))); }
+    .theme-btn[data-theme="xingtone-official"] { background-image: var(--theme-head-bg); background-size: cover; background-position: center; }
+    .theme-btn.active { border-color: hsl(var(--accent)); }
+    .theme-btn span { position: absolute; inset: auto 0 0; padding: 2px 4px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.8)); color: white; font-size: 9px; text-align: left; }
+    .note { position: fixed; left: 12px; bottom: 12px; z-index: 100; max-width: 340px; border-radius: 8px; background: rgba(0,0,0,.65); padding: 5px 8px; color: rgba(255,255,255,.76); font-size: 11px; backdrop-filter: blur(10px); }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <div class="control-title">切换主题：只改变变量 / 皮肤层</div>
+    <div class="theme-grid" id="themeGrid">
+      <button class="theme-btn active" data-theme="xingtone-official"><span>星瞳·个性</span></button>
+      <button class="theme-btn" data-theme="xingtone-purple" style="--a:273 100% 56%;--b:320 80% 70%"><span>星瞳紫</span></button>
+      <button class="theme-btn" data-theme="sky" style="--a:214 100% 58%;--b:180 80% 60%"><span>天空蓝</span></button>
+      <button class="theme-btn" data-theme="pink" style="--a:350 80% 65%;--b:30 100% 70%"><span>樱粉</span></button>
+    </div>
+  </div>
+  <div class="note">基于保存的移动端 XingTone UI：TopNav / MiniPlayer / MobileTabBar 结构不变，只叠加 head_bg、tail_bg 和 Tab 图标皮肤。</div>
+
+  <main class="stage">
+    <section class="phone">
+      <div class="app-root">
+        <header class="top-nav">
+          <div class="safe-top"></div>
+          <div class="top-nav-row">
+            <div class="top-nav-main">
+              <a href="#" class="search-link">
+                <div class="search-box">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                  <span>搜索歌曲、歌单、歌手</span>
+                </div>
+              </a>
+              <button class="avatar-button" aria-label="个人中心"><div class="avatar"></div></button>
+            </div>
+          </div>
+        </header>
+
+        <div class="page">
+          <section class="hero">
+            <div class="hero-content">
+              <div class="eyebrow">今日推荐</div>
+              <h1 class="hero-title">星瞳主题歌单</h1>
+              <div class="hero-desc">主题素材作为皮肤层叠加，首页模块仍保持 XingTone 的音乐推荐结构。</div>
+            </div>
+          </section>
+
+          <div class="section-title"><span>推荐歌单</span><span class="more">查看更多 ›</span></div>
+          <section class="playlist-row">
+            <a class="playlist-card" href="#"><div class="cover theme-cover"><span class="cover-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div><div class="playlist-title">星海漫游</div></a>
+            <a class="playlist-card" href="#"><div class="cover gradient-1"><span class="cover-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div><div class="playlist-title">夜阑静听</div></a>
+            <a class="playlist-card" href="#"><div class="cover gradient-2"><span class="cover-play"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></div><div class="playlist-title">电音律动</div></a>
+          </section>
+
+          <div class="section-title"><span>为你推荐</span><span class="more">换一批 ›</span></div>
+          <section class="song-list">
+            <div class="song-row"><div class="song-cover"></div><div class="song-info"><div class="song-title">夜空下的星</div><div class="song-artist">星瞳 · 蓝色幻想</div></div><button class="song-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
+            <div class="song-row"><div class="song-cover alt"></div><div class="song-info"><div class="song-title">蝴蝶落在肩上</div><div class="song-artist">星瞳 · 梦的翅膀</div></div><button class="song-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
+            <div class="song-row"><div class="song-cover alt"></div><div class="song-info"><div class="song-title">Lullaby for You</div><div class="song-artist">星瞳 · 夜之独白</div></div><button class="song-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button></div>
+          </section>
+        </div>
+
+        <div class="mini-player-shell">
+          <div class="mini-player">
+            <div class="mini-inner">
+              <div class="mini-cover"></div>
+              <div class="mini-main">
+                <div class="mini-top"><div class="mini-title-wrap"><div class="mini-title">夜空下的星</div><div class="mini-artist">星瞳</div></div></div>
+                <div class="progress-hit"><div class="progress-track"><div class="progress-fill"></div></div></div>
+              </div>
+              <div class="mini-actions">
+                <button class="mini-play" aria-label="播放"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+                <button class="mini-icon" aria-label="展开播放页"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <nav class="mobile-tabbar">
+          <div class="tabbar-inner">
+            <a href="#" class="tab-link active"><span class="tab-icon"><span class="theme-icon icon-discover"></span></span>发现</a>
+            <a href="#" class="tab-link"><span class="tab-icon"><span class="theme-icon icon-ranking"></span></span>排行榜</a>
+            <a href="#" class="tab-link"><span class="tab-icon"><span class="theme-icon icon-library"></span></span>音乐库</a>
+            <a href="#" class="tab-link"><span class="tab-icon"><span class="theme-icon icon-profile"></span></span>我的</a>
+          </div>
+          <div class="safe-bottom"></div>
+        </nav>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const grid = document.getElementById('themeGrid');
+    grid.addEventListener('click', (event) => {
+      const button = event.target.closest('.theme-btn');
+      if (!button) return;
+      root.setAttribute('data-theme', button.dataset.theme);
+      grid.querySelectorAll('.theme-btn').forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+    });
+  </script>
+</body>
+</html>
