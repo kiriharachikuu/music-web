@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import {
   Heart,
-  Music2,
   Pause,
   Play,
   Repeat,
@@ -13,7 +12,7 @@ import {
   SkipForward,
 } from "lucide-react";
 
-import { formatTime, type PlayMode } from "@/lib/store/player-store";
+import { formatTime, usePlayerStore, type PlayMode } from "@/lib/store/player-store";
 import { cn } from "@/lib/utils";
 import { ProgressBar } from "./progress-bar";
 import { QualitySelector } from "./quality-selector";
@@ -60,6 +59,14 @@ export function FullScreenControls({
         : playMode === "sequential"
           ? "顺序播放"
           : "列表循环";
+
+  const currentQuality = usePlayerStore((s) => s.currentQuality);
+  const qualityBadge: Record<string, string> = {
+    high: "高音质",
+    medium: "中音质",
+    low: "低音质",
+  };
+  const qualityLabel = qualityBadge[currentQuality] || "音质";
 
   return (
     <footer className="shrink-0 px-4 pb-4 pt-2 md:px-8 md:pb-6">
@@ -167,19 +174,19 @@ export function FullScreenControls({
             <SkipForward className="h-7 w-7" fill="currentColor" />
           </motion.button>
 
-          {/* 移动端：音质；PC 端：喜欢音乐 */}
+          {/* 移动端：音质文字徽章 */}
           <motion.button
             type="button"
-            onClick={onOpenQualitySheet || onToggleFavorite}
+            onClick={onOpenQualitySheet}
             className={cn(
-              "rounded-full p-2.5 transition-all md:hidden",
-              "text-white/60 hover:text-white hover:bg-white/10"
+              "rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 transition-all md:hidden",
+              "hover:bg-white/15 hover:text-white"
             )}
             aria-label="音质选择"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <Music2 className="h-5 w-5" />
+            {qualityLabel}
           </motion.button>
           <motion.button
             type="button"
