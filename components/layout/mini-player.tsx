@@ -64,7 +64,9 @@ const ProgressBar = React.memo(function ProgressBar({
 /**
  * 底部常驻迷你播放栏
  * - 封面 + 歌名 + 歌手 + 播放/暂停 + 进度条 + 下一首 + 展开
- * - 移动端位于底部 Tab 栏之上（bottom-16），桌面端 bottom-0
+ * - 移动端位于底部 Tab 栏之上（mp-themed-shell 提供 64px 偏移），桌面端 bottom-0
+ * - 默认使用悬浮卡片 + 主题渐变 + 主题封面的主题风格样式
+ *   （即使没有切换主题，也会通过 .mp-themed / .mp-themed-cover 启用该视觉）
  */
 export function MiniPlayer() {
   const router = useRouter();
@@ -80,12 +82,12 @@ export function MiniPlayer() {
   const openLyricPage = usePlayerStore((s) => s.openLyricPage);
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(3.5rem+var(--safe-area-bottom,0px))] max-md:landscape:bottom-[calc(3rem+var(--safe-area-bottom,0px))] z-40 md:bottom-0 md:left-64 md:z-40">
-      <div className="mx-auto border-t border-primary/10 bg-background/80 backdrop-blur-xl">
+    <div className="mp-themed-shell fixed inset-x-0 z-40 md:left-64 md:z-40">
+      <div className="mp-themed mx-auto">
         <div className="flex items-center gap-3 px-3 py-2 md:gap-4 md:px-6 md:py-3 max-md:landscape:py-1.5">
           {/* 封面 */}
           <motion.div
-            className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/10 md:h-14 md:w-14 max-md:landscape:h-10 max-md:landscape:w-10"
+            className="mp-themed-cover relative h-11 w-11 shrink-0 md:h-14 md:w-14 max-md:landscape:h-10 max-md:landscape:w-10"
             animate={{
               scale: isPlaying ? [1, 1.02, 1] : 1,
             }}
@@ -174,7 +176,7 @@ export function MiniPlayer() {
               onClick={next}
               type="button"
               aria-label="下一首"
-              className="hidden flex h-9 w-9 items-center justify-center text-foreground/70 hover:text-foreground sm:inline-flex"
+              className="hidden h-9 w-9 items-center justify-center text-foreground/70 hover:text-foreground sm:inline-flex"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >

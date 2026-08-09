@@ -370,6 +370,75 @@
     }
   }
 
+  /* =========================================================
+   * 主题系统：仅用于 mini-player 皮肤层（themes/xingtone-official）
+   * - 默认 :root / .dark 不引入主题包资源
+   * - 当 [data-theme="xingtone-official"] 启用时，注入 head / tail / preview / tab icon 资源
+   * - MiniPlayer 内部使用类 .mp-themed 时才消费这些资源，关闭主题时完全回退
+   * ======================================================= */
+  :root {
+    --theme-head-bg: none;
+    --theme-tail-bg: none;
+    --theme-preview: none;
+    --theme-tab-discover: none;
+    --theme-tab-discover-active: none;
+    --theme-tab-ranking: none;
+    --theme-tab-ranking-active: none;
+    --theme-tab-library: none;
+    --theme-tab-library-active: none;
+    --theme-tab-profile: none;
+    --theme-tab-profile-active: none;
+  }
+
+  [data-theme="xingtone-official"] {
+    --theme-head-bg: url("/themes/xingtone-official/bg.jpg");
+    --theme-tail-bg: url("/themes/xingtone-official/tail.png");
+    --theme-preview: url("/themes/xingtone-official/preview.png");
+    --theme-tab-discover: url("/themes/xingtone-official/icons/discover-before.png");
+    --theme-tab-discover-active: url("/themes/xingtone-official/icons/discover-after.png");
+    --theme-tab-ranking: url("/themes/xingtone-official/icons/ranking-before.png");
+    --theme-tab-ranking-active: url("/themes/xingtone-official/icons/ranking-after.png");
+    --theme-tab-library: url("/themes/xingtone-official/icons/library-before.png");
+    --theme-tab-library-active: url("/themes/xingtone-official/icons/library-after.png");
+    --theme-tab-profile: url("/themes/xingtone-official/icons/me-before.png");
+    --theme-tab-profile-active: url("/themes/xingtone-official/icons/me-after.png");
+  }
+
+  /* MiniPlayer 主题皮肤：悬浮卡片，背景渐变 + 主色描边 + 阴影 */
+  .mp-themed-shell {
+    /* 移动端：上移避开底部皮肤异形；PC 端：使用默认 64px 偏移 */
+    bottom: calc(3.5rem + var(--safe-area-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    .mp-themed-shell {
+      bottom: 0;
+    }
+  }
+
+  .mp-themed {
+    margin: 6px 10px 0;
+    overflow: hidden;
+    border: 1px solid hsl(var(--primary) / 0.18);
+    border-radius: 18px;
+    background: linear-gradient(
+        135deg,
+        hsl(var(--background) / 0.92),
+        hsl(var(--background) / 0.72)
+      );
+    backdrop-filter: blur(18px);
+    box-shadow:
+      0 10px 28px rgba(0, 0, 0, 0.12),
+      0 0 0 1px hsl(var(--primary) / 0.06);
+  }
+
+  .mp-themed-cover {
+    overflow: hidden;
+    border-radius: 12px;
+    background:
+      var(--theme-preview) center / cover,
+      hsl(var(--primary) / 0.12);
+  }
+
   /* 减弱动态效果：尊重用户系统设置 */
   @media (prefers-reduced-motion: reduce) {
     .lyrics-flash,
