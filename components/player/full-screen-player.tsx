@@ -282,13 +282,21 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 overflow-hidden bg-black text-white"
+      className="fixed inset-0 z-50 overflow-hidden bg-black text-fullscreen-player"
+      style={{
+        // iOS PWA 适配：
+        // 1. 高度用 dvh，浏览器 UI 收起后视口变化时能跟随收缩，避免底部被 URL bar 覆盖
+        // 2. 100vh 兜底，覆盖不支持 dvh 的旧版 iOS Safari
+        height: "calc(100dvh - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))",
+        top: "var(--safe-area-top, env(safe-area-inset-top))",
+        bottom: "var(--safe-area-bottom, env(safe-area-inset-bottom))",
+        willChange: "transform",
+      }}
       initial={{ y: "100%" }}
       animate={{ y: 0 }}
       exit={{ y: "100%" }}
       transition={{ type: "tween", duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
       onAnimationComplete={() => setEntered(true)}
-      style={{ willChange: "transform" }}
       // 拖拽关闭：仅手柄区域通过 dragControls.start 启动，
       // 不在容器上挂 drag listener，避免拦截底部控制按钮的点击事件
       dragListener={false}
@@ -444,9 +452,10 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
               tabIndex={0}
               aria-label="点击查看歌词"
             >
-              {/* 封面图：vh 约束适配横屏/矮视口 */}
+              {/* 封面图：vh 约束适配横屏/矮视口，
+                  iOS 上额外加 shrink-0 + max-h 占位，避免 flex 内容超出可用区被裁 */}
               <motion.div
-                className="relative aspect-square w-[min(360px,75vw,65vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10"
+                className="relative aspect-square w-[min(320px,70vw,55vh)] shrink-0 overflow-hidden rounded-2xl bg-white/5 shadow-2xl ring-1 ring-white/10"
                 animate={{
                   boxShadow: isPlaying
                     ? "0 0 40px hsl(var(--primary) / 0.2), 0 0 15px hsl(var(--primary) / 0.08), 0 20px 40px -10px rgba(0,0,0,0.4)"
@@ -475,8 +484,8 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                 )}
               </motion.div>
 
-              {/* 歌名 + 歌手：shrink-0 防止被压缩 */}
-              <div className="mt-6 w-full max-w-xs shrink-0 px-2 text-center">
+              {/* 歌名 + 歌手：shrink-0 防止被压缩，iOS 上加 py-safe 避免贴底 */}
+              <div className="mt-4 w-full max-w-xs shrink-0 px-2 pb-2 text-center">
                 <div className="flex items-center justify-center gap-1.5">
                   {currentSong.trackType === "live_clip" && currentSong.sessionId && (
                     <span
@@ -499,9 +508,9 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                 </p>
               </div>
 
-              {/* 底部上滑提示 */}
+              {/* 底部上滑提示：仅在非紧凑视口下展示，避免矮屏被裁 */}
               <motion.div
-                className="mt-8 flex shrink-0 flex-col items-center gap-1 text-white/30"
+                className="mt-2 hidden shrink-0 flex-col items-center gap-1 text-white/30 min-[480px]:flex"
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
