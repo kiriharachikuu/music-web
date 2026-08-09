@@ -36,6 +36,8 @@ export interface AndroidJSBridge {
   getAppVersionCode(): string;
   /** 获取 JSBridge 接口版本（用于兼容性降级） */
   getBridgeVersion(): string;
+  /** 刷新当前 WebView（用于平台更新后重新加载 Web 资源） */
+  reloadWebView(): void;
   /** 退出 App（finishAffinity） */
   exitApp(): void;
   /** 获取状态栏高度（像素），用于 WebView safe-area 适配 */
@@ -246,6 +248,17 @@ export const androidBridge = {
     }
   },
 
+  /** 刷新当前 WebView */
+  reloadWebView(): void {
+    const bridge = getNativeBridge();
+    if (!bridge) return;
+    try {
+      bridge.reloadWebView();
+    } catch {
+      // 静默
+    }
+  },
+
   /** 退出 App */
   exitApp(): void {
     const bridge = getNativeBridge();
@@ -366,7 +379,7 @@ export const androidBridge = {
     songId: string,
     url: string,
     headers: Record<string, string> | undefined,
-    meta: { title: string; artist: string; albumName?: string; coverUrl?: string; fileUrl: string }
+    meta: { title: string; artist: string; albumName?: string; coverUrl?: string; fileUrl: string; cachedQuality?: string }
   ): void {
     const bridge = getNativeBridge();
     if (!bridge) return;
