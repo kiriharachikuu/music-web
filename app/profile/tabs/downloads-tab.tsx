@@ -7,10 +7,11 @@ import type { DownloadListItem } from "@/lib/download";
 import { toPlayerSong } from "@/lib/types";
 import {
   listDownloads,
-  removeDownload,
   clearAllDownloads,
   getCacheSize,
   getCachedUrl,
+  removeDownload,
+  removeAllInvalidDownloads,
 } from "@/lib/download";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useToast } from "@/components/ui/toaster";
@@ -18,7 +19,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/common/confirm-dialog";
-import { cn, resolveMediaUrl, formatDate } from "@/lib/utils";
+import { cn, resolveMediaUrl, resolveClipCover, formatDate, formatBytes } from "@/lib/utils";
 import {
   useDownloadProgressStore,
   selectInFlightOrdered,
@@ -88,7 +89,7 @@ export function DownloadsTab() {
     }
   };
 
-  /** 删除单条 */
+  /** 删除单条（按当前平台删除实际缓存） */
   const handleRemove = async (item: DownloadListItem) => {
     try {
       await removeDownload(item.songId);
@@ -103,6 +104,19 @@ export function DownloadsTab() {
   const handleCancelInFlight = (item: InFlightDownload) => {
     useDownloadProgressStore.getState().clear(item.song.id);
     toast.show("已从下载队列移除", { description: item.song.title });
+  };
+
+  /** 一键清理失效缓存（size 为 0 / 未知的记录） */
+  const handleCleanInvalid = async () => {
+    try {
+      const n = await removeAllInvalidDownloads();
+      toast.success(
+        n > 0 ? `已清理 ${n} 条失效缓存` : "没有失效缓存可清理"
+      );
+      void load();
+    } catch {
+      toast.error("清理失效缓存失败");
+    }
   };
 
   /** 清空全部（需确认） */
@@ -138,21 +152,33 @@ export function DownloadsTab() {
   return (
     <div className="space-y-5">
       {/* 顶部统计 + 清空按钮 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-foreground/40">
           已下载 {downloads.length} 首 · 占用 {formatBytes(totalSize)}
           {hasInFlight && ` · 下载中 ${activeInFlight.length} 首`}
         </span>
-        {hasDownloads && (
-          <Button
-            variant="ghost"
-            onClick={handleClearAll}
-            className="rounded-full px-3 text-sm text-destructive hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-            清空全部
-          </Button>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {hasDownloads && (
+            <Button
+              variant="ghost"
+              onClick={handleCleanInvalid}
+              className="rounded-full px-3 text-sm text-foreground/60 hover:text-foreground"
+            >
+              <Trash2 className="h-4 w-4" />
+              清理失效
+            </Button>
+          )}
+          {hasDownloads && (
+            <Button
+              variant="ghost"
+              onClick={handleClearAll}
+              className="rounded-full px-3 text-sm text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+              清空全部
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* 下载中区域 */}
@@ -212,7 +238,7 @@ export function DownloadsTab() {
               // 优先使用本地封面路径（TWA 已下载到本地的封面文件），
               // 退化到服务器 URL（在线访问 / 未下载场景）。
               // 任何场景下都走 resolveMediaUrl 统一处理相对路径 → 后端绝对 URL。
-              const coverUrl = resolveMediaUrl(item.song.coverUrl || item.song.album?.cover);
+              const coverUrl = resolveMediaUrl(resolveClipCover(item.song) ?? item.song.album?.cover);
               const isLoadingPlay = loadingPlayId === item.songId;
               return (
                 <div
@@ -245,13 +271,19 @@ export function DownloadsTab() {
                       {item.song.albumName ? ` · ${item.song.albumName}` : ""}
                     </p>
                     <p className="mt-0.5 flex items-center gap-2 text-[11px] text-foreground/40">
+                      {/* 缓存音质徽章（Task 1 持久化） */}
+                      {item.cachedQuality && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-foreground/5 px-2 py-0.5 text-[11px] text-foreground/70">
+                          {item.cachedQuality}
+                        </span>
+                      )}
                       <span>{formatBytes(item.size)}</span>
                       <span aria-hidden>·</span>
                       <span>{formatDate(new Date(item.cachedAt))}</span>
                     </p>
                   </div>
 
-                  {/* 操作：播放 / 删除 */}
+                  {/* 操作：播放 / 清理单首缓存 */}
                   <div className="flex shrink-0 items-center gap-0.5">
                     <button
                       type="button"
@@ -269,8 +301,9 @@ export function DownloadsTab() {
                     <button
                       type="button"
                       onClick={() => void handleRemove(item)}
-                      aria-label="删除"
-                      className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/40 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      aria-label="清理单首缓存"
+                      title="清理单首缓存"
+                      className="h-7 w-7 p-1.5 text-foreground/50 hover:text-red-500"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -336,10 +369,10 @@ function InFlightRow({
       <div className="flex items-center gap-3 md:gap-4">
         {/* 封面 */}
         <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/5 md:h-12 md:w-12">
-          {item.song.coverUrl ? (
+          {resolveClipCover(item.song) ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={item.song.coverUrl}
+              src={resolveMediaUrl(resolveClipCover(item.song))}
               alt={item.song.title}
               className="h-full w-full object-cover"
             />
@@ -426,15 +459,4 @@ function ErrorRow({
       </button>
     </div>
   );
-}
-
-/** 格式化字节 */
-function formatBytes(bytes: number): string {
-  if (typeof bytes !== "number" || !isFinite(bytes) || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB"];
-  const i = Math.min(
-    units.length - 1,
-    Math.max(0, Math.floor(Math.log(bytes) / Math.log(1024)))
-  );
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
 }

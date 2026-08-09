@@ -1,85 +1,84 @@
 # XingTone Web
 
-> 当前版本：0.3.1
+XingTone 用户端 Web/PWA 应用，提供音乐发现、播放、搜索、歌单、收藏、下载与个人中心能力。可作为普通网页、PWA、Android TWA 与桌面端内置 Web 前端运行。
 
-XingTone 音乐播放器前端用户端，Apple Music 风格的跨端 Web 应用，支持 PWA 安装到桌面/主屏幕。
-
-完整文档请参考 [docs 目录](../docs/README.md)。
+完整项目文档见 [docs](../docs/README.md)。
 
 ## 技术栈
 
 | 技术 | 用途 |
 |------|------|
-| Next.js 15 (App Router) | React 框架 + SSR/ISR |
-| TypeScript | 类型安全 |
-| TailwindCSS v3 + shadcn/ui | 样式与组件库 |
-| Howler.js | 跨浏览器音频播放 |
-| Zustand | 轻量状态管理（含持久化） |
-| Framer Motion | 手势动画与页面转场 |
-| next-pwa | PWA 支持（Service Worker） |
-| next-themes | 亮/暗色模式 |
+| Next.js 15 App Router | React 应用框架 |
+| React 19 + TypeScript | UI 与类型安全 |
+| TailwindCSS v3 + shadcn/ui | 样式与基础组件 |
+| Zustand | 播放器、登录态、主题等状态管理 |
+| Howler.js | 浏览器音频播放降级实现 |
+| Framer Motion | 手势与动效 |
+| next-pwa | PWA 与离线缓存 |
+| idb | 本地缓存与离线数据 |
 
 ## 核心功能
 
-- **发现页** — 轮播 Banner、推荐歌曲、新专辑、精选歌单
-- **排行榜** — 播放量 TOP 歌曲（飙升榜、热歌榜等）
-- **搜索** — 歌曲/专辑/歌手/歌单全域实时搜索
-- **歌手详情** — 歌手信息、热门歌曲、专辑列表
-- **音乐库** — 我的歌单、收藏歌曲、下载管理
-- **个人中心** — 用户信息、编辑资料（头像上传）、收藏/歌单/历史、偏好设置
-- **全屏歌词页** — 拖拽关闭、双语歌词、逐行高亮、锁屏控制（Media Session API）
-- **全屏播放** — 迷你播放栏 → 向上滑展开
-- **PWA** — 可添加到主屏幕，standalone 模式全屏运行，离线缓存
+- 发现页：Banner、推荐歌曲、新专辑、精选歌单、推荐演出片段。
+- 搜索：歌曲、专辑、歌手、歌单全局搜索。
+- 排行榜：飙升榜、热歌榜等榜单页。
+- 播放器：迷你播放栏、全屏播放、歌词、播放队列、音质切换。
+- 音乐库：收藏、历史、我的歌单、下载管理。
+- 个人中心：资料编辑、密码修改、偏好设置。
+- 现场内容：演出场次、片段列表、歌手现场内容页。
+- PWA：桌面/主屏幕安装、离线缓存、移动端安全区适配。
+- 原生桥接：支持 Android JSBridge 与桌面端 Electron Bridge。
 
 ## 快速开始
 
 ### 环境要求
 
 - Node.js 20+
+- npm
 
-### 1. 安装依赖
+### 安装依赖
 
 ```bash
 npm install
 ```
 
-### 2. 启动开发服务器
+### 配置环境变量
+
+本项目通常使用 `.env.local`：
+
+```bash
+NEXT_PUBLIC_API_BASE=http://localhost:3000/api
+```
+
+| 变量名 | 必填 | 说明 |
+|--------|------|------|
+| `NEXT_PUBLIC_API_BASE` | 是 | 后端 API 基址，例如 `http://localhost:3000/api` |
+| `NEXT_PUBLIC_ADMIN_URL` | 否 | 管理后台地址，用于前端跳转入口 |
+
+### 启动开发服务
 
 ```bash
 npm run dev
-# 运行于 http://localhost:3000
 ```
 
-### 3. 构建生产版本
+默认运行于 `http://localhost:3000`。
+
+### 生产构建
 
 ```bash
 npm run build
 npm run start
 ```
 
-## 环境变量
+## 常用脚本
 
-| 变量名 | 必填 | 说明 |
-|--------|------|------|
-| `NEXT_PUBLIC_API_BASE` | 是 | 后端 API 基址，如 `http://localhost:3000/api` |
-| `NEXT_PUBLIC_ADMIN_URL` | 是 | 管理后台地址（个人中心跳转用） |
+| 命令 | 说明 |
+|------|------|
+| `npm run dev` | 启动开发服务 |
+| `npm run build` | 构建生产版本 |
+| `npm run start` | 启动生产服务 |
 
-> 在 Vercel 部署时需在「Settings → Environment Variables」中配置，`NEXT_PUBLIC_` 前缀变量会在构建时内联到客户端代码，修改后需重新部署。
-
-## 部署
-
-推荐部署到 [Vercel](https://vercel.com)：
-
-1. 登录 Vercel → Import Git Repository → 选择 `music-web` 目录
-2. **Root Directory** 设置为 `.`（本目录）
-3. 添加环境变量 `NEXT_PUBLIC_API_BASE` 和 `NEXT_PUBLIC_ADMIN_URL`
-4. 点击 Deploy
-
-部署完成后可绑定自定义域名，并配置 CDN 加速。
-
-或参考 `DEPLOY.md`（位于项目根目录）了解更多部署方式。
-
-## 页面路由
+## 主要路由
 
 | 路径 | 说明 |
 |------|------|
@@ -87,46 +86,35 @@ npm run start
 | `/search` | 搜索页 |
 | `/rankings` | 排行榜 |
 | `/library` | 音乐库 |
-| `/profile` | 个人中心（含未登录引导） |
-| `/about` | 项目介绍 |
-| `/login` | 登录 / 注册 |
-
-## PWA 配置
-
-- `manifest.json` — 定义 `display: standalone`，支持 Android/iOS 主屏幕安装
-- Service Worker (`next-pwa`) — 静态资源离线缓存
-- iOS 兼容 — `apple-mobile-web-app-capable`、`apple-touch-icon` 等 meta 标签
-- safe-area — iOS 刘海屏 / Home Indicator 适配
+| `/profile` | 个人中心 |
+| `/daily-recommend/songs` | 每日推荐歌曲 |
+| `/daily-recommend/clips` | 每日推荐片段 |
+| `/live-sessions` | 现场场次 |
+| `/download` | 下载页 |
+| `/about` | 关于页 |
+| `/login` | 登录/注册 |
 
 ## 项目结构
 
-```
-app/
-├── (dashboard)/         # 各页面路由（发现/搜索/音乐库等）
-│   ├── page.tsx        # 发现页
-│   ├── search/
-│   ├── rankings/
-│   ├── library/
-│   └── profile/
-├── login/              # 登录/注册（独立页面，不含外壳）
-├── about/              # 项目介绍
-└── globals.css        # TailwindCSS + 自定义工具类
-
-components/
-├── layout/             # AppShell、Sidebar、TopNav、MiniPlayer、MobileTabBar
-├── player/             # FullScreenPlayer、LyricsView
-├── common/             # SongList、PlaylistCard、EmptyState 等通用组件
-└── ui/                 # shadcn/ui 基础组件
-
-lib/
-├── api.ts              # API 请求层（含 Authorization 注入）
-├── auth.ts             # JWT token 存储（cookie + localStorage）
-├── store/              # Zustand store（播放状态持久化）
-├── types.ts            # TypeScript 类型定义
-├── nav.ts              # 导航配置
-└── utils.ts            # 工具函数
+```text
+app/                  Next.js App Router 页面
+components/           通用组件、布局组件、播放器组件、UI 组件
+lib/api/              API 子模块
+lib/audio-engine/     浏览器/原生音频引擎适配
+lib/db/               IndexedDB 缓存
+lib/jsbridge/         Android 原生桥接定义
+lib/platform/         平台检测
+lib/store/            Zustand 状态
+public/               图标、PWA manifest、静态资源
 ```
 
-## License
+## 相关子项目
+
+- [music-server](../music-server/README.md)：后端 API 服务。
+- [music-admin](../music-admin/README.md)：管理后台。
+- [music-twa](../music-twa/README.md)：Android 客户端。
+- [music-desktop](../music-desktop/README.md)：桌面客户端。
+
+## 许可
 
 MIT

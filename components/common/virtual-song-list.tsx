@@ -29,7 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { cn, formatPlays } from "@/lib/utils";
+import { cn, formatPlays, resolveClipCover } from "@/lib/utils";
 import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
 import { SongActionSheet } from "@/components/common/song-action-sheet";
 import { downloadSong, listDownloads, isDownloadAvailable } from "@/lib/download";
@@ -37,6 +37,7 @@ import { useToast } from "@/components/ui/toaster";
 import { AppImage } from "@/components/ui/app-image";
 
 type SongWithTrackType = ApiSong & { trackType?: TrackType };
+type SongCoverSource = ApiSong | Track | (ApiSong & { cover?: string | null });
 
 interface VirtualSongListProps<T extends ApiSong | Track = SongWithTrackType> {
   songs: T[];
@@ -278,16 +279,9 @@ export function VirtualSongList<T extends ApiSong | Track = SongWithTrackType>({
                   onClick={handlePlay}
                   className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/5 md:h-12 md:w-12"
                 >
-                  {("cover" in song && (song as any).cover) ||
-                  ("coverUrl" in song && song.coverUrl) ||
-                  ("album" in song && song.album?.cover) ? (
+                  {resolveClipCover(song) || ("album" in song && song.album?.cover) ? (
                     <AppImage
-                      src={
-                        ("cover" in song && (song as any).cover) ||
-                        ("coverUrl" in song && song.coverUrl) ||
-                        ("album" in song ? song.album?.cover : undefined) ||
-                        undefined
-                      }
+                      src={resolveClipCover(song) || ("album" in song ? song.album?.cover : undefined) || undefined}
                       alt={song.title}
                       fill
                       className="rounded-lg"

@@ -9,7 +9,7 @@
  * - 提供 serverFetch 供 Server Component 使用（带 revalidate + 容错）
  * - GET 请求内存缓存（默认 30s），避免快速导航重复请求
  */
-import type { ApiResponse, LiveSession, LiveClipTrack, Paginated } from "@/lib/types";
+import type { ApiResponse, LiveSession, LiveClipTrack, Paginated, RankingsData, LeaderboardType } from "@/lib/types";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { resolveMediaPaths } from "@/lib/utils";
@@ -247,4 +247,21 @@ export async function getQualityPreference(): Promise<{ preferredQuality: string
 
 export async function setQualityPreference(quality: "HIGH" | "MEDIUM" | "LOW"): Promise<{ preferredQuality: string }> {
   return api.put<{ preferredQuality: string }>("/user/preferences/quality", { quality });
+}
+
+/**
+ * 排行榜数据获取（GET /api/rankings）
+ * - type 参数用于区分「综合 / 单曲 / 歌切」
+ *   - all：综合（默认）
+ *   - song：仅单曲（trackType === "official"）
+ *   - live_clip：仅歌切（trackType === "live_clip"）
+ * - 后端需补充 `?type=`，前端已做临时回退过滤：
+ *   若后端暂未支持 type 参数，前端会在 RankingsClient 中按 trackType
+ *   做兜底过滤，保证 Tab 切换体验正确。
+ */
+export async function getRankings(type: LeaderboardType = "all"): Promise<RankingsData> {
+  const params = new URLSearchParams();
+  if (type && type !== "all") params.set("type", type);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return api.get<RankingsData>(`/rankings${query}`);
 }

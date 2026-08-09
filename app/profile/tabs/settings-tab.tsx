@@ -15,7 +15,10 @@ import {
   Lock,
   Palette,
   KeyRound,
+  Smartphone,
+  Loader2,
 } from "lucide-react";
+import Link from "next/link";
 
 import { clearAllDownloads, getCacheSize } from "@/lib/download";
 import { Button } from "@/components/ui/button";
@@ -25,8 +28,12 @@ import { cn } from "@/lib/utils";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { getPlatform } from "@/lib/platform";
 import { useColorThemeStore, type ColorTheme } from "@/lib/store/color-theme-store";
+import { useSettingsStore, type OfflineQuality } from "@/lib/store/settings-store";
 import { ChangePasswordDialog } from "./change-password-dialog";
 import { getQualityPreference, setQualityPreference } from "@/lib/api";
+import { AppUpdateModal } from "@/components/common/app-update-modal";
+import { checkLatestVersion, detectPlatform, type AppVersionInfo } from "@/lib/api/app-version";
+import { APP_VERSION, APP_VERSION_CODE } from "@/lib/constants/changelog";
 
 /** localStorage key */
 const DOWNLOADS_KEY = "xt-music-downloads";
@@ -53,6 +60,8 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
   const { theme, setTheme } = useTheme();
   const colorTheme = useColorThemeStore((s) => s.theme);
   const setColorTheme = useColorThemeStore((s) => s.setTheme);
+  const offlineQuality = useSettingsStore((s) => s.offlineQuality);
+  const setOfflineQuality = useSettingsStore((s) => s.setOfflineQuality);
   const [mounted, setMounted] = React.useState(false);
   const [settings, setSettings] = React.useState<UserSettings>(DEFAULT_SETTINGS);
   const [isTWA, setIsTWA] = React.useState(false);
@@ -60,6 +69,9 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
   const [lockScreenPlayerEnabled, setLockScreenPlayerEnabledState] = React.useState(true);
   const cacheSizeSavedRef = React.useRef(500);
   const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
+  const [appUpdateOpen, setAppUpdateOpen] = React.useState(false);
+  const [latestAppVersion, setLatestAppVersion] = React.useState<AppVersionInfo | null>(null);
+  const [checkingAppUpdate, setCheckingAppUpdate] = React.useState(false);
   const [currentCacheSize, setCurrentCacheSize] = React.useState(0);
   const confirm = useConfirm();
   const toast = useToast();
@@ -179,6 +191,34 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
     setLockScreenPlayerEnabledState(enabled);
     androidBridge.setLockScreenPlayerEnabled(enabled);
     toast.success(enabled ? "锁屏/通知栏播放器已开启" : "锁屏/通知栏播放器已关闭");
+  };
+
+  const getCurrentAppVersionCode = () => {
+    if (getPlatform().isTWA) {
+      const code = Number(androidBridge.getAppVersionCode());
+      if (Number.isFinite(code) && code > 0) return code;
+    }
+    const envCode = Number(process.env.NEXT_PUBLIC_APP_VERSION_CODE);
+    if (Number.isFinite(envCode) && envCode > 0) return envCode;
+    return APP_VERSION_CODE;
+  };
+
+  const handleCheckAppUpdate = async () => {
+    if (checkingAppUpdate) return;
+    try {
+      setCheckingAppUpdate(true);
+      const result = await checkLatestVersion(detectPlatform(), "stable", getCurrentAppVersionCode());
+      if (result.hasUpdate && result.latest) {
+        setLatestAppVersion(result.latest);
+        setAppUpdateOpen(true);
+      } else {
+        toast.success("已是最新版本");
+      }
+    } catch {
+      toast.error("检查更新失败");
+    } finally {
+      setCheckingAppUpdate(false);
+    }
   };
 
   /** 清除缓存：localStorage 关键 key + Cache API + IndexedDB 音频缓存 */
@@ -434,6 +474,38 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
         </p>
       </div>
 
+      {/* 离线缓存音质 */}
+      <SettingsRow icon={HardDrive} title="离线缓存音质">
+        <div className="flex items-center gap-1.5">
+          {(
+            [
+              { key: "standard" as OfflineQuality, label: "标准" },
+              { key: "higher" as OfflineQuality, label: "较高" },
+              { key: "lossless" as OfflineQuality, label: "无损" },
+              { key: "follow-online" as OfflineQuality, label: "跟随在线" },
+            ] as const
+          ).map((q) => {
+            const isActive = offlineQuality === q.key;
+            return (
+              <button
+                key={q.key}
+                type="button"
+                onClick={() => setOfflineQuality(q.key)}
+                aria-pressed={isActive}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs font-medium transition-all",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-foreground/5 text-foreground/60 hover:bg-foreground/10"
+                )}
+              >
+                {q.label}
+              </button>
+            );
+          })}
+        </div>
+      </SettingsRow>
+
       {/* 自动播放开关 */}
       <SettingsRow icon={Play} title="自动播放">
         <Switch
@@ -487,6 +559,36 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
         </div>
       )}
 
+      {/* App 更新 */}
+      <div className="space-y-2 rounded-2xl border border-primary/10 bg-card/40 px-4 py-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary dark:text-primary/70">
+              <Smartphone className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">App 更新</p>
+              <p className="text-xs text-muted-foreground">当前版本 v{APP_VERSION}</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleCheckAppUpdate}
+            disabled={checkingAppUpdate}
+            className="rounded-full px-4 text-sm"
+          >
+            {checkingAppUpdate && <Loader2 className="h-4 w-4 animate-spin" />}
+            检查更新
+          </Button>
+        </div>
+        <Link
+          href="/about/changelog"
+          className="ml-10 text-xs font-medium text-primary hover:underline"
+        >
+          查看完整更新日志
+        </Link>
+      </div>
+
       {/* 清除缓存 */}
       <SettingsRow icon={Trash2} title="清除缓存">
         <div className="flex items-center gap-3">
@@ -530,6 +632,11 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
       <ChangePasswordDialog
         open={changePasswordOpen}
         onOpenChange={setChangePasswordOpen}
+      />
+      <AppUpdateModal
+        open={appUpdateOpen}
+        onOpenChange={setAppUpdateOpen}
+        info={latestAppVersion}
       />
     </React.Fragment>
   );

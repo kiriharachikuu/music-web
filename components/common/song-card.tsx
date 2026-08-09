@@ -5,7 +5,7 @@ import { Play, Music2 } from "lucide-react";
 import type { ApiSong, LiveClipTrack } from "@/lib/types";
 import { toPlayerSong } from "@/lib/types";
 import { usePlayerStore } from "@/lib/store/player-store";
-import { cn } from "@/lib/utils";
+import { cn, resolveClipCover } from "@/lib/utils";
 import { AppImage } from "@/components/ui/app-image";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 
@@ -41,9 +41,9 @@ export function SongCard({
     play(toPlayerSong(song), list.map(toPlayerSong));
   };
 
-  // 封面来源：歌切用 cover，官方用 coverUrl 或 album.cover
+  // 封面来源：歌切优先独立封面，缺失时回退到场次封面
   const coverSrc = isLiveClip
-    ? (song as LiveClipTrack).cover
+    ? resolveClipCover(song)
     : (song as ApiSong).coverUrl || (song as ApiSong).album?.cover || undefined;
 
   // 副标题：歌切显示场次名，官方显示专辑名

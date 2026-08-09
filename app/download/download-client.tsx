@@ -387,9 +387,11 @@ export function DownloadClient() {
                   最新版本
                 </span>
               </div>
-              <span className="text-xs text-foreground/50 sm:text-sm">
-                {formatReleaseDate(displayVersion.releaseDate)}
-              </span>
+              {displayVersion.releaseDate && (
+                <span className="text-xs text-foreground/50 sm:text-sm">
+                  {formatReleaseDate(displayVersion.releaseDate)}
+                </span>
+              )}
             </div>
             {/* 标题 */}
             {displayVersion.title && (

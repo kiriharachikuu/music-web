@@ -39,7 +39,7 @@ import { getToken } from "@/lib/auth";
 import { SongList } from "@/components/common/song-list";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
-import { cn, formatPlays } from "@/lib/utils";
+import { cn, formatPlays, resolveClipCover } from "@/lib/utils";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { EditPlaylistSheet } from "@/app/profile/tabs/edit-playlist-sheet";
 import { EditPlaylistDialog } from "@/app/profile/tabs/edit-playlist-dialog";
@@ -470,6 +470,8 @@ function SortableSongRow({
     zIndex: isDragging ? 10 : undefined,
   };
 
+  const coverUrl = resolveClipCover(song) ?? song.album?.cover;
+
   return (
     <div
       ref={setNodeRef}
@@ -495,10 +497,10 @@ function SortableSongRow({
       </span>
       {/* 封面 */}
       <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-primary/5">
-        {song.coverUrl || (song.album?.cover && song.album.cover) ? (
+        {coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={song.coverUrl || song.album?.cover || undefined}
+            src={coverUrl}
             alt={song.title}
             className="h-full w-full object-cover"
           />

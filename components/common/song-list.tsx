@@ -29,7 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { cn, formatPlays } from "@/lib/utils";
+import { cn, formatPlays, resolveClipCover } from "@/lib/utils";
 import { AddToPlaylistDialog } from "@/components/common/add-to-playlist-dialog";
 import { SongActionSheet } from "@/components/common/song-action-sheet";
 import { SwipeableRow } from "@/components/common/swipeable-row";
@@ -46,6 +46,7 @@ import { AppImage } from "@/components/ui/app-image";
  * - 操作按钮：播放/暂停、喜欢、添加到队列
  */
 type SongWithTrackType = ApiSong & { trackType?: TrackType };
+type SongCoverSource = ApiSong | Track | (ApiSong & { cover?: string | null });
 
 export const SongList = React.memo(function SongList<T extends ApiSong | Track = SongWithTrackType>({
   songs,
@@ -58,6 +59,7 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
   onLike,
   likedIds,
   onDelete,
+  renderTrailing,
   className,
   emptyText,
 }: {
@@ -80,6 +82,12 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
   likedIds?: Set<string>;
   /** 删除回调（用于播放历史单条删除） */
   onDelete?: (song: ApiSong | Track) => void;
+  /**
+   * 在歌曲行右侧（操作按钮组之前）追加自定义内容
+   * - 排行榜用：渲染 LiveClipBadge 角标
+   * - 不传则不渲染，保持原行为
+   */
+  renderTrailing?: (song: T) => React.ReactNode;
   className?: string;
   emptyText?: string;
 }) {
@@ -259,16 +267,9 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
               onClick={handlePlay}
               className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-primary/5 md:h-12 md:w-12"
             >
-              {("cover" in song && (song as any).cover) ||
-              ("coverUrl" in song && song.coverUrl) ||
-              ("album" in song && song.album?.cover) ? (
+              {resolveClipCover(song as SongCoverSource) || ("album" in song && song.album?.cover) ? (
                 <AppImage
-                  src={
-                    ("cover" in song && (song as any).cover) ||
-                    ("coverUrl" in song && song.coverUrl) ||
-                    ("album" in song ? song.album?.cover : undefined) ||
-                    undefined
-                  }
+                  src={resolveClipCover(song as SongCoverSource) || ("album" in song ? song.album?.cover : undefined) || undefined}
                   alt={song.title}
                   fill
                   className="rounded-lg"
@@ -319,6 +320,9 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
             <span className="shrink-0 font-mono text-xs text-foreground/40">
               {formatTime(song.duration)}
             </span>
+
+            {/* 自定义右侧追加内容（排行榜用：LiveClipBadge 等） */}
+            {renderTrailing?.(song)}
 
             {/* 操作按钮组：PC 显示内联按钮 + 下拉菜单；移动端仅显示三点触发底部抽屉 */}
             <div className="flex shrink-0 items-center gap-0.5 md:gap-1">

@@ -59,6 +59,7 @@ export interface Song {
   artist: string;
   album?: string;
   cover?: string;
+  sessionCover?: string | null;
   /** 音频播放地址 */
   url: string;
   /** 时长（秒），可选，加载后以引擎实测为准 */

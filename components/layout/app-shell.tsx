@@ -12,9 +12,11 @@ import { MobileBackGesture } from "@/components/layout/mobile-back-gesture";
 import { MediaSessionManager } from "@/components/player/media-session-manager";
 import { Toaster } from "@/components/ui/toaster";
 import { DesktopControlBridge } from "@/components/layout/desktop-control-bridge";
+import { UpdatePromptBanner } from "@/components/common/update-prompt-banner";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useSafeArea } from "@/lib/hooks/use-safe-area";
 import { installDesktopProgressBridge } from "@/lib/download";
+import { startVersionPolling } from "@/lib/runtime/version-check";
 import { cn } from "@/lib/utils";
 
 // 动态导入非首屏重型组件，减少初始 JS 包体积
@@ -30,7 +32,7 @@ const UpdateDialog = dynamic(() => import("@/components/common/update-dialog").t
 const InstallPrompt = dynamic(() => import("@/components/common/install-prompt").then(m => ({ default: m.InstallPrompt })), { ssr: false });
 
 /** 不显示应用外壳的路径（全屏独立页面） */
-const STANDALONE_PATHS = ["/login"];
+const STANDALONE_PATHS = ["/login", "/forgot-password"];
 
 /** 判断元素是否为可输入控件（输入框 / 文本域 / 可编辑区域） */
 function isEditableTarget(el: EventTarget | null): boolean {
@@ -68,6 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     // Desktop 侧：把主进程下载进度事件桥接到 download-progress-store
     // 幂等，重复挂载无副作用
     installDesktopProgressBridge();
+    startVersionPolling();
   }, []);
 
   React.useEffect(() => {
@@ -230,6 +233,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (isStandalone) {
     return (
       <div className="min-h-dvh">
+        <UpdatePromptBanner />
         {children}
         {/* MediaSession 常驻：登录页等独立页面也保持锁屏元数据同步 */}
         <MediaSessionManager />
@@ -247,6 +251,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh">
+      <UpdatePromptBanner />
+
       {/* 移动端边缘滑动返回手势 */}
       <MobileBackGesture />
 

@@ -19,15 +19,16 @@ export interface AppVersionInfo {
   title?: string | null;
   /** 更新内容列表（后端 content JSON 解析后的字符串数组） */
   content: string[];
-  downloadUrl: string;
+  downloadUrl?: string | null;
+  apkUrl?: string | null;
   /** APK 文件 MD5 校验值（TWA 模式安装时校验） */
   md5?: string | null;
   /** 文件大小（字节） */
   fileSize: number;
   channel: string;
   platform: string;
-  /** 发布时间（ISO 字符串） */
-  releaseDate: string;
+  /** 发布时间（后端返回 Date 序列化字符串；可能为空） */
+  releaseDate?: string | Date | null;
   forceUpdate: boolean;
   minVersionCode: number;
 }
@@ -45,8 +46,8 @@ export interface VersionCheckResult {
  * @param channel 发布渠道 stable/beta
  * @param versionCode 当前版本码（可选，用于判断是否需要更新）
  */
-export async function fetchLatestVersion(
-  platform: string = "android",
+export async function checkLatestVersion(
+  platform: string = detectPlatform(),
   channel: string = "stable",
   versionCode?: number
 ): Promise<VersionCheckResult> {
@@ -57,8 +58,12 @@ export async function fetchLatestVersion(
   if (versionCode != null) {
     params.set("versionCode", String(versionCode));
   }
-  return api.get<VersionCheckResult>(`/app/version/latest?${params.toString()}`);
+  return api.get<VersionCheckResult>(`/app/version/latest?${params.toString()}`, {
+    skipCache: true,
+  });
 }
+
+export const fetchLatestVersion = checkLatestVersion;
 
 /**
  * 上报下载次数（HEAD 请求，静默上报成功不影响下载）
@@ -89,8 +94,9 @@ export function formatFileSize(bytes: number): string {
 /**
  * 格式化日期为中文易读格式
  */
-export function formatReleaseDate(dateStr: string): string {
+export function formatReleaseDate(dateStr: string | Date): string {
   const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "未知日期";
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();

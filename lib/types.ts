@@ -20,6 +20,7 @@ export interface ApiSong {
   duration: number; // 秒
   fileUrl: string;
   coverUrl?: string | null;
+  sessionCover?: string | null;
   lyricUrl?: string | null;
   releaseDate: string;
   plays: number;
@@ -239,6 +240,16 @@ export interface RankingsData {
 /** 排行榜分类 key */
 export type RankingType = "soar" | "new" | "hot";
 
+/**
+ * 排行榜曲目类型过滤（综合 / 单曲 / 歌切）
+ * - all：综合（含单曲和歌切，后端默认行为）
+ * - song：仅单曲（trackType === "official"）
+ * - live_clip：仅歌切（trackType === "live_clip"）
+ *
+ * URL 同步：?type=all | song | live_clip
+ */
+export type LeaderboardType = "all" | "song" | "live_clip";
+
 /** 分页结果通用结构 */
 export interface Paginated<T> {
   list: T[];
@@ -352,7 +363,8 @@ export function toPlayerSong(s: ApiSong | Track): PlayerSong {
       artist: s.artist,
       album: albumLabel,
       // 兼容 LiveClipTrack(cover) 和 ApiSong(coverUrl) 两种格式
-      cover: s.cover ?? (s as unknown as ApiSong).coverUrl ?? undefined,
+      cover: s.cover ?? (s as unknown as ApiSong).coverUrl ?? (s as unknown as ApiSong).sessionCover ?? undefined,
+      sessionCover: (s as unknown as ApiSong).sessionCover,
       // 兼容 LiveClipTrack(url) 和 ApiSong(fileUrl) 两种格式
       url: s.url ?? (s as unknown as ApiSong).fileUrl,
       duration: s.duration,
@@ -366,7 +378,8 @@ export function toPlayerSong(s: ApiSong | Track): PlayerSong {
     title: s.title,
     artist: s.artist,
     album: s.albumName ?? s.album?.name,
-    cover: s.coverUrl ?? s.album?.cover ?? undefined,
+    cover: s.coverUrl ?? ("sessionCover" in s ? s.sessionCover : undefined) ?? s.album?.cover ?? undefined,
+    sessionCover: "sessionCover" in s ? s.sessionCover : undefined,
     url: s.fileUrl,
     duration: s.duration,
     trackType: "official",

@@ -1,5 +1,5 @@
 import type { ApiSong } from "@/lib/types";
-import { resolveMediaUrl } from "@/lib/utils";
+import { resolveClipCover, resolveMediaUrl } from "@/lib/utils";
 import { getToken } from "@/lib/auth";
 import {
   cacheAudio,
@@ -15,7 +15,44 @@ import { fetchAndCacheLyric, isLyricCached, fetchLyric } from "@/lib/db/lyric-ca
 import { getPlatform } from "@/lib/platform/detect";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { setupDownloadListeners, removeDownloadListeners } from "@/lib/jsbridge/native-events";
+import { getSongQualities } from "@/lib/api";
 import { useDownloadProgressStore } from "@/lib/store/download-progress-store";
+import { useSettingsStore, type OfflineQuality } from "@/lib/store/settings-store";
+import { usePlayerStore } from "@/lib/store/player-store";
+
+/** 内部使用的最终下载品质（与 player 音质三档对齐） */
+type ResolvedQuality = "low" | "medium" | "high";
+
+export function resolveQuality(input?: string | null): ResolvedQuality {
+  switch (input as OfflineQuality | undefined) {
+    case "standard":
+      return "medium";
+    case "higher":
+      return "high";
+    case "lossless":
+      // 当前下载链路最高只支持 high，无损暂以 high 兜底。
+      return "high";
+    case "follow-online": {
+      const preferred = usePlayerStore.getState().preferredQuality;
+      return preferred === "high" || preferred === "medium" || preferred === "low" ? preferred : "medium";
+    }
+    default:
+      return input === "high" || input === "medium" || input === "low" ? input : "medium";
+  }
+}
+
+async function resolveDownloadUrl(song: ApiSong, quality: ResolvedQuality): Promise<string | null> {
+  try {
+    const qualities = await getSongQualities(song.id);
+    const target = qualities.find((q) => q.level === quality);
+    if (target?.fileUrl) {
+      return resolveMediaUrl(target.fileUrl);
+    }
+  } catch {
+    // 音质列表不可用时回退到歌曲默认 fileUrl。
+  }
+  return resolveMediaUrl(song.fileUrl);
+}
 
 /**
  * XingTone —— 下载触发器
@@ -36,6 +73,7 @@ export interface DownloadResult {
   cached: boolean;
   newlyDownloaded: boolean;
   size: number;
+  cachedQuality: string;
 }
 
 function isTWA(): boolean {
@@ -99,7 +137,12 @@ export function installDesktopProgressBridge(): void {
  * 下载并缓存一首歌曲
  * @throws 网络错误或后端不可达时抛 Error
  */
-export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
+export async function downloadSong(
+  song: ApiSong,
+  qualityOverride?: OfflineQuality | ResolvedQuality | null
+): Promise<DownloadResult> {
+  const cachedQuality = resolveQuality(qualityOverride ?? useSettingsStore.getState().offlineQuality);
+
   // ========== Desktop（Electron） ==========
   if (isDesktop()) {
     const api = getDesktopAPI();
@@ -108,9 +151,9 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     }
     const existing = await api.getLocalPath?.(song.id);
     if (existing) {
-      return { cached: true, newlyDownloaded: false, size: 0 };
+      return { cached: true, newlyDownloaded: false, size: 0, cachedQuality };
     }
-    const url = resolveMediaUrl(song.fileUrl);
+    const url = await resolveDownloadUrl(song, cachedQuality);
     if (!url) {
       throw new Error("音频地址无效");
     }
@@ -127,13 +170,14 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
         albumName: song.albumName || "",
         coverUrl: song.coverUrl || "",
         fileUrl: song.fileUrl,
+        cachedQuality,
         token,
       })
       .catch(() => {
         // 错误由 onDownloadProgress 事件回传
       });
     fetchAndCacheLyric(song.id).catch(() => {});
-    return { cached: true, newlyDownloaded: true, size: 0 };
+    return { cached: true, newlyDownloaded: true, size: 0, cachedQuality };
   }
 
   // ========== TWA ==========
@@ -142,9 +186,9 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
       if (!(await isLyricCached(song.id))) {
         fetchAndCacheLyric(song.id).catch(() => {});
       }
-      return { cached: true, newlyDownloaded: false, size: 0 };
+      return { cached: true, newlyDownloaded: false, size: 0, cachedQuality };
     }
-    const url = resolveMediaUrl(song.fileUrl);
+    const url = await resolveDownloadUrl(song, cachedQuality);
     if (!url) {
       throw new Error("音频地址无效");
     }
@@ -172,7 +216,7 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
         onComplete: (sid, size) => {
           useDownloadProgressStore.getState().clear(sid);
           removeDownloadListeners(sid);
-          resolve({ cached: true, newlyDownloaded: true, size });
+          resolve({ cached: true, newlyDownloaded: true, size, cachedQuality });
         },
         onError: (sid, msg) => {
           useDownloadProgressStore.getState().markError(sid, msg);
@@ -186,6 +230,7 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
         albumName: song.albumName || "",
         coverUrl: song.coverUrl || "",
         fileUrl: song.fileUrl,
+        cachedQuality,
       });
     });
   }
@@ -196,10 +241,10 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     if (!(await isLyricCached(song.id))) {
       fetchAndCacheLyric(song.id).catch(() => {});
     }
-    return { cached: true, newlyDownloaded: false, size: 0 };
+    return { cached: true, newlyDownloaded: false, size: 0, cachedQuality };
   }
 
-  const url = resolveMediaUrl(song.fileUrl);
+  const url = await resolveDownloadUrl(song, cachedQuality);
   if (!url) {
     throw new Error("音频地址无效");
   }
@@ -268,10 +313,10 @@ export async function downloadSong(song: ApiSong): Promise<DownloadResult> {
     throw new Error("音频内容为空");
   }
 
-  await cacheAudio(song, blob);
+  await cacheAudio(song, blob, cachedQuality);
   useDownloadProgressStore.getState().clear(song.id);
 
-  return { cached: true, newlyDownloaded: true, size: blob.size };
+  return { cached: true, newlyDownloaded: true, size: blob.size, cachedQuality };
 }
 
 /**
@@ -359,6 +404,8 @@ export interface DownloadListItem {
   song: ApiSong;
   size: number;
   cachedAt: number;
+  /** 实际缓存音质（写入时由 downloadSong 决定；不可用时记录实际降级到的品质） */
+  cachedQuality: string;
   localCoverPath?: string; // TWA 本地封面路径（file:// 前缀）
   localPath?: string; // Desktop 本地文件绝对路径
 }
@@ -376,6 +423,7 @@ export async function listDownloads(): Promise<DownloadListItem[]> {
           songId: item.id,
           size: item.size || 0,
           cachedAt: (meta.downloadedAt as number) || Date.now(),
+          cachedQuality: (meta.cachedQuality as string) || "",
           localPath: item.localPath,
           song: {
             id: item.id,
@@ -397,6 +445,7 @@ export async function listDownloads(): Promise<DownloadListItem[]> {
         songId: item.songId,
         size: item.size,
         cachedAt: item.cachedAt,
+        cachedQuality: (item as { cachedQuality?: string }).cachedQuality || "",
         localCoverPath: item.localCoverPath || undefined,
         song: {
           id: item.songId,
@@ -441,6 +490,19 @@ export async function removeDownload(songId: string): Promise<void> {
     return;
   }
   return removeDownloadWeb(songId);
+}
+
+/** 一键清理失效下载（size 为 0 / 未知的记录） */
+export async function removeAllInvalidDownloads(): Promise<number> {
+  const list = await listDownloads();
+  let removed = 0;
+  for (const item of list) {
+    if (!item.size || item.size <= 0) {
+      await removeDownload(item.songId);
+      removed += 1;
+    }
+  }
+  return removed;
 }
 
 /** 清空全部下载 */

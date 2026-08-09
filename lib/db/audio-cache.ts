@@ -30,6 +30,8 @@ export interface AudioCacheRecord {
   /** 最近访问时间戳（ms）；写入与读取时更新 */
   cachedAt: number;
   song: ApiSong;
+  /** 实际缓存音质（写入时由 downloadSong 决定；不可用时记录实际降级到的品质） */
+  cachedQuality: string;
 }
 
 /** 列表展示用的精简结构 */
@@ -38,6 +40,8 @@ export interface DownloadListItem {
   song: ApiSong;
   size: number;
   cachedAt: number;
+  /** 实际缓存音质（持久化字段） */
+  cachedQuality: string;
 }
 
 let _dbPromise: Promise<IDBPDatabase> | null = null;
@@ -83,8 +87,15 @@ async function evictIfNeeded(db: IDBPDatabase): Promise<void> {
  * 缓存音频到 IndexedDB
  * - 若已存在同名记录则覆盖（更新 blob 与 cachedAt，不触发淘汰）
  * - 新增记录时若已达上限，先淘汰最久未访问的记录
+ * @param song 歌曲元信息
+ * @param blob 音频二进制
+ * @param cachedQuality 实际缓存音质（来自下载链路；可空，保留向后兼容）
  */
-export async function cacheAudio(song: ApiSong, blob: Blob): Promise<void> {
+export async function cacheAudio(
+  song: ApiSong,
+  blob: Blob,
+  cachedQuality?: string
+): Promise<void> {
   const db = await getDB();
   if (!db) return;
   // 仅新增记录时才需要 LRU 淘汰，覆盖已存在记录时跳过
@@ -97,6 +108,7 @@ export async function cacheAudio(song: ApiSong, blob: Blob): Promise<void> {
     blob,
     size: blob.size,
     cachedAt: Date.now(),
+    cachedQuality: cachedQuality ?? "",
     song,
   };
   await db.put(STORE_AUDIO, record);
@@ -147,6 +159,7 @@ export async function listDownloads(): Promise<DownloadListItem[]> {
       song: r.song,
       size: r.size,
       cachedAt: r.cachedAt,
+      cachedQuality: r.cachedQuality,
     }))
     .sort((a, b) => b.cachedAt - a.cachedAt);
 }
@@ -185,4 +198,21 @@ export async function isCached(songId: string): Promise<boolean> {
   if (!db) return false;
   const key = await db.getKey(STORE_AUDIO, songId);
   return !!key;
+}
+
+/**
+ * 一键清理失效缓存
+ * - 失效判定：size 为 0 / blob 为空 / blob.size 与 song.duration 严重不符（按 size 阈值简化为 size === 0）
+ * - 返回清理条数
+ */
+export async function removeAllInvalidDownloads(): Promise<number> {
+  const list = await listDownloads();
+  let removed = 0;
+  for (const item of list) {
+    if (!item.size || item.size <= 0) {
+      await removeDownload(item.songId);
+      removed += 1;
+    }
+  }
+  return removed;
 }

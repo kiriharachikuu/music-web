@@ -58,6 +58,7 @@ function toDownloadableSong(song: Song): ApiSong {
     duration: song.duration ?? 0,
     fileUrl: song.url,
     coverUrl: song.cover,
+    sessionCover: song.sessionCover,
     lyricUrl: null,
     releaseDate: "",
     plays: 0,
@@ -277,7 +278,7 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   // 无歌曲不渲染
   if (!currentSong) return null;
 
-  const cover = currentSong.cover;
+  const cover = currentSong.cover ?? currentSong.sessionCover ?? undefined;
 
   return (
     <motion.div

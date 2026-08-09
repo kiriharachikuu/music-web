@@ -273,6 +273,17 @@ export function LoginClient() {
                   ? "登录"
                   : "注册并登录"}
             </button>
+
+            {mode === "login" && (
+              <div className="text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-white/50 transition-colors hover:text-white/80"
+                >
+                  忘记密码？
+                </Link>
+              </div>
+            )}
           </form>
         </div>
 

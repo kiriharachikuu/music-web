@@ -60,6 +60,37 @@ export function formatPlays(n: number): string {
 }
 
 /**
+ * formatBytes —— 格式化字节数为人类可读文本
+ * - 0 / 非法值显示为 "—"
+ * - < 1 KB：B
+ * - < 1 MB：KB（1 位小数）
+ * - < 1 GB：MB（1 位小数）
+ * - >= 1 GB：GB（2 位小数）
+ */
+export function formatBytes(b: number): string {
+  if (!b) return "—";
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  if (b < 1024 * 1024 * 1024) return `${(b / 1024 / 1024).toFixed(1)} MB`;
+  return `${(b / 1024 / 1024 / 1024).toFixed(2)} GB`;
+}
+
+/**
+ * 统一解析歌切/歌曲的封面字段
+ * - 优先级：cover → coverUrl → sessionCover → session.cover → null
+ * - 用于前端列表/播放器在 song.clip 缺少独立封面时回退到直播场次封面
+ */
+export function resolveClipCover<T extends { cover?: string | null; coverUrl?: string | null; sessionCover?: string | null; session?: { cover?: string | null } | null }>(clip: T): string | null {
+  return (
+    (clip as { cover?: string | null }).cover ??
+    (clip as { coverUrl?: string | null }).coverUrl ??
+    (clip as { sessionCover?: string | null }).sessionCover ??
+    (clip.session?.cover ?? null) ??
+    null
+  );
+}
+
+/**
  * 媒体路径解析
  * - 后端返回的图片/音频路径为 /uploads/... 相对路径
  * - 部署在不同域名时需拼接后端 origin（从 NEXT_PUBLIC_API_BASE 提取）
