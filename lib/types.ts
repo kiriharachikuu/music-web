@@ -232,20 +232,20 @@ export interface DiscoverData {
 }
 
 /**
- * 排行榜单曲条目（GET /api/rankings?type=song）
+ * 排行榜单曲条目（综合榜单内 trackType === 'official' 的曲目）
  * - 与 ApiSong 字段保持一致
  */
 export type RankingSongItem = ApiSong;
 
 /**
- * 排行榜歌切条目（GET /api/rankings?type=clip）
+ * 排行榜歌切条目（综合榜单内 trackType === 'live_clip' 的曲目）
  * - 与 LiveClipTrack 字段保持一致
  */
 export type RankingClipItem = LiveClipTrack;
 
 /**
- * 排行榜曲目统一条目（GET /api/rankings?type=combined 时为混合列表）
- * - 判别字段：trackType === 'live_clip' 时为歌切，其余为单曲
+ * 排行榜曲目统一条目（GET /api/rankings?ranking=...）
+ * - 后端现在只返回综合榜单（单曲 + 歌切混合），判别字段：trackType === 'live_clip' 时为歌切，其余为单曲
  */
 export interface RankingTrack {
   id: string;
@@ -276,14 +276,20 @@ export interface RankingTrack {
 }
 
 /**
- * 排行榜单榜响应（GET /api/rankings?type=...&ranking=...）
- * - 后端按 9 种组合返回单个榜单数据
- *   - type: combined | single | clip
+ * 排行榜子榜标识（GET /api/rankings?ranking=...）
+ * - 后端只返回 3 个综合榜单：综合-飙升榜 / 综合-热歌榜 / 综合-新歌榜
  *   - ranking: soar | hot | new
  */
+export type RankingSubType = "soar" | "hot" | "new";
+
+/**
+ * 排行榜单榜响应（GET /api/rankings?ranking=...）
+ * - 后端按 3 个综合榜单返回单个榜单数据
+ *   - ranking: soar | hot | new
+ * - 综合榜单内混合单曲与歌切，曲目通过 trackType 区分
+ */
 export interface RankingsResponse {
-  type: "combined" | "single" | "clip";
-  ranking: "soar" | "hot" | "new";
+  ranking: RankingSubType;
   title: string;
   description?: string;
   cover: string;

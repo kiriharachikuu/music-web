@@ -15,6 +15,7 @@ import {
 import type {
   RankingTrack,
   RankingsResponse,
+  RankingSubType,
   ApiSong,
 } from "@/lib/types";
 import { toPlayerSong } from "@/lib/types";
@@ -30,18 +31,6 @@ import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { cn, formatPlays, resolveClipCover } from "@/lib/utils";
 
-/** 9 组合：type（综合 / 单曲 / 歌切） */
-type RankingType = "combined" | "single" | "clip";
-/** 9 组合：ranking（飙升 / 热歌 / 新歌） */
-type RankingSubType = "soar" | "hot" | "new";
-
-/** 曲目类型 Tab：综合 / 单曲 / 歌切，URL ?type= 同步 */
-const TYPE_TABS: { key: RankingType; label: string }[] = [
-  { key: "combined", label: "综合" },
-  { key: "single", label: "单曲" },
-  { key: "clip", label: "歌切" },
-];
-
 /** 子榜 Tab：飙升 / 热歌 / 新歌，URL ?ranking= 同步 */
 const RANKING_TABS: {
   key: RankingSubType;
@@ -52,12 +41,6 @@ const RANKING_TABS: {
   { key: "hot", label: "热歌榜", desc: "本周播放冠军" },
   { key: "new", label: "新歌榜", desc: "最新上架单曲" },
 ];
-
-/** 解析 URL 中的 ?type= 参数，未知值回退到 combined */
-function parseTypeParam(raw: string | null | undefined): RankingType {
-  if (raw === "single" || raw === "clip") return raw;
-  return "combined";
-}
 
 /** 解析 URL 中的 ?ranking= 参数，未知值回退到 soar */
 function parseRankingParam(raw: string | null | undefined): RankingSubType {
@@ -118,8 +101,8 @@ function rankingTracksToPlayerSongs(list: RankingTrack[]): PlayerSong[] {
 
 /**
  * 排行榜客户端组件
- * - 9 组合 Tab：type(综合/单曲/歌切) × ranking(飙升/热歌/新歌)
- * - URL 同步：?type=combined|single|clip&ranking=soar|hot|new
+ * - 3 个子榜 Tab：ranking(飙升/热歌/新歌)，每个榜内混合单曲与歌切
+ * - URL 同步：?ranking=soar|hot|new
  * - 整榜播放 / 随机播放（兼容单曲和歌切）
  * - Top3 序号金银铜徽章
  * - 歌切行右侧展示 LiveClipBadge
@@ -133,10 +116,7 @@ export function RankingsClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // URL 同步到 state（默认 combined / soar，与 SSR 默认拉取一致）
-  const [type, setType] = React.useState<RankingType>(() =>
-    parseTypeParam(searchParams.get("type"))
-  );
+  // URL 同步到 state（默认 soar，与 SSR 默认拉取一致）
   const [ranking, setRanking] = React.useState<RankingSubType>(() =>
     parseRankingParam(searchParams.get("ranking"))
   );
@@ -157,11 +137,9 @@ export function RankingsClient({
   const toggleLike = useFavoritesStore((s) => s.toggleLike);
   const toggleFavoriteClip = useFavoritesStore((s) => s.toggleFavoriteClip);
 
-  // 监听 URL 中 type / ranking 变化（如浏览器前进 / 后退、用户直接修改 URL）
+  // 监听 URL 中 ranking 变化（如浏览器前进 / 后退、用户直接修改 URL）
   React.useEffect(() => {
-    const t = parseTypeParam(searchParams.get("type"));
     const r = parseRankingParam(searchParams.get("ranking"));
-    setType((prev) => (prev !== t ? t : prev));
     setRanking((prev) => (prev !== r ? r : prev));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -170,24 +148,21 @@ export function RankingsClient({
   // - 仅在 state 与 URL 不一致时调用 replace，避免无谓导航
   // - 首次渲染若 state 默认值等于 URL 现有值，effect 不触发
   React.useEffect(() => {
-    const urlType = searchParams.get("type");
     const urlRanking = searchParams.get("ranking");
-    if (urlType === type && urlRanking === ranking) return;
+    if (urlRanking === ranking) return;
     const params = new URLSearchParams(searchParams.toString());
-    params.set("type", type);
     params.set("ranking", ranking);
     const target = `${pathname}?${params.toString()}`;
     router.replace(target, { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, ranking]);
+  }, [ranking]);
 
-  // type / ranking 变化时拉取新榜单
+  // ranking 变化时拉取新榜单
   // - 切换时清内存缓存中的 /rankings 旧组合，避免 cachedGet 命中过期数据
   // - 用 cancelled 守卫避免慢请求覆盖新切换
   // - SSR 初始数据刚好匹配时跳过首次拉取
   React.useEffect(() => {
     if (
-      data.type === type &&
       data.ranking === ranking &&
       data.tracks.length > 0
     ) {
@@ -198,7 +173,7 @@ export function RankingsClient({
     invalidateCache("/rankings");
     void (async () => {
       try {
-        const next = await getRankings(type, ranking);
+        const next = await getRankings(ranking);
         if (cancelled) return;
         setData(next);
       } catch {
@@ -212,7 +187,7 @@ export function RankingsClient({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, ranking]);
+  }, [ranking]);
 
   // 加载喜欢的单曲 + 歌切列表（仅加载一次）
   React.useEffect(() => {
@@ -245,7 +220,6 @@ export function RankingsClient({
     [tracks]
   );
   const currentRanking = RANKING_TABS.find((t) => t.key === ranking)!;
-  const currentType = TYPE_TABS.find((t) => t.key === type)!;
 
   /** 整榜播放：从第一首开始，列表循环 */
   const playAll = () => {
@@ -259,11 +233,6 @@ export function RankingsClient({
     setPlayMode("shuffle");
     const random = playerSongs[Math.floor(Math.random() * playerSongs.length)];
     play(random, playerSongs);
-  };
-
-  /** 切换 type Tab */
-  const handleTypeChange = (next: RankingType) => {
-    if (next !== type) setType(next);
   };
 
   /** 切换 ranking Tab */
@@ -287,34 +256,6 @@ export function RankingsClient({
           </p>
         </div>
       </header>
-
-      {/* 曲目类型 Tab：综合 / 单曲 / 歌切（URL ?type= 同步） */}
-      <div
-        className="flex items-center gap-2"
-        role="tablist"
-        aria-label="排行榜曲目类型"
-      >
-        {TYPE_TABS.map((t) => {
-          const isActive = type === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => handleTypeChange(t.key)}
-              className={cn(
-                "text-sm font-semibold transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground rounded-full px-3.5 py-1.5"
-                  : "bg-foreground/5 text-foreground/60 rounded-full px-3.5 py-1.5 hover:text-foreground"
-              )}
-            >
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
 
       {/* 子榜 Tab 切换：飙升 / 热歌 / 新歌（URL ?ranking= 同步） */}
       <div
@@ -407,7 +348,7 @@ export function RankingsClient({
         <EmptyState
           icon={TrendingUp}
           title="该榜单暂无数据"
-          description={`稍后再来看看${currentType?.label ?? ""}榜吧～`}
+          description="稍后再来看看吧～"
         />
       )}
     </section>

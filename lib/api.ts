@@ -9,7 +9,14 @@
  * - 提供 serverFetch 供 Server Component 使用（带 revalidate + 容错）
  * - GET 请求内存缓存（默认 30s），避免快速导航重复请求
  */
-import type { ApiResponse, LiveSession, LiveClipTrack, Paginated, RankingsResponse } from "@/lib/types";
+import type {
+  ApiResponse,
+  LiveSession,
+  LiveClipTrack,
+  Paginated,
+  RankingsResponse,
+  RankingSubType,
+} from "@/lib/types";
 import { getToken, clearAuth } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { resolveMediaPaths } from "@/lib/utils";
@@ -250,21 +257,18 @@ export async function setQualityPreference(quality: "HIGH" | "MEDIUM" | "LOW"): 
 }
 
 /**
- * 排行榜数据获取（GET /api/rankings?type=...&ranking=...）
- * - 后端按 9 种组合返回单个榜单（不含客户端聚合）
- *   - type: combined | single | clip
+ * 排行榜数据获取（GET /api/rankings?ranking=...）
+ * - 后端只返回 3 个综合榜单：综合-飙升榜 / 综合-热歌榜 / 综合-新歌榜
  *   - ranking: soar | hot | new
- * - 默认值：type=combined, ranking=soar（与 RankingsClient 默认 state 对齐）
+ * - 默认值：ranking=soar（与 RankingsClient 默认 state 对齐）
  * - 走 client cache（cachedGet），切换 Tab 在 30s 内的二次请求会命中内存
- * - 客户端切换 type/ranking 时，调用方需自行 invalidateCache("/rankings")
+ * - 客户端切换 ranking 时，调用方需自行 invalidateCache("/rankings")
  *   防止内存缓存命中旧组合；本函数不再自动失效
  */
 export async function getRankings(
-  type: "combined" | "single" | "clip" = "combined",
-  ranking: "soar" | "hot" | "new" = "soar",
+  ranking: RankingSubType = "soar",
 ): Promise<RankingsResponse> {
   const params = new URLSearchParams();
-  params.set("type", type);
   params.set("ranking", ranking);
   return api.get<RankingsResponse>(`/rankings?${params.toString()}`);
 }
