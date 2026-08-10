@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Music2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

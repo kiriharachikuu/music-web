@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { usePlayerStore, formatTime as fmt } from "@/lib/store/player-store";
 import { LiveClipBadge } from "@/components/common/live-clip-badge";
 import { AppImage } from "@/components/ui/app-image";
+import { resolveClipCover, resolveMediaUrl } from "@/lib/utils";
 
 /**
  * 进度条（点击/拖拽定位）—— 使用 React.memo 避免 currentTime 变化时重渲染文字部分
