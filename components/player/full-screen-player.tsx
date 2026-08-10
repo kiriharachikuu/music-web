@@ -23,6 +23,7 @@ import { getCachedLyric, fetchAndCacheLyric } from "@/lib/db/lyric-cache";
 import { downloadSong, isDownloaded } from "@/lib/download";
 import { getPlatform } from "@/lib/platform/detect";
 import type { ApiSong } from "@/lib/types";
+import { resolveClipCover, resolveMediaUrl } from "@/lib/utils";
 import { LyricsView } from "./lyrics-view";
 import { QueueSheet } from "./queue-sheet";
 import { FullScreenControls } from "./full-screen-controls";

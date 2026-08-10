@@ -35,6 +35,18 @@ export function AppImage({
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
+  // 跟随 src 变化重置 error/loaded：
+  // 1. 新图加载成功前显示占位，避免继续显示旧封面（移动端 Image 缓存命中时常出现）
+  // 2. 切歌时若新 src 同样失败，能再次触发 onError 而非被旧 error 短路
+  const lastSrcRef = useRef<string | null | undefined>(src);
+  useEffect(() => {
+    if (lastSrcRef.current !== src) {
+      lastSrcRef.current = src;
+      setError(false);
+      setLoaded(false);
+    }
+  }, [src]);
+
   if (!src || error) {
     if (!fallbackIcon) return null;
     return (
