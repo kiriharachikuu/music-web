@@ -50,8 +50,12 @@ export function LiveSessionDetailClient({
   }, []);
 
   const clips: LiveClipTrack[] = React.useMemo(
-    () => session.clips ?? [],
-    [session.clips]
+    () =>
+      (session.clips ?? []).map((clip) => ({
+        ...clip,
+        cover: clip.cover ?? session.cover,
+      })),
+    [session.clips, session.cover]
   );
 
   const totalDuration = React.useMemo(

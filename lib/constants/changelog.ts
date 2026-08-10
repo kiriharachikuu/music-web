@@ -64,6 +64,11 @@ export const CHANGELOG: VersionEntry[] = [
       { type: "feature", content: "搜索引擎升级：支持同义词扩展（管理端可后台配置）、拼音首字母匹配（如「xjj」→「星镜境」）" },
       { type: "feature", content: "管理端新增「搜索同义词」CRUD 页面，可即时新增 / 编辑 / 删除同义词条目，生效无需重启服务" },
       { type: "improvement", content: "搜索结果默认按相关度排序（标题 / 歌手 / 专辑权重 4 / 3 / 2），同时保留按播放量 / 时间排序选项" },
+      // 播放器与移动端体验
+      { type: "fix", content: "修复从排行榜播放时播放器封面字段丢失的问题，mini 播放器、全屏播放器、队列面板与系统媒体封面统一使用封面兜底规则" },
+      { type: "fix", content: "修复移动端 / iOS 切歌后播放器封面与锁屏封面不同步的问题" },
+      { type: "fix", content: "移动端禁止页面缩放，并移除登录输入框聚焦滚动逻辑，降低输入法弹出时的窗口抖动" },
+      { type: "improvement", content: "播放器进度条底色改为固定中性透明色，不再随播放模式或主题变化" },
     ],
   },
   {
