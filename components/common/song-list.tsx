@@ -16,6 +16,7 @@ import {
   Trash2,
   Download,
   Loader2,
+  User,
 } from "lucide-react";
 
 import type { ApiSong, Track, TrackType } from "@/lib/types";
@@ -300,7 +301,17 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                 <span className="truncate">{song.title}</span>
               </p>
               <p className="truncate text-xs text-foreground/50">
-                {song.artist}
+                {"artistId" in song && (song as any).artistId ? (
+                  <Link
+                    href={`/artist/${(song as any).artistId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:text-primary hover:underline dark:hover:text-primary/60"
+                  >
+                    {song.artist}
+                  </Link>
+                ) : (
+                  <span>{song.artist}</span>
+                )}
                 {"trackType" in song && song.trackType === "live_clip" && "sessionName" in song
                   ? ` · ${(song as any).sessionName}`
                   : "albumName" in song && song.albumName
@@ -507,6 +518,20 @@ export const SongList = React.memo(function SongList<T extends ApiSong | Track =
                           >
                             <Disc className="mr-2 h-4 w-4" />
                             查看专辑
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {"artistId" in song && (song as any).artistId && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href={`/artist/${(song as any).artistId}`}
+                            className="flex items-center"
+                          >
+                            <User className="mr-2 h-4 w-4" />
+                            查看歌手
                           </Link>
                         </DropdownMenuItem>
                       </>

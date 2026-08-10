@@ -15,6 +15,7 @@ export interface ApiSong {
   id: string;
   title: string;
   artist: string;
+  artistId?: string | null;
   albumId?: string | null;
   /** 专辑名（后端 join 返回，便于展示） */
   albumName?: string;
@@ -61,6 +62,7 @@ export interface OfficialTrack extends BaseTrack {
   status: "PUBLISHED" | "DRAFT";
   tags?: Tag[];
   album?: Album | null;
+  artistId?: string | null;
 }
 
 export interface LiveClipTrack extends BaseTrack {
@@ -69,6 +71,7 @@ export interface LiveClipTrack extends BaseTrack {
   sessionName: string;
   liveTime: string;
   trackIndex: number;
+  artistId?: string | null;
 }
 
 export type Track = OfficialTrack | LiveClipTrack;
@@ -228,28 +231,65 @@ export interface DiscoverData {
   hotArtists: ArtistBrief[];
 }
 
-/** 排行榜聚合数据（GET /api/rankings） */
-export interface RankingsData {
-  /** 飙升榜 */
-  soar: ApiSong[];
-  /** 新歌榜 */
-  new: ApiSong[];
-  /** 热歌榜 */
-  hot: ApiSong[];
-}
-
-/** 排行榜分类 key */
-export type RankingType = "soar" | "new" | "hot";
+/**
+ * 排行榜单曲条目（GET /api/rankings?type=song）
+ * - 与 ApiSong 字段保持一致
+ */
+export type RankingSongItem = ApiSong;
 
 /**
- * 排行榜曲目类型过滤（综合 / 单曲 / 歌切）
- * - all：综合（含单曲和歌切，后端默认行为）
- * - song：仅单曲（trackType === "official"）
- * - live_clip：仅歌切（trackType === "live_clip"）
- *
- * URL 同步：?type=all | song | live_clip
+ * 排行榜歌切条目（GET /api/rankings?type=clip）
+ * - 与 LiveClipTrack 字段保持一致
  */
-export type LeaderboardType = "all" | "song" | "live_clip";
+export type RankingClipItem = LiveClipTrack;
+
+/**
+ * 排行榜曲目统一条目（GET /api/rankings?type=combined 时为混合列表）
+ * - 判别字段：trackType === 'live_clip' 时为歌切，其余为单曲
+ */
+export interface RankingTrack {
+  id: string;
+  trackType: TrackType;
+  title: string;
+  artist: string;
+  artistId?: string | null;
+  // 单曲字段
+  albumId?: string | null;
+  albumName?: string;
+  coverUrl?: string | null;
+  fileUrl?: string;
+  lyricUrl?: string | null;
+  releaseDate?: string;
+  duration: number;
+  plays?: number;
+  status?: "PUBLISHED" | "DRAFT";
+  tags?: Tag[];
+  album?: Album | null;
+  // 歌切字段
+  sessionId?: string;
+  sessionName?: string;
+  sessionCover?: string | null;
+  liveTime?: string;
+  trackIndex?: number;
+  // 榜单统一返回的封面（综合/单曲时为 coverUrl，歌切时为 session.cover 兜底）
+  cover: string | null;
+}
+
+/**
+ * 排行榜单榜响应（GET /api/rankings?type=...&ranking=...）
+ * - 后端按 9 种组合返回单个榜单数据
+ *   - type: combined | single | clip
+ *   - ranking: soar | hot | new
+ */
+export interface RankingsResponse {
+  type: "combined" | "single" | "clip";
+  ranking: "soar" | "hot" | "new";
+  title: string;
+  description?: string;
+  cover: string;
+  tracks: RankingTrack[];
+  generatedAt: string;
+}
 
 /** 分页结果通用结构 */
 export interface Paginated<T> {
@@ -279,6 +319,7 @@ export interface ArtistBrief {
   cover?: string | null;
   avatar?: string | null;
   songCount: number;
+  clipCount: number;
 }
 
 /** 歌手详情（GET /api/artists/:id） */
@@ -362,6 +403,7 @@ export function toPlayerSong(s: ApiSong | Track): PlayerSong {
       id: s.id,
       title: s.title,
       artist: s.artist,
+      artistId: s.artistId ?? null,
       album: albumLabel,
       // 歌切封面统一回退：cover → coverUrl → sessionCover → session.cover
       cover: resolveClipCover(s as unknown as Parameters<typeof resolveClipCover>[0]) ?? undefined,
@@ -378,6 +420,7 @@ export function toPlayerSong(s: ApiSong | Track): PlayerSong {
     id: s.id,
     title: s.title,
     artist: s.artist,
+    artistId: (s as ApiSong).artistId ?? null,
     album: s.albumName ?? s.album?.name,
     cover: s.coverUrl ?? ("sessionCover" in s ? s.sessionCover : undefined) ?? s.album?.cover ?? undefined,
     sessionCover: "sessionCover" in s ? s.sessionCover : undefined,

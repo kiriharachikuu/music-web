@@ -13,6 +13,7 @@ import {
   Trash2,
   Download,
   Loader2,
+  User,
 } from "lucide-react";
 
 import type { ApiSong, Track } from "@/lib/types";
@@ -195,6 +196,18 @@ export function SongActionSheet({
                   <Disc className="h-5 w-5" />
                 </span>
                 <span className="text-sm font-medium">查看专辑</span>
+              </Link>
+            )}
+            {"artistId" in (song ?? {}) && (song as any)?.artistId && (
+              <Link
+                href={`/artist/${(song as any).artistId}`}
+                onClick={() => onOpenChange(false)}
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors active:bg-foreground/5"
+              >
+                <span className="flex h-5 w-5 items-center justify-center">
+                  <User className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-medium">查看歌手</span>
               </Link>
             )}
             {onDelete && (

@@ -49,7 +49,7 @@ export function SearchResults({
           for (const s of songList) {
             if (!s.artist) continue;
             if (!map.has(s.artist)) {
-              map.set(s.artist, { name: s.artist, songCount: 0 });
+              map.set(s.artist, { name: s.artist, songCount: 0, clipCount: 0 });
             }
             map.get(s.artist)!.songCount++;
           }
@@ -211,7 +211,12 @@ export function ArtistCard({ artist }: ArtistCardProps) {
         )}
       </div>
       <p className="text-sm font-medium transition-colors group-hover:text-primary">{artist.name}</p>
-      <p className="text-xs text-foreground/40">{artist.songCount} 首</p>
+      <p
+        className="text-xs text-foreground/40"
+        title={`${artist.songCount} 首单曲 + ${artist.clipCount ?? 0} 首歌切，共 ${artist.songCount + (artist.clipCount ?? 0)} 首`}
+      >
+        {artist.songCount + (artist.clipCount ?? 0)} 首
+      </p>
     </Link>
   );
 }

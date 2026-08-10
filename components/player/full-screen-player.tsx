@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   motion,
@@ -369,7 +370,17 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                 <MobileHeaderScrollingTitle title={currentSong.title} />
               </div>
               <p className="truncate text-xs text-white/60">
-                {currentSong.artist}
+                {currentSong.artistId ? (
+                  <Link
+                    href={`/artist/${currentSong.artistId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="hover:text-white hover:underline"
+                  >
+                    {currentSong.artist}
+                  </Link>
+                ) : (
+                  <span>{currentSong.artist}</span>
+                )}
               </p>
             </div>
           </div>
@@ -423,7 +434,17 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                   </h1>
                 </div>
                 <p className="mt-1 truncate text-sm text-white/60">
-                  {currentSong.artist}
+                  {currentSong.artistId ? (
+                    <Link
+                      href={`/artist/${currentSong.artistId}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="hover:text-white hover:underline"
+                    >
+                      {currentSong.artist}
+                    </Link>
+                  ) : (
+                    <span>{currentSong.artist}</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -506,7 +527,17 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
                   </h1>
                 </div>
                 <p className="mt-1 truncate text-sm text-white/60">
-                  {currentSong.artist}
+                  {currentSong.artistId ? (
+                    <Link
+                      href={`/artist/${currentSong.artistId}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="hover:text-white hover:underline"
+                    >
+                      {currentSong.artist}
+                    </Link>
+                  ) : (
+                    <span>{currentSong.artist}</span>
+                  )}
                 </p>
               </div>
 

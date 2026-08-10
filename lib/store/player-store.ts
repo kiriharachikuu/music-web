@@ -57,6 +57,7 @@ export interface Song {
   id: string;
   title: string;
   artist: string;
+  artistId?: string | null;
   album?: string;
   cover?: string;
   sessionCover?: string | null;
