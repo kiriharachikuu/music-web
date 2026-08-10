@@ -43,6 +43,30 @@ export interface VersionEntry {
  */
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.5.0",
+    versionCode: 13,
+    releaseDate: "2026-08-10",
+    title: "排行榜 9 档升级、歌手页与多歌手管理、搜索能力增强",
+    changes: [
+      // 排行榜
+      { type: "feature", content: "排行榜重构为 9 档矩阵：综合 / 单曲 / 歌切 × 飙升 / 热歌 / 新歌，支持双 Tab 切换与 URL 同步，便于分享与返回恢复" },
+      { type: "feature", content: "新歌榜实时按发布时间倒序（10 分钟缓存），飙升榜与热歌榜自动覆盖到对应系统歌单 Top 50" },
+      { type: "feature", content: "9 个系统歌单自动创建与维护：综合-飙升榜 / 单曲-热歌榜 / 歌切-新歌榜等，可直接在歌单中点播" },
+      // 歌手页与多歌手
+      { type: "feature", content: "管理端支持为单曲 / 专辑 / 歌切 / 直播场次选择多位歌手，表单使用 ArtistSelector 统一交互" },
+      { type: "feature", content: "歌手页新增单曲数 + 歌切数双计显示（如「31 首单曲 + 573 首歌切，共 604 首」），悬停查看明细" },
+      { type: "feature", content: "歌手页单曲 / 歌切预览精简为各 10 首，提供「查看全部」独立页入口，首屏更清爽" },
+      { type: "feature", content: "歌曲列表、全屏播放页 PC 端左侧、移动端全屏歌词页顶部、移动端歌曲操作菜单均支持点击歌手名进入歌手详情页" },
+      // 歌切体验
+      { type: "feature", content: "管理端歌切支持独立自定义封面，并新增「清空自定义封面」按钮自动回退至所属场次封面" },
+      { type: "improvement", content: "歌切播放纳入 PlayHistory：歌切播放同样会计入最近播放与 7 天榜单统计" },
+      // 搜索
+      { type: "feature", content: "搜索引擎升级：支持同义词扩展（管理端可后台配置）、拼音首字母匹配（如「xjj」→「星镜境」）" },
+      { type: "feature", content: "管理端新增「搜索同义词」CRUD 页面，可即时新增 / 编辑 / 删除同义词条目，生效无需重启服务" },
+      { type: "improvement", content: "搜索结果默认按相关度排序（标题 / 歌手 / 专辑权重 4 / 3 / 2），同时保留按播放量 / 时间排序选项" },
+    ],
+  },
+  {
     version: "1.4.3",
     versionCode: 12,
     releaseDate: "2026-08-09",
@@ -255,8 +279,8 @@ export const CHANGELOG: VersionEntry[] = [
 ];
 
 /** 当前版本号（与 package.json 保持一致） */
-export const APP_VERSION = "1.4.3";
-export const APP_VERSION_CODE = 12;
+export const APP_VERSION = "1.5.0";
+export const APP_VERSION_CODE = 13;
 
 /**
  * 获取更新类型对应的显示标签
