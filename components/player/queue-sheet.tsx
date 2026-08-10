@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { usePlayerStore, type PlayMode, type Song } from "@/lib/store/player-store";
-import { cn } from "@/lib/utils";
+import { cn, resolveClipCover, resolveMediaUrl } from "@/lib/utils";
 import {
   Sheet,
   SheetContent,

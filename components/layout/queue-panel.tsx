@@ -5,7 +5,7 @@ import { Music2, Play, Pause, ChevronUp, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { usePlayerStore } from "@/lib/store/player-store";
-import { cn } from "@/lib/utils";
+import { cn, resolveClipCover, resolveMediaUrl } from "@/lib/utils";
 import { AppImage } from "@/components/ui/app-image";
 
 /**

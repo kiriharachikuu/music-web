@@ -428,7 +428,7 @@ export function toPlayerSong(s: ApiSong | Track): PlayerSong {
     artist: s.artist,
     artistId: (s as ApiSong).artistId ?? null,
     album: s.albumName ?? s.album?.name,
-    cover: s.coverUrl ?? ("sessionCover" in s ? s.sessionCover : undefined) ?? s.album?.cover ?? undefined,
+    cover: ("cover" in s ? s.cover : undefined) ?? s.coverUrl ?? ("sessionCover" in s ? s.sessionCover : undefined) ?? s.album?.cover ?? undefined,
     sessionCover: "sessionCover" in s ? s.sessionCover : undefined,
     url: s.fileUrl,
     duration: s.duration,

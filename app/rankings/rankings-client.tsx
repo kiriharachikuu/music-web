@@ -81,7 +81,7 @@ function rankingTrackToPlayerSong(t: RankingTrack): PlayerSong {
     albumName: t.albumName,
     duration: t.duration,
     fileUrl: t.fileUrl ?? "",
-    coverUrl: t.coverUrl ?? null,
+    coverUrl: t.coverUrl ?? t.cover ?? null,
     sessionCover: t.sessionCover ?? null,
     lyricUrl: t.lyricUrl ?? null,
     releaseDate: t.releaseDate ?? "",

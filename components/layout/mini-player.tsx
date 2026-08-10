@@ -99,13 +99,13 @@ export function MiniPlayer() {
             }}
             whileHover={{ scale: 1.05 }}
           >
-            {currentSong?.cover || (currentSong?.trackType === "live_clip" && resolveClipCover(currentSong)) ? (
+            {currentSong?.cover || currentSong?.sessionCover || (currentSong?.trackType === "live_clip" && resolveClipCover(currentSong)) ? (
               <AppImage
                 src={resolveMediaUrl(
                   currentSong.cover ??
                     (currentSong.trackType === "live_clip"
                       ? resolveClipCover(currentSong)
-                      : null)
+                      : currentSong.sessionCover ?? null)
                 )}
                 alt={currentSong.title}
                 fill

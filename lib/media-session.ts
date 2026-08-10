@@ -11,7 +11,7 @@
 
 import type { Song } from "@/lib/store/player-store";
 import { getPlatform } from "@/lib/platform";
-import { resolveMediaUrl } from "@/lib/utils";
+import { resolveClipCover, resolveMediaUrl } from "@/lib/utils";
 
 /** Media Session 操作处理器集合 */
 export interface MediaSessionHandlers {
