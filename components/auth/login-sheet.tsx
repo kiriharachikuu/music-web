@@ -413,14 +413,10 @@ function FormField({
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={(e) => {
-            // 延迟等键盘动画稳定后再滚动，确保输入框可见
-            setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
-          }}
           placeholder={placeholder}
           autoComplete={autoComplete}
           disabled={disabled}
-          className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-sm text-white placeholder:text-white/30 transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+          className="h-11 w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-3 text-base text-white placeholder:text-white/30 transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 md:text-sm"
         />
       </div>
     </div>

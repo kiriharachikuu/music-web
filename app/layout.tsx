@@ -54,7 +54,7 @@ export const metadata: Metadata = {
  * viewport：跨 CDN（Vercel / EdgeOne）一致渲染的关键配置
  *
  * 修复说明：
- * 1. 移除 maximumScale=1 + userScalable=false（违反 Apple 策略且 EdgeOne 会注入冲突值）
+ * 1. 移动端禁止双指/双击缩放，避免输入框聚焦触发页面缩放
  * 2. 显式声明 colorScheme，避免 CDN 推断导致深/浅色模式错位
  * 3. 保留 viewportFit=cover 以适配 TWA 内的刘海屏
  * 4. themeColor 改为数组，dark/light 浏览器自动按 prefers-color-scheme 切换
@@ -62,6 +62,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   colorScheme: "dark light",
   themeColor: [
