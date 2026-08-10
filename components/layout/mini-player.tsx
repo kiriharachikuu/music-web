@@ -43,7 +43,8 @@ const ProgressBar = React.memo(function ProgressBar({
     >
       <motion.div
         ref={ref}
-        className="relative h-1 w-full rounded-full bg-white/10"
+        className="relative h-1 w-full rounded-full"
+        style={{ backgroundColor: "rgba(255, 255, 255, 0.16)" }}
       >
         <motion.div
           className="absolute inset-y-0 left-0 rounded-full"

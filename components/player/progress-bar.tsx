@@ -118,8 +118,11 @@ export function ProgressBar({ value, max, onSeek }: ProgressBarProps) {
       onKeyDown={onKeyDown}
       className="group relative flex h-6 w-full cursor-pointer touch-none items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
-      {/* 轨道 */}
-      <div className="absolute inset-x-0 h-1.5 rounded-full bg-white/15" />
+      {/* 轨道：固定中性底色，不随主题/模式变化 */}
+      <div
+        className="absolute inset-x-0 h-1.5 rounded-full"
+        style={{ backgroundColor: "rgba(255, 255, 255, 0.16)" }}
+      />
       {/* 已播放填充：主题渐变 */}
       <motion.div
         className="absolute left-0 h-1.5 rounded-full"
