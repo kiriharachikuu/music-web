@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Music2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -62,25 +61,31 @@ export function AppImage({
     );
   }
 
+  // 用原生 <img> 而非 next/image：
+  // 1. next/image 的优化端点 /_next/image 在 dev rewrites 和生产 nginx 都没匹配 /uploads/...，
+  //    后端相对路径封面会被 next/image 走 404，最终回退到 Music2 占位
+  // 2. 后端图本身已带尺寸优化，前端再走 next/image 优化收益不大
+  // 3. 对 /uploads 路径、原域名、data: 都直接交给浏览器加载
   return (
-    <Image
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
       src={src}
       alt={alt}
-      fill={fill}
       width={fill ? undefined : width}
       height={fill ? undefined : height}
       className={cn(
         "object-cover transition-opacity duration-300",
         loaded ? "opacity-100" : "opacity-0",
+        fill ? "absolute inset-0 h-full w-full" : "",
         className
       )}
-      priority={priority}
-      sizes={sizes}
+      // 切歌时不强制 lazy，避免移动端懒加载延迟显示新封面
+      loading={priority ? "eager" : "eager"}
+      decoding="async"
       onLoad={() => setLoaded(true)}
       onError={() => setError(true)}
-      loading={priority ? "eager" : "lazy"}
-      style={style}
       draggable={draggable}
+      style={style}
     />
   );
 }

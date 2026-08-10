@@ -281,14 +281,14 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
   if (!currentSong) return null;
 
   // 封面解析：
-  // - 官方歌曲：currentSong.cover
+  // - 官方歌曲：currentSong.cover 缺失时回退 album/sessionCover（部分歌曲的 coverUrl/album.cover 走了不同字段）
   // - 直播歌切：优先独立封面，缺失时回退到 sessionCover / session.cover
   // - 统一通过 resolveMediaUrl 拼接后端 origin，避免移动端在 PWA / 跨域部署下拿到相对路径图片不显示
   const rawCover = currentSong.cover
     ? currentSong.cover
     : currentSong.trackType === "live_clip"
       ? resolveClipCover(currentSong)
-      : null;
+      : (currentSong.sessionCover ?? null);
   const cover = rawCover ? resolveMediaUrl(rawCover) : undefined;
 
   return (
