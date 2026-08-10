@@ -9,8 +9,6 @@ import {
   Shuffle,
   ListOrdered,
   Trash2,
-  Play,
-  Pause,
 } from "lucide-react";
 
 import { usePlayerStore, type PlayMode, type Song } from "@/lib/store/player-store";
@@ -234,10 +232,8 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
   const queue = usePlayerStore((s) => s.queue);
   const currentIndex = usePlayerStore((s) => s.currentIndex);
   const currentSong = usePlayerStore((s) => s.currentSong);
-  const isPlaying = usePlayerStore((s) => s.isPlaying);
   const playMode = usePlayerStore((s) => s.playMode);
   const play = usePlayerStore((s) => s.play);
-  const toggle = usePlayerStore((s) => s.toggle);
   const setPlayMode = usePlayerStore((s) => s.setPlayMode);
   const listRef = React.useRef<HTMLUListElement>(null);
   const itemRefs = React.useRef<Array<HTMLLIElement | null>>([]);
@@ -332,19 +328,6 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
                 {currentSong?.artist ?? "—"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={toggle}
-              disabled={!currentSong}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-primary shadow-md transition-all hover:scale-105 active:scale-95 disabled:opacity-40"
-              aria-label={isPlaying ? "暂停" : "播放"}
-            >
-              {isPlaying ? (
-                <Pause className="h-4 w-4" fill="currentColor" />
-              ) : (
-                <Play className="h-4 w-4 translate-x-[1px]" fill="currentColor" />
-              )}
-            </button>
           </div>
 
           {/* 播放模式切换条 */}

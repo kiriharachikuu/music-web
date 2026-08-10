@@ -236,19 +236,11 @@ export function LyricsView({
               aria-current={isActive ? "true" : undefined}
               aria-label={`跳转到 ${formatLabelTime(line.time)}`}
               className={cn(
-                "group relative max-w-full cursor-pointer rounded-lg border-0 bg-transparent px-4 py-2 text-center outline-none md:text-left",
-                isActive
-                  ? "text-white"
-                  : "text-white/70 hover:text-white"
+                "group relative max-w-full cursor-pointer rounded-lg border-0 bg-transparent px-4 py-2 text-center text-white outline-none md:text-left",
+                !isActive && "hover:text-white"
               )}
               style={{
                 opacity,
-                ...(isActive
-                  ? {
-                      textShadow:
-                        "0 0 22px rgba(139,0,255,0.45), 0 0 8px rgba(255,255,255,0.18)",
-                    }
-                  : undefined),
               }}
               animate={{
                 scale: isActive ? 1.1 : 1,
@@ -294,7 +286,7 @@ function LyricLineContent({
       {/* 原文：空行用占位符避免高度塌陷 */}
       <motion.span
         className={cn(
-          "block text-center text-lg font-semibold leading-relaxed drop-shadow-sm md:text-left md:text-2xl md:leading-relaxed",
+          "block text-center text-lg font-semibold leading-relaxed text-white drop-shadow-sm md:text-left md:text-2xl md:leading-relaxed",
           isActive && "font-bold"
         )}
         initial={{ opacity: 0, y: 10 }}
@@ -303,12 +295,11 @@ function LyricLineContent({
       >
         {line.text || "···"}
       </motion.span>
-      {/* 译文：双语歌词，比原文小，颜色 primary-300 */}
+      {/* 译文：双语歌词，比原文小，颜色保持白色，透明度用于层级区分（不跟随主色变紫） */}
       {line.translation && (
         <motion.span
           className={cn(
-            "mt-1 block text-center text-sm font-normal md:text-left md:text-base",
-            isActive ? "text-primary/60" : "text-white/50"
+            "mt-1 block text-center text-sm font-normal text-white/50 md:text-left md:text-base",
           )}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

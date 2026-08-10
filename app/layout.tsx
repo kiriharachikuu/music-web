@@ -82,8 +82,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        {/* 首屏注入 safe-area CSS 变量，避免 useSafeArea useEffect 前的内容闪烁 */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var r=document.documentElement;r.style.setProperty('--safe-area-top','env(safe-area-inset-top,0px)');r.style.setProperty('--safe-area-bottom','env(safe-area-inset-bottom,0px)');r.style.setProperty('--safe-area-left','env(safe-area-inset-left,0px)');r.style.setProperty('--safe-area-right','env(safe-area-inset-right,0px)');})();` }} />
         {/* 首屏同步颜色主题，避免 SSR/hydration 后闪烁 */}
         <script dangerouslySetInnerHTML={{ __html: colorThemeInitScript }} />
         {/*

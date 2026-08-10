@@ -282,14 +282,16 @@ function FullScreenPlayerInner({ onClose }: FullScreenPlayerInnerProps) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 overflow-hidden bg-black text-fullscreen-player"
+      className="fixed inset-0 z-50 overflow-hidden bg-black text-white"
       style={{
         // iOS PWA 适配：
         // 1. 高度用 dvh，浏览器 UI 收起后视口变化时能跟随收缩，避免底部被 URL bar 覆盖
         // 2. 100vh 兜底，覆盖不支持 dvh 的旧版 iOS Safari
-        height: "calc(100dvh - var(--safe-area-top, 0px) - var(--safe-area-bottom, 0px))",
-        top: "var(--safe-area-top, env(safe-area-inset-top))",
-        bottom: "var(--safe-area-bottom, env(safe-area-inset-bottom))",
+        // 3. 容器全屏铺满（top/bottom/left/right 全部为 0），让背景黑底延伸到状态栏 / Home 指示条之下，
+        //    避免 iOS PWA 在灵动岛/安全区外露出 body 的浅色背景形成白边。
+        //    内容层的顶部/底部安全区改用 pt-safe / pb-safe 内部 padding 适配。
+        height: "100dvh",
+        width: "100dvw",
         willChange: "transform",
       }}
       initial={{ y: "100%" }}
