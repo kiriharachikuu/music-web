@@ -51,15 +51,23 @@ export const metadata: Metadata = {
 };
 
 /**
- * viewport：theme-color 主色 + viewport-fit=cover（适配刘海屏 standalone）
+ * viewport：跨 CDN（Vercel / EdgeOne）一致渲染的关键配置
+ *
+ * 修复说明：
+ * 1. 移除 maximumScale=1 + userScalable=false（违反 Apple 策略且 EdgeOne 会注入冲突值）
+ * 2. 显式声明 colorScheme，避免 CDN 推断导致深/浅色模式错位
+ * 3. 保留 viewportFit=cover 以适配 TWA 内的刘海屏
+ * 4. themeColor 改为数组，dark/light 浏览器自动按 prefers-color-scheme 切换
  */
 export const viewport: Viewport = {
-  themeColor: "#8B00FF",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
+  colorScheme: "dark light",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#8B00FF" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a0033" },
+  ],
 };
 
 export default function RootLayout({
