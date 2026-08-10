@@ -33,7 +33,7 @@ import { ChangePasswordDialog } from "./change-password-dialog";
 import { getQualityPreference, setQualityPreference } from "@/lib/api";
 import { AppUpdateModal } from "@/components/common/app-update-modal";
 import { checkLatestVersion, detectPlatform, type AppVersionInfo } from "@/lib/api/app-version";
-import { APP_VERSION, APP_VERSION_CODE } from "@/lib/constants/changelog";
+import { APP_VERSION, APP_VERSION_CODE, CHANGELOG } from "@/lib/constants/changelog";
 
 /** localStorage key */
 const DOWNLOADS_KEY = "xt-music-downloads";
@@ -73,6 +73,24 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
   const [latestAppVersion, setLatestAppVersion] = React.useState<AppVersionInfo | null>(null);
   const [checkingAppUpdate, setCheckingAppUpdate] = React.useState(false);
   const [currentCacheSize, setCurrentCacheSize] = React.useState(0);
+
+  /**
+   * 获取当前已安装的 TWA App 版本号（用于「Android App 更新」区块显示）
+   * - 优先级：原生 Bridge.getAppVersionName() → versionCode 反查 CHANGELOG → APP_VERSION
+   * - 老版本 TWA（<= 1.3.3）没有 getAppVersionName，会回退到 versionCode 查表
+   * - versionCode 仍查不到时显示 `v{versionCode}`（避免对未收录的中间版本无显示）
+   * - 非 TWA 环境直接使用前端常量 APP_VERSION（即 Web 平台版本）
+   */
+  const installedAppVersion = React.useMemo(() => {
+    if (!isTWA) return APP_VERSION;
+    const name = androidBridge.getAppVersionName();
+    if (name) return name;
+    const codeStr = androidBridge.getAppVersionCode();
+    const code = parseInt(codeStr, 10);
+    if (!code || Number.isNaN(code)) return APP_VERSION;
+    const match = CHANGELOG.find((c) => c.versionCode === code);
+    return match?.version ?? `v${code}`;
+  }, [isTWA]);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -474,37 +492,49 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
         </p>
       </div>
 
-      {/* 离线缓存音质 */}
-      <SettingsRow icon={HardDrive} title="离线缓存音质">
-        <div className="flex items-center gap-1.5">
-          {(
-            [
-              { key: "standard" as OfflineQuality, label: "标准" },
-              { key: "higher" as OfflineQuality, label: "较高" },
-              { key: "lossless" as OfflineQuality, label: "无损" },
-              { key: "follow-online" as OfflineQuality, label: "跟随在线" },
-            ] as const
-          ).map((q) => {
-            const isActive = offlineQuality === q.key;
-            return (
-              <button
-                key={q.key}
-                type="button"
-                onClick={() => setOfflineQuality(q.key)}
-                aria-pressed={isActive}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-all",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-foreground/5 text-foreground/60 hover:bg-foreground/10"
-                )}
-              >
-                {q.label}
-              </button>
-            );
-          })}
+      {/* 离线缓存音质
+          4 个选项在窄屏上单行会拥挤，移动端改为：
+          - 标题与按钮垂直堆叠（按钮区使用完整宽度）
+          - 按钮 2x2 网格排布（每行 2 个）
+          桌面端恢复水平排列 */}
+      <div className="rounded-2xl border border-primary/10 bg-card/40 px-4 py-3.5">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary dark:text-primary/70">
+              <HardDrive className="h-4 w-4" />
+            </span>
+            <span className="text-sm font-medium">离线缓存音质</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center sm:gap-1.5">
+            {(
+              [
+                { key: "standard" as OfflineQuality, label: "标准" },
+                { key: "higher" as OfflineQuality, label: "较高" },
+                { key: "lossless" as OfflineQuality, label: "无损" },
+                { key: "follow-online" as OfflineQuality, label: "跟随在线" },
+              ] as const
+            ).map((q) => {
+              const isActive = offlineQuality === q.key;
+              return (
+                <button
+                  key={q.key}
+                  type="button"
+                  onClick={() => setOfflineQuality(q.key)}
+                  aria-pressed={isActive}
+                  className={cn(
+                    "rounded-full px-2 py-1.5 text-xs font-medium transition-all whitespace-nowrap sm:px-3",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-foreground/5 text-foreground/60 hover:bg-foreground/10"
+                  )}
+                >
+                  {q.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </SettingsRow>
+      </div>
 
       {/* 自动播放开关 */}
       <SettingsRow icon={Play} title="自动播放">
@@ -569,7 +599,7 @@ export function SettingsTab({ onLogout }: SettingsTabProps) {
               </span>
               <div>
                 <p className="text-sm font-medium">Android App 更新</p>
-                <p className="text-xs text-muted-foreground">当前客户端版本 v{APP_VERSION}</p>
+                <p className="text-xs text-muted-foreground">当前客户端版本 v{installedAppVersion}</p>
               </div>
             </div>
             <Button

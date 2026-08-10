@@ -34,6 +34,8 @@ export interface AndroidJSBridge {
   installApk(downloadUrl: string, md5: string | null): void;
   /** 获取原生 BuildConfig.VERSION_CODE（供版本检查使用） */
   getAppVersionCode(): string;
+  /** 获取原生 BuildConfig.VERSION_NAME（如 "1.3.3"）。旧版 TWA 不支持，JS 侧需做特性检测。 */
+  getAppVersionName(): string;
   /** 获取 JSBridge 接口版本（用于兼容性降级） */
   getBridgeVersion(): string;
   /** 刷新当前 WebView（用于平台更新后重新加载 Web 资源） */
@@ -128,6 +130,21 @@ export const androidBridge = {
     if (!bridge) return "";
     try {
       return bridge.getAppVersionCode();
+    } catch {
+      return "";
+    }
+  },
+
+  /**
+   * 获取原生 App versionName（如 "1.3.3"）
+   * - 旧版 TWA（<= 1.3.3）未实现此接口，返回空字符串
+   * - 浏览器模式返回空字符串
+   */
+  getAppVersionName(): string {
+    const bridge = getNativeBridge();
+    if (!bridge || typeof bridge.getAppVersionName !== "function") return "";
+    try {
+      return bridge.getAppVersionName();
     } catch {
       return "";
     }
