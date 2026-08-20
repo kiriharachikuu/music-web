@@ -3,7 +3,9 @@
  *
  * 后端接口：
  * - GET  /api/app/version/latest   获取最新版本
- * - HEAD /api/app/version/download/:id  上报下载次数（需登录）
+ * - GET  /api/app/version/list     公开历史版本列表
+ * - GET  /api/app/version/download/:id  302 计数跳转（匿名下载也计入统计）
+ * - HEAD /api/app/version/download/:id  旧版上报下载次数（需登录，保留兼容）
  *
  * 对接页面：
  * - /download 下载页
@@ -21,16 +23,43 @@ export interface AppVersionInfo {
   content: string[];
   downloadUrl?: string | null;
   apkUrl?: string | null;
-  /** APK 文件 MD5 校验值（TWA 模式安装时校验） */
+  /** 安装包 MD5 校验值（TWA 模式安装时校验） */
   md5?: string | null;
   /** 文件大小（字节） */
   fileSize: number;
   channel: string;
   platform: string;
+  /** 发布形态：full（APK 完整包）/ setup（Win 安装版）/ portable（Win 便携版） */
+  variant?: string | null;
   /** 发布时间（后端返回 Date 序列化字符串；可能为空） */
   releaseDate?: string | Date | null;
   forceUpdate: boolean;
   minVersionCode: number;
+}
+
+/** 历史版本列表条目（GET /app/version/list） */
+export interface AppVersionListItem {
+  id: string;
+  versionCode: number;
+  versionName: string;
+  title?: string | null;
+  content: string[];
+  fileSize: number;
+  variant: string;
+  channel: string;
+  platform: string;
+  downloadCount: number;
+  releaseDate?: string | Date | null;
+}
+
+/** 历史版本列表返回 */
+export interface VersionListResult {
+  list: AppVersionListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasMore: boolean;
 }
 
 /** 版本检查接口返回 */
@@ -42,14 +71,16 @@ export interface VersionCheckResult {
 
 /**
  * 获取最新版本信息
- * @param platform 平台 android/ios/desktop
+ * @param platform 平台 android/windows/ios（旧值 desktop 由后端兼容）
  * @param channel 发布渠道 stable/beta
  * @param versionCode 当前版本码（可选，用于判断是否需要更新）
+ * @param variant 发布形态 full/setup/portable（可选，Windows 双形态用）
  */
 export async function checkLatestVersion(
   platform: string = detectPlatform(),
   channel: string = "stable",
-  versionCode?: number
+  versionCode?: number,
+  variant?: string
 ): Promise<VersionCheckResult> {
   const params = new URLSearchParams({
     platform,
@@ -58,12 +89,46 @@ export async function checkLatestVersion(
   if (versionCode != null) {
     params.set("versionCode", String(versionCode));
   }
+  if (variant) {
+    params.set("variant", variant);
+  }
   return api.get<VersionCheckResult>(`/app/version/latest?${params.toString()}`, {
     skipCache: true,
   });
 }
 
 export const fetchLatestVersion = checkLatestVersion;
+
+/**
+ * 获取公开历史版本列表（仅 published）
+ */
+export async function fetchVersionList(
+  platform: string,
+  channel: string = "stable",
+  variant?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<VersionListResult> {
+  const params = new URLSearchParams({
+    platform,
+    channel,
+    page: String(page),
+    limit: String(limit),
+  });
+  if (variant) {
+    params.set("variant", variant);
+  }
+  return api.get<VersionListResult>(`/app/version/list?${params.toString()}`, {
+    skipCache: true,
+  });
+}
+
+/**
+ * 构建 302 下载链接（服务端计数后跳转真实地址，匿名下载也计入统计）
+ */
+export function buildDownloadUrl(versionId: string): string {
+  return `${API_BASE}/app/version/download/${versionId}`;
+}
 
 /**
  * 上报下载次数（HEAD 请求，静默上报成功不影响下载）
@@ -118,4 +183,12 @@ export function detectPlatform(): "desktop" | "android" | "ios" {
   if (isIOS) return "ios";
   if (/android|mobile|touch/.test(ua)) return "android";
   return "desktop";
+}
+
+/**
+ * 下载页平台 Tab 检测：桌面浏览器默认选中 Windows
+ * （iOS 无原生客户端，默认展示 Android）
+ */
+export function detectDownloadTab(): "android" | "windows" {
+  return detectPlatform() === "desktop" ? "windows" : "android";
 }

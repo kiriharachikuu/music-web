@@ -18,15 +18,21 @@ import {
   FileDown,
   RefreshCw,
   AlertCircle,
+  Monitor,
+  PackageOpen,
+  Archive,
+  History,
 } from "lucide-react";
 
 import {
-  fetchLatestVersion,
-  trackDownload,
+  checkLatestVersion,
+  fetchVersionList,
+  buildDownloadUrl,
   formatFileSize,
   formatReleaseDate,
-  detectPlatform,
+  detectDownloadTab,
   type AppVersionInfo,
+  type AppVersionListItem,
 } from "@/lib/api/app-version";
 import { CHANGELOG, APP_VERSION, CHANGE_TYPE_LABEL, type ChangeItem } from "@/lib/constants/changelog";
 import { Button } from "@/components/ui/button";
@@ -43,105 +49,168 @@ type DownloadStatus =
   | "success"   // 成功
   | "error";    // 失败
 
+/** 下载目标：Android 完整包 / Windows 安装版 / Windows 便携版 */
+type DownloadTarget = "android" | "setup" | "portable";
+
+type PlatformTab = "android" | "windows";
+
+/** 按目标生成下载文件名 */
+function buildFileName(target: DownloadTarget, versionName?: string | null): string {
+  const v = versionName || APP_VERSION;
+  if (target === "android") return `XingTone-v${v}.apk`;
+  if (target === "setup") return `XingTone-v${v}-Setup.exe`;
+  return `XingTone-v${v}-portable.exe`;
+}
+
 export function DownloadClient() {
   const [status, setStatus] = React.useState<DownloadStatus>("loading");
   const [progress, setProgress] = React.useState(0);
-  const [latestVersion, setLatestVersion] = React.useState<AppVersionInfo | null>(null);
+  const [downloadTarget, setDownloadTarget] = React.useState<DownloadTarget | null>(null);
+  const [activeTab, setActiveTab] = React.useState<PlatformTab>("android");
   const [showAllChangelog, setShowAllChangelog] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [versionsLoading, setVersionsLoading] = React.useState(true);
 
-  const platform = "android"; // 下载页默认展示 Android 版本
+  // 各目标最新版本
+  const [androidLatest, setAndroidLatest] = React.useState<AppVersionInfo | null>(null);
+  const [winSetup, setWinSetup] = React.useState<AppVersionInfo | null>(null);
+  const [winPortable, setWinPortable] = React.useState<AppVersionInfo | null>(null);
 
-  // 页面入场动画 + 加载最新版本
+  // 历史版本
+  const [historyExpanded, setHistoryExpanded] = React.useState(false);
+  const [historyLoading, setHistoryLoading] = React.useState(false);
+  const [historyError, setHistoryError] = React.useState<string | null>(null);
+  const [historyItems, setHistoryItems] = React.useState<AppVersionListItem[] | null>(null);
+
+  // 页面入场动画 + UA 检测默认 Tab + 并行加载各平台最新版本
   React.useEffect(() => {
     setMounted(true);
-    loadLatestVersion();
+    setActiveTab(detectDownloadTab());
+    void loadVersions();
   }, []);
 
-  // 加载最新版本信息
-  async function loadLatestVersion() {
+  // 切换平台时收起历史版本
+  React.useEffect(() => {
+    setHistoryExpanded(false);
+    setHistoryItems(null);
+    setHistoryError(null);
+  }, [activeTab]);
+
+  // 并行加载：Android 最新版 + Windows 安装版/便携版
+  async function loadVersions() {
     try {
-      setStatus("loading");
+      setVersionsLoading(true);
+      const [androidRes, setupRes, portableRes] = await Promise.all([
+        checkLatestVersion("android", "stable"),
+        checkLatestVersion("windows", "stable", undefined, "setup").catch(() => null),
+        checkLatestVersion("windows", "stable", undefined, "portable").catch(() => null),
+      ]);
+      setAndroidLatest(androidRes.latest);
+      setWinSetup(setupRes?.latest ?? null);
+      setWinPortable(portableRes?.latest ?? null);
       setLoadError(null);
-      const result = await fetchLatestVersion(platform, "stable");
-      if (result.latest) {
-        setLatestVersion(result.latest);
-      }
-      setStatus("idle");
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "加载失败");
-      setStatus("idle"); // 降级：加载失败时仍显示静态版本信息
+    } finally {
+      setVersionsLoading(false);
+      setStatus("idle");
     }
   }
 
-  // 处理下载
-  const handleDownload = React.useCallback(async () => {
-    if (status === "downloading" || status === "preparing" || status === "loading") return;
+  const getTargetVersion = React.useCallback(
+    (target: DownloadTarget): AppVersionInfo | null => {
+      if (target === "android") return androidLatest;
+      if (target === "setup") return winSetup;
+      return winPortable;
+    },
+    [androidLatest, winSetup, winPortable]
+  );
 
-    const downloadUrl = latestVersion?.downloadUrl;
-    const versionId = latestVersion?.id;
+  // 处理下载（302 计数链接，浏览器接管真实下载）
+  const handleDownload = React.useCallback(
+    (target: DownloadTarget) => {
+      if (status === "downloading" || status === "preparing" || status === "loading") return;
 
-    setStatus("preparing");
-    setProgress(0);
+      const version = getTargetVersion(target);
+      // 302 代理链接：服务端计数后跳转真实地址；无版本数据时不可下载
+      const downloadUrl = version ? buildDownloadUrl(version.id) : undefined;
 
-    // 上报下载次数（静默处理
-    if (versionId) {
-      void trackDownload(versionId);
-    }
+      setDownloadTarget(target);
+      setStatus("preparing");
+      setProgress(0);
 
-    // 模拟准备阶段
-    const prepareTimer = setTimeout(() => {
-      setStatus("downloading");
+      // 模拟准备阶段（真实下载由浏览器接管，这里做视觉反馈）
+      const prepareTimer = setTimeout(() => {
+        setStatus("downloading");
 
-      // 模拟下载进度（真实场景下浏览器无法获取文件下载进度，用动画效果）
-      // 实际下载由浏览器接管，这里做视觉反馈
-      let current = 0;
-      const interval = setInterval(() => {
-        const increment = Math.random() * 8 + 2;
-        current = Math.min(current + increment, 95); // 到 95% 等实际下载完成
-        setProgress(Math.floor(current));
+        let current = 0;
+        const interval = setInterval(() => {
+          const increment = Math.random() * 8 + 2;
+          current = Math.min(current + increment, 95); // 到 95% 等实际下载完成
+          setProgress(Math.floor(current));
+          if (current >= 95) {
+            clearInterval(interval);
+          }
+        }, 200);
 
-        if (current >= 95) {
-          clearInterval(interval);
+        // 触发真实文件下载
+        if (downloadUrl) {
+          const link = document.createElement("a");
+          link.href = downloadUrl;
+          link.download = buildFileName(target, version?.versionName);
+          link.target = "_blank";
+          link.rel = "noopener";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         }
-      }, 200);
 
-      // 触发真实文件下载
-      if (downloadUrl) {
-        const link = document.createElement("a");
-        link.href = downloadUrl;
-        link.download = `XingTone-v${latestVersion?.versionName || APP_VERSION}.apk`;
-        link.target = "_blank";
-        link.rel = "noopener";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
-      // 浏览器下载启动后延迟标记成功
-      const completeTimer = setTimeout(() => {
-        clearInterval(interval);
-        setProgress(100);
-        setStatus("success");
-      }, 2500);
-
-      return () => {
-        clearTimeout(completeTimer);
-      };
-    }, 800);
-
-    return () => clearTimeout(prepareTimer);
-  }, [status, latestVersion]);
+        // 浏览器下载启动后延迟标记成功
+        const completeTimer = setTimeout(() => {
+          clearInterval(interval);
+          setProgress(100);
+          setStatus("success");
+        }, 2500);
+      }, 800);
+    },
+    [status, getTargetVersion]
+  );
 
   // 重新下载
   const handleRetry = React.useCallback(() => {
     setStatus("idle");
     setProgress(0);
+    setDownloadTarget(null);
   }, []);
 
-  // 显示的版本数据：优先后端返回，降级静态数据
-  const displayVersion = latestVersion;
+  // 加载历史版本列表
+  async function loadHistory() {
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const res = await fetchVersionList(activeTab, "stable", undefined, 1, 10);
+      setHistoryItems(res.list);
+    } catch (e) {
+      setHistoryError(e instanceof Error ? e.message : "加载失败");
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  function toggleHistory() {
+    if (!historyExpanded && historyItems === null && !historyLoading) {
+      void loadHistory();
+    }
+    setHistoryExpanded(!historyExpanded);
+  }
+
+  // 当前 Tab 展示的版本：优先后端，Windows 优先安装版
+  const isWindowsTab = activeTab === "windows";
+  const displayVersion = isWindowsTab
+    ? winSetup ?? winPortable
+    : androidLatest;
+  const fallbackSize = isWindowsTab ? "约 85 MB" : "约 8.5 MB";
   const visibleChangelog = showAllChangelog ? CHANGELOG : CHANGELOG.slice(0, 1);
 
   // 更新内容展示：优先用后端 content，降级到静态 changelog
@@ -201,138 +270,55 @@ export function DownloadClient() {
               <Badge icon={HardDrive}>
                 {displayVersion?.fileSize
                   ? formatFileSize(displayVersion.fileSize)
-                  : "约 8.5 MB"}
+                  : fallbackSize}
               </Badge>
             </div>
 
-            {/* 下载按钮区域 */}
-            <div className="w-full max-w-md space-y-3">
-              {/* 加载中 */}
-              {status === "loading" && (
-                <div className="flex h-12 items-center justify-center gap-3 rounded-xl bg-white/15 backdrop-blur-sm sm:h-14">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="text-sm font-medium sm:text-base">
-                    正在获取最新版本...
-                  </span>
-                </div>
-              )}
-
-              {/* 主下载按钮 */}
-              {status === "idle" && (
-                <Button
-                  onClick={handleDownload}
-                  size="lg"
-                  className="group relative h-12 w-full overflow-hidden bg-white text-primary shadow-xl transition-all hover:bg-white/90 hover:shadow-2xl active:scale-[0.98] sm:h-14"
-                >
-                  <span className="relative z-10 flex items-center justify-center gap-2 text-base font-semibold">
-                    <Download className="h-5 w-5 transition-transform group-hover:-translate-y-0.5" />
-                    立即下载
-                  </span>
-                  <span className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-500 group-hover:translate-y-0" />
-                </Button>
-              )}
-
-              {status === "preparing" && (
-                <div className="flex h-12 items-center justify-center gap-3 rounded-xl bg-white/15 backdrop-blur-sm sm:h-14">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span className="text-sm font-medium sm:text-base">
-                    正在准备下载...
-                  </span>
-                </div>
-              )}
-
-              {status === "downloading" && (
-                <div className="space-y-2">
-                  <div className="relative h-12 overflow-hidden rounded-xl bg-white/15 backdrop-blur-sm sm:h-14">
-                    {/* 进度条背景 */}
-                    <div
-                      className="absolute inset-y-0 left-0 bg-white/30 transition-all duration-200 ease-out"
-                      style={{ width: `${progress}%` }}
-                    />
-                    {/* 进度文字 */}
-                    <div className="relative z-10 flex h-full items-center justify-between px-4">
-                      <span className="flex items-center gap-2 text-sm font-medium">
-                        <FileDown className="h-4 w-4 animate-bounce" />
-                        正在下载
-                      </span>
-                      <span className="font-mono text-sm font-bold">
-                        {progress}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between text-[11px] text-white/50">
-                    <span>
-                      {displayVersion?.fileSize
-                        ? formatFileSize(displayVersion.fileSize)
-                        : "约 8.5 MB"}
-                    </span>
-                    <span>浏览器将自动开始下载</span>
-                  </div>
-                </div>
-              )}
-
-              {status === "success" && (
-                <div className="space-y-3">
-                  <div className="flex h-12 items-center justify-center gap-3 rounded-xl bg-emerald-500/20 text-emerald-200 sm:h-14">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span className="text-sm font-medium sm:text-base">
-                      下载已开始，请在浏览器中查看
-                    </span>
-                  </div>
-                  <Button
-                    onClick={handleRetry}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-white/70 hover:bg-white/10 hover:text-white"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    重新下载
-                  </Button>
-                </div>
-              )}
-
-              {status === "error" && (
-                <div className="space-y-3">
-                  <div className="flex h-12 items-center justify-center gap-3 rounded-xl bg-red-500/20 text-red-200 sm:h-14">
-                    <XCircle className="h-5 w-5" />
-                    <span className="text-sm font-medium sm:text-base">
-                      下载失败，请重试
-                    </span>
-                  </div>
-                  <Button
-                    onClick={handleRetry}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-white/70 hover:bg-white/10 hover:text-white"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    重新下载
-                  </Button>
-                </div>
-              )}
-
-              {/* 辅助链接 */}
-              {status === "idle" && (
-                <p className="text-center text-[11px] text-white/50 sm:text-xs">
-                  点击下载即表示同意{" "}
-                  <a href="/about" className="underline hover:text-white/80">
-                    用户协议
-                  </a>{" "}
-                  与{" "}
-                  <a href="/about" className="underline hover:text-white/80">
-                    隐私政策
-                  </a>
-                </p>
-              )}
-
-              {/* 加载失败提示 */}
-              {loadError && status === "idle" && (
-                <p className="flex items-center justify-center gap-1 text-[11px] text-amber-300/80 sm:text-xs">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  版本信息获取失败，显示的是本地缓存版本
-                </p>
-              )}
+            {/* ===== 平台切换 Tab ===== */}
+            <div className="flex w-full max-w-md items-center gap-1 rounded-xl bg-white/10 p-1 backdrop-blur-sm">
+              <PlatformTabButton
+                active={activeTab === "android"}
+                onClick={() => setActiveTab("android")}
+                icon={Smartphone}
+                label="Android"
+              />
+              <PlatformTabButton
+                active={activeTab === "windows"}
+                onClick={() => setActiveTab("windows")}
+                icon={Monitor}
+                label="Windows"
+              />
             </div>
+
+            {/* 下载按钮区域 */}
+            {!isWindowsTab ? (
+              <AndroidDownloadArea
+                status={downloadTarget === "android" ? status : "idle"}
+                progress={progress}
+                versionsLoading={versionsLoading}
+                hasVersion={!!androidLatest}
+                fileSizeText={
+                  androidLatest?.fileSize
+                    ? formatFileSize(androidLatest.fileSize)
+                    : fallbackSize
+                }
+                onDownload={() => handleDownload("android")}
+                onRetry={handleRetry}
+                loadError={loadError}
+              />
+            ) : (
+              <WindowsDownloadArea
+                setup={winSetup}
+                portable={winPortable}
+                versionsLoading={versionsLoading}
+                activeStatus={status}
+                activeTarget={downloadTarget}
+                progress={progress}
+                onDownload={handleDownload}
+                onRetry={handleRetry}
+                loadError={loadError}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -369,7 +355,9 @@ export function DownloadClient() {
             <h2 className="text-lg font-bold tracking-tight sm:text-xl md:text-2xl">
               更新内容
             </h2>
-            <p className="text-xs text-foreground/50 sm:text-sm">What's New</p>
+            <p className="text-xs text-foreground/50 sm:text-sm">
+              What&apos;s New · {isWindowsTab ? "Windows" : "Android"}
+            </p>
           </div>
         </div>
 
@@ -386,6 +374,11 @@ export function DownloadClient() {
                   <CheckCircle2 className="h-3 w-3" />
                   最新版本
                 </span>
+                {isWindowsTab && displayVersion.variant && displayVersion.variant !== "full" && (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-foreground/70">
+                    {displayVersion.variant === "setup" ? "安装版" : "便携版"}
+                  </span>
+                )}
               </div>
               {displayVersion.releaseDate && (
                 <span className="text-xs text-foreground/50 sm:text-sm">
@@ -464,6 +457,16 @@ export function DownloadClient() {
         )}
       </div>
 
+      {/* ===== 历史版本 ===== */}
+      <HistorySection
+        platform={activeTab}
+        expanded={historyExpanded}
+        loading={historyLoading}
+        error={historyError}
+        items={historyItems}
+        onToggle={toggleHistory}
+      />
+
       {/* ===== 系统要求 ===== */}
       <div className="space-y-5 md:space-y-6">
         <div className="flex items-center gap-3">
@@ -480,7 +483,7 @@ export function DownloadClient() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           <div className="rounded-xl border border-border/60 bg-card p-5 sm:rounded-2xl sm:p-6">
             <div className="mb-3 flex items-center gap-2">
               <Smartphone className="h-5 w-5 text-primary dark:text-primary/60" />
@@ -507,6 +510,31 @@ export function DownloadClient() {
           </div>
 
           <div className="rounded-xl border border-border/60 bg-card p-5 sm:rounded-2xl sm:p-6">
+            <div className="mb-3 flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-primary dark:text-primary/60" />
+              <h3 className="text-base font-semibold">Windows</h3>
+            </div>
+            <ul className="space-y-2 text-sm text-foreground/70">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                操作系统：Windows 10 及以上（64 位）
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                存储空间：至少 500 MB 可用空间
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                提供：安装版（Setup）与便携版（Portable）
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                便携版：免安装，解压即用，可放 U 盘
+              </li>
+            </ul>
+          </div>
+
+          <div className="rounded-xl border border-border/60 bg-card p-5 sm:rounded-2xl sm:p-6 sm:col-span-2 lg:col-span-1">
             <div className="mb-3 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary dark:text-primary/60" />
               <h3 className="text-base font-semibold">Web / PWA</h3>
@@ -546,11 +574,11 @@ export function DownloadClient() {
           安装包仅{" "}
           {displayVersion?.fileSize
             ? formatFileSize(displayVersion.fileSize)
-            : "约 8.5 MB"}
+            : fallbackSize}
           ，几秒钟即可下载完成
         </p>
         <Button
-          onClick={handleDownload}
+          onClick={() => handleDownload(isWindowsTab ? (winSetup ? "setup" : "portable") : "android")}
           disabled={
             status === "downloading" ||
             status === "preparing" ||
@@ -569,12 +597,475 @@ export function DownloadClient() {
           ) : (
             <>
               <Download className="mr-2 h-5 w-5" />
-              下载 v{displayVersion?.versionName || APP_VERSION}
+              下载 {isWindowsTab ? "Windows" : "Android"} 版 v
+              {displayVersion?.versionName || APP_VERSION}
             </>
           )}
         </Button>
       </div>
     </section>
+  );
+}
+
+/**
+ * 平台切换 Tab 按钮
+ */
+function PlatformTabButton({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: typeof Smartphone;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all",
+        active
+          ? "bg-white text-primary shadow-md"
+          : "text-white/70 hover:bg-white/10 hover:text-white"
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
+  );
+}
+
+/**
+ * Android 下载区（主按钮状态机）
+ */
+function AndroidDownloadArea({
+  status,
+  progress,
+  versionsLoading,
+  hasVersion,
+  fileSizeText,
+  onDownload,
+  onRetry,
+  loadError,
+}: {
+  status: DownloadStatus;
+  progress: number;
+  versionsLoading: boolean;
+  hasVersion: boolean;
+  fileSizeText: string;
+  onDownload: () => void;
+  onRetry: () => void;
+  loadError: string | null;
+}) {
+  return (
+    <div className="w-full max-w-md space-y-3">
+      {/* 加载中 */}
+      {(versionsLoading || status === "loading") && (
+        <div className="flex h-12 items-center justify-center gap-3 rounded-xl bg-white/15 backdrop-blur-sm sm:h-14">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm font-medium sm:text-base">
+            正在获取最新版本...
+          </span>
+        </div>
+      )}
+
+      {/* 主下载按钮 */}
+      {status === "idle" && !versionsLoading && (
+        <Button
+          onClick={onDownload}
+          disabled={!hasVersion}
+          size="lg"
+          className="group relative h-12 w-full overflow-hidden bg-white text-primary shadow-xl transition-all hover:bg-white/90 hover:shadow-2xl active:scale-[0.98] sm:h-14"
+        >
+          <span className="relative z-10 flex items-center justify-center gap-2 text-base font-semibold">
+            <Download className="h-5 w-5 transition-transform group-hover:-translate-y-0.5" />
+            {hasVersion ? "立即下载 APK" : "暂未发布"}
+          </span>
+          <span className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-500 group-hover:translate-y-0" />
+        </Button>
+      )}
+
+      {status === "preparing" && (
+        <div className="flex h-12 items-center justify-center gap-3 rounded-xl bg-white/15 backdrop-blur-sm sm:h-14">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm font-medium sm:text-base">
+            正在准备下载...
+          </span>
+        </div>
+      )}
+
+      {status === "downloading" && (
+        <div className="space-y-2">
+          <div className="relative h-12 overflow-hidden rounded-xl bg-white/15 backdrop-blur-sm sm:h-14">
+            <div
+              className="absolute inset-y-0 left-0 bg-white/30 transition-all duration-200 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+            <div className="relative z-10 flex h-full items-center justify-between px-4">
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <FileDown className="h-4 w-4 animate-bounce" />
+                正在下载
+              </span>
+              <span className="font-mono text-sm font-bold">{progress}%</span>
+            </div>
+          </div>
+          <div className="flex justify-between text-[11px] text-white/50">
+            <span>{fileSizeText}</span>
+            <span>浏览器将自动开始下载</span>
+          </div>
+        </div>
+      )}
+
+      {status === "success" && (
+        <div className="space-y-3">
+          <div className="flex h-12 items-center justify-center gap-3 rounded-xl bg-emerald-500/20 text-emerald-200 sm:h-14">
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="text-sm font-medium sm:text-base">
+              下载已开始，请在浏览器中查看
+            </span>
+          </div>
+          <Button
+            onClick={onRetry}
+            variant="ghost"
+            size="sm"
+            className="w-full text-white/70 hover:bg-white/10 hover:text-white"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            重新下载
+          </Button>
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="space-y-3">
+          <div className="flex h-12 items-center justify-center gap-3 rounded-xl bg-red-500/20 text-red-200 sm:h-14">
+            <XCircle className="h-5 w-5" />
+            <span className="text-sm font-medium sm:text-base">
+              下载失败，请重试
+            </span>
+          </div>
+          <Button
+            onClick={onRetry}
+            variant="ghost"
+            size="sm"
+            className="w-full text-white/70 hover:bg-white/10 hover:text-white"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            重新下载
+          </Button>
+        </div>
+      )}
+
+      {/* 辅助链接 */}
+      {status === "idle" && !versionsLoading && (
+        <p className="text-center text-[11px] text-white/50 sm:text-xs">
+          点击下载即表示同意{" "}
+          <a href="/about" className="underline hover:text-white/80">
+            用户协议
+          </a>{" "}
+          与{" "}
+          <a href="/about" className="underline hover:text-white/80">
+            隐私政策
+          </a>
+        </p>
+      )}
+
+      {/* 加载失败提示 */}
+      {loadError && !versionsLoading && (
+        <p className="flex items-center justify-center gap-1 text-[11px] text-amber-300/80 sm:text-xs">
+          <AlertCircle className="h-3.5 w-3.5" />
+          版本信息获取失败，请稍后重试
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Windows 下载区：安装版 + 便携版双卡片
+ */
+function WindowsDownloadArea({
+  setup,
+  portable,
+  versionsLoading,
+  activeStatus,
+  activeTarget,
+  progress,
+  onDownload,
+  onRetry,
+  loadError,
+}: {
+  setup: AppVersionInfo | null;
+  portable: AppVersionInfo | null;
+  versionsLoading: boolean;
+  activeStatus: DownloadStatus;
+  activeTarget: DownloadTarget | null;
+  progress: number;
+  onDownload: (target: DownloadTarget) => void;
+  onRetry: () => void;
+  loadError: string | null;
+}) {
+  const noWindowsVersion = !versionsLoading && !setup && !portable;
+
+  return (
+    <div className="w-full max-w-2xl space-y-3">
+      <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+        <WinVariantCard
+          title="安装版"
+          desc="标准 Windows 安装程序，支持开始菜单与桌面快捷方式"
+          icon={PackageOpen}
+          version={setup}
+          target="setup"
+          versionsLoading={versionsLoading}
+          status={activeTarget === "setup" ? activeStatus : "idle"}
+          progress={progress}
+          onDownload={onDownload}
+          onRetry={onRetry}
+        />
+        <WinVariantCard
+          title="便携版"
+          desc="免安装绿色版，解压即用，可放 U 盘随身携带"
+          icon={Archive}
+          version={portable}
+          target="portable"
+          versionsLoading={versionsLoading}
+          status={activeTarget === "portable" ? activeStatus : "idle"}
+          progress={progress}
+          onDownload={onDownload}
+          onRetry={onRetry}
+        />
+      </div>
+
+      {noWindowsVersion && !loadError && (
+        <p className="text-center text-[11px] text-white/60 sm:text-xs">
+          Windows 版本正在准备中，敬请期待
+        </p>
+      )}
+
+      {loadError && !versionsLoading && (
+        <p className="flex items-center justify-center gap-1 text-[11px] text-amber-300/80 sm:text-xs">
+          <AlertCircle className="h-3.5 w-3.5" />
+          版本信息获取失败，请稍后重试
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Windows 单形态下载卡片（安装版/便携版共用）
+ */
+function WinVariantCard({
+  title,
+  desc,
+  icon: Icon,
+  version,
+  target,
+  versionsLoading,
+  status,
+  progress,
+  onDownload,
+  onRetry,
+}: {
+  title: string;
+  desc: string;
+  icon: typeof PackageOpen;
+  version: AppVersionInfo | null;
+  target: Extract<DownloadTarget, "setup" | "portable">;
+  versionsLoading: boolean;
+  status: DownloadStatus;
+  progress: number;
+  onDownload: (target: DownloadTarget) => void;
+  onRetry: () => void;
+}) {
+  const busy = status === "preparing" || status === "downloading" || status === "loading";
+
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm sm:p-5">
+      <div className="flex items-center gap-2">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="text-left">
+          <p className="text-sm font-semibold sm:text-base">{title}</p>
+          <p className="text-[11px] text-white/60 sm:text-xs">
+            {versionsLoading
+              ? "获取版本中..."
+              : version
+                ? `v${version.versionName} · ${version.fileSize ? formatFileSize(version.fileSize) : "大小未知"}`
+                : "暂未发布"}
+          </p>
+        </div>
+      </div>
+      <p className="hidden text-[11px] leading-relaxed text-white/60 sm:block sm:text-xs">
+        {desc}
+      </p>
+
+      {versionsLoading || status === "loading" ? (
+        <div className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-white/15">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-xs font-medium sm:text-sm">加载中...</span>
+        </div>
+      ) : status === "preparing" ? (
+        <div className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-white/15">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-xs font-medium sm:text-sm">准备下载...</span>
+        </div>
+      ) : status === "downloading" ? (
+        <div className="w-full space-y-1.5">
+          <div className="relative h-10 overflow-hidden rounded-lg bg-white/15">
+            <div
+              className="absolute inset-y-0 left-0 bg-white/30 transition-all duration-200 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+            <div className="relative z-10 flex h-full items-center justify-between px-3">
+              <span className="flex items-center gap-1.5 text-xs font-medium">
+                <FileDown className="h-3.5 w-3.5 animate-bounce" />
+                下载中
+              </span>
+              <span className="font-mono text-xs font-bold">{progress}%</span>
+            </div>
+          </div>
+        </div>
+      ) : status === "success" ? (
+        <div className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-emerald-500/20 text-emerald-200">
+          <CheckCircle2 className="h-4 w-4" />
+          <span className="text-xs font-medium sm:text-sm">下载已开始</span>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="ml-1 flex items-center gap-1 text-[11px] text-white/70 underline-offset-2 hover:underline sm:text-xs"
+          >
+            <RefreshCw className="h-3 w-3" />
+            重新下载
+          </button>
+        </div>
+      ) : (
+        <Button
+          onClick={() => onDownload(target)}
+          disabled={!version || busy}
+          size="sm"
+          className="h-10 w-full bg-white text-primary shadow-lg transition-all hover:bg-white/90 active:scale-[0.98]"
+        >
+          <Download className="mr-1.5 h-4 w-4" />
+          {version ? `下载${title}` : "暂未发布"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 历史版本折叠区（当前平台，走 302 计数直链）
+ */
+function HistorySection({
+  platform,
+  expanded,
+  loading,
+  error,
+  items,
+  onToggle,
+}: {
+  platform: PlatformTab;
+  expanded: boolean;
+  loading: boolean;
+  error: string | null;
+  items: AppVersionListItem[] | null;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 sm:h-10 sm:w-10 sm:rounded-xl">
+            <History className="h-4 w-4 sm:h-5 sm:w-5" />
+          </span>
+          <div>
+            <h2 className="text-lg font-bold tracking-tight sm:text-xl md:text-2xl">
+              历史版本
+            </h2>
+            <p className="text-xs text-foreground/50 sm:text-sm">
+              Version Archive · {platform === "windows" ? "Windows" : "Android"}
+            </p>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" onClick={onToggle}>
+          {expanded ? (
+            <>
+              <ChevronUp className="mr-1.5 h-4 w-4" />
+              收起
+            </>
+          ) : (
+            <>
+              <ChevronDown className="mr-1.5 h-4 w-4" />
+              查看历史版本
+            </>
+          )}
+        </Button>
+      </div>
+
+      {expanded && (
+        <div className="overflow-hidden rounded-xl border border-border/60 bg-card sm:rounded-2xl">
+          {loading && (
+            <div className="flex h-24 items-center justify-center gap-2 text-sm text-foreground/60">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              加载历史版本...
+            </div>
+          )}
+          {!loading && error && (
+            <div className="flex h-24 flex-col items-center justify-center gap-2 text-sm text-foreground/60">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              {error}
+            </div>
+          )}
+          {!loading && !error && items && items.length === 0 && (
+            <div className="flex h-24 items-center justify-center text-sm text-foreground/60">
+              暂无历史版本
+            </div>
+          )}
+          {!loading && !error && items && items.length > 0 && (
+            <ul className="divide-y divide-border/40">
+              {items.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center gap-3 px-4 py-3 sm:px-6"
+                >
+                  <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs font-semibold text-foreground/80 sm:text-sm">
+                    v{item.versionName}
+                  </span>
+                  {platform === "windows" && item.variant && item.variant !== "full" && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary dark:text-primary/60">
+                      {item.variant === "setup" ? "安装版" : "便携版"}
+                    </span>
+                  )}
+                  <span className="hidden flex-1 truncate text-xs text-foreground/60 sm:block sm:text-sm">
+                    {item.title || (item.content[0] ?? "")}
+                  </span>
+                  <span className="ml-auto whitespace-nowrap text-xs text-foreground/50 sm:text-sm">
+                    {item.releaseDate ? formatReleaseDate(item.releaseDate) : "未知日期"}
+                  </span>
+                  <span className="hidden whitespace-nowrap text-xs text-foreground/50 md:inline">
+                    {item.fileSize ? formatFileSize(item.fileSize) : ""}
+                  </span>
+                  <a
+                    href={buildDownloadUrl(item.id)}
+                    target="_blank"
+                    rel="noopener"
+                    className="flex items-center gap-1 rounded-md border border-border/60 px-2.5 py-1 text-xs font-medium text-foreground/80 transition-colors hover:border-primary/40 hover:text-primary"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    下载
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
