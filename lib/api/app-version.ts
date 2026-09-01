@@ -2,7 +2,10 @@
  * App 版本相关 API
  *
  * 后端接口：
- * - GET  /api/app/version/latest   获取最新版本
+ * - GET  /api/update/android       Android 平台更新检查（版本分离推送）
+ * - GET  /api/update/pc            PC 平台更新检查（PC 客户端使用）
+ * - GET  /api/public/app-versions  官网公共版本查询（无需登录）
+ * - GET  /api/app/version/latest   旧版统一接口（保留兼容，Windows 展示用）
  * - GET  /api/app/version/list     公开历史版本列表
  * - GET  /api/app/version/download/:id  302 计数跳转（匿名下载也计入统计）
  * - HEAD /api/app/version/download/:id  旧版上报下载次数（需登录，保留兼容）
@@ -12,6 +15,7 @@
  * - update-dialog.tsx 版本更新弹窗
  */
 import { api, API_BASE } from "@/lib/api";
+import { APP_VERSION } from "@/lib/constants/changelog";
 
 /** 版本检查结果 */
 export interface AppVersionInfo {
@@ -69,8 +73,34 @@ export interface VersionCheckResult {
   latest: AppVersionInfo | null;
 }
 
+/** 新平台端点（GET /update/android、/update/pc）响应结构 */
+interface PlatformUpdateCheckResult {
+  hasUpdate: boolean;
+  forceUpdate: boolean;
+  latest: {
+    id: string;
+    version: string;
+    title?: string | null;
+    versionCode: number;
+    changelog: string[];
+    downloadUrl: string;
+    md5?: string | null;
+    fileSize: number;
+    forceUpdate: boolean;
+    minVersionCode: number;
+    channel: string;
+    platform: string;
+    variant?: string | null;
+    publishedAt: string;
+  } | null;
+}
+
 /**
  * 获取最新版本信息
+ *
+ * Android 平台走独立端点 /update/android（与 PC 分离推送），
+ * 其余平台保持旧接口 /app/version/latest（保留兼容）
+ *
  * @param platform 平台 android/windows/ios（旧值 desktop 由后端兼容）
  * @param channel 发布渠道 stable/beta
  * @param versionCode 当前版本码（可选，用于判断是否需要更新）
@@ -82,6 +112,48 @@ export async function checkLatestVersion(
   versionCode?: number,
   variant?: string
 ): Promise<VersionCheckResult> {
+  // Android：独立平台端点，currentVersion 纯数字按 versionCode 比较，
+  // 缺失时用 web APP_VERSION（semver）兜底（服务端按 versionName 比较）
+  if (platform === "android") {
+    const currentVersion =
+      versionCode != null ? String(versionCode) : APP_VERSION;
+    const params = new URLSearchParams({
+      currentVersion,
+      channel,
+    });
+    if (variant) {
+      params.set("variant", variant);
+    }
+    const res = await api.get<PlatformUpdateCheckResult>(
+      `/update/android?${params.toString()}`,
+      { skipCache: true }
+    );
+    // 新端点字段映射为既有 AppVersionInfo 结构（下载页 / 更新弹窗复用）
+    return {
+      hasUpdate: res.hasUpdate,
+      forceUpdate: res.forceUpdate,
+      latest: res.latest
+        ? {
+            id: res.latest.id,
+            versionCode: res.latest.versionCode,
+            versionName: res.latest.version,
+            title: res.latest.title ?? null,
+            content: res.latest.changelog,
+            downloadUrl: res.latest.downloadUrl,
+            apkUrl: null,
+            md5: res.latest.md5,
+            fileSize: res.latest.fileSize,
+            channel: res.latest.channel,
+            platform: res.latest.platform,
+            variant: res.latest.variant,
+            releaseDate: res.latest.publishedAt,
+            forceUpdate: res.latest.forceUpdate,
+            minVersionCode: res.latest.minVersionCode,
+          }
+        : null,
+    };
+  }
+
   const params = new URLSearchParams({
     platform,
     channel,

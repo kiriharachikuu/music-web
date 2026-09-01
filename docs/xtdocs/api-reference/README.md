@@ -853,6 +853,81 @@ curl "http://localhost:3000/api/search?q=周杰伦&sort=plays&page=1&pageSize=20
 
 > 当没有发布版本时 `latest` 为 `null`，`hasUpdate` 为 `false`。
 
+#### GET /update/android
+
+Android 平台独立更新检查（公开，限流 30 次/分钟/IP）。Android 客户端（music-web / TWA）检查更新走此端点，与 PC 分离推送。
+
+**参数：**
+- `currentVersion`（必填）：当前版本，纯数字按 `versionCode` 数值比较；也接受语义化版本号（按 `versionName` semver 比较）
+- `channel`（可选，默认 stable）：发布渠道
+- `variant`（可选）：发布形态 full/setup/portable
+
+**错误码：** `400` — 缺少 `currentVersion` 或格式非法（`{ code: 400, data: null, message: "..." }`）。
+
+**响应 data：**
+
+```json
+{
+  "hasUpdate": true,
+  "forceUpdate": false,
+  "latest": {
+    "id": "string",
+    "version": "1.4.3",
+    "title": "新版本发布",
+    "versionCode": 13,
+    "changelog": ["[新增] xxx", "[优化] yyy", "[修复] zzz"],
+    "downloadUrl": "https://example.com/app.apk",
+    "fileSize": 12345678,
+    "md5": "string",
+    "forceUpdate": false,
+    "minVersionCode": 1,
+    "channel": "stable",
+    "platform": "android",
+    "variant": "full",
+    "publishedAt": "2026-08-01T00:00:00.000Z"
+  }
+}
+```
+
+> 当没有发布版本时 `latest` 为 `null`，`hasUpdate` 为 `false`。
+
+#### GET /update/pc
+
+PC（Windows 桌面端）独立更新检查（公开，限流 30 次/分钟/IP）。`currentVersion`（必填）传语义化版本号（如 `1.4.3`，PC 客户端 `app.getVersion()`），服务端按 semver 与 `versionName` 比较；`channel`、`variant` 可选。请求与响应结构同 `/update/android`。
+
+> Android 与 PC 各自独立取该平台 `status=published` 中最高 `versionCode` 的版本，互不影响。
+
+#### GET /public/app-versions
+
+官网公共版本查询（无需登录，限流 30 次/分钟/IP，服务端 60s 内存缓存）。一次性返回 Android / PC 两平台最新正式版（stable + published），供官网（xingtone-site）下载页展示。
+
+**参数：** 无。
+
+**响应 data：**
+
+```json
+{
+  "android": {
+    "version": "1.4.3",
+    "versionCode": 13,
+    "changelog": ["[新增] xxx", "[修复] yyy"],
+    "downloadUrl": "https://example.com/app.apk",
+    "fileSize": 12345678,
+    "publishedAt": "2026-08-01T00:00:00.000Z"
+  },
+  "pc": {
+    "version": "1.1.1",
+    "versionCode": 2,
+    "changelog": ["[新增] xxx"],
+    "downloadUrl": "https://example.com/app.exe",
+    "fileSize": 98765432,
+    "publishedAt": "2026-08-20T00:00:00.000Z"
+  }
+}
+```
+
+> 平台暂无版本时对应字段为 `null`，不报错。浏览器跨域调用仅允许 `PUBLIC_API_CORS_ORIGINS` 白名单内的官网域名（后端注入 `Access-Control-Allow-Origin`，非白名单 Origin 不注入头）。
+
 #### HEAD /app/version/download/:id（需鉴权）
 
 记录下载次数（HEAD 请求，防止匿名刷量）。前端调用示例：

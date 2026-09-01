@@ -9,32 +9,15 @@ import {
   ResponsiveDialogDescription,
 } from "@/components/ui/responsive-dialog";
 import { Button } from "@/components/ui/button";
-import { api, API_BASE } from "@/lib/api";
+import {
+  checkLatestVersion,
+  detectPlatform,
+  trackDownload,
+  type VersionCheckResult,
+} from "@/lib/api/app-version";
 import { androidBridge } from "@/lib/jsbridge/android-bridge";
 import { getPlatform } from "@/lib/platform";
 import { Download, Sparkles } from "lucide-react";
-
-/**
- * 版本检查结果（后端 GET /api/app/version/latest 返回格式）
- */
-interface VersionCheckResult {
-  hasUpdate: boolean;
-  forceUpdate: boolean;
-  latest: {
-    id: string;
-    versionCode: number;
-    versionName: string;
-    title?: string | null;
-    content: string[];
-    downloadUrl: string;
-    /** APK 文件 MD5 校验值（TWA 模式安装时校验） */
-    md5?: string | null;
-    fileSize: number;
-    channel: string;
-    platform: string;
-    releaseDate: string;
-  } | null;
-}
 
 /**
  * 获取当前应用版本码
@@ -54,25 +37,9 @@ function getCurrentVersionCode(): number {
 const IGNORE_KEY = "xt_music_ignored_version";
 
 /**
- * 检测当前运行平台，供后端按平台匹配版本
- * - ios：iPhone / iPad（含 iPadOS 13+ 桌面 UA 特例）
- * - android：其他移动端 UA
- * - desktop：桌面浏览器
- */
-function detectPlatform(): "desktop" | "android" | "ios" {
-  if (typeof navigator === "undefined") return "desktop";
-  const ua = navigator.userAgent.toLowerCase();
-  const isIOS =
-    /iphone|ipad|ipod/.test(ua) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  if (isIOS) return "ios";
-  if (/android|mobile|touch/.test(ua)) return "android";
-  return "desktop";
-}
-
-/**
  * 版本检查弹窗
- * - 应用挂载时调用 GET /api/app/version/latest 检查更新
+ * - 应用挂载时检查更新：Android/TWA 走独立端点 /update/android，
+ *   iOS / 桌面浏览器保持旧统一接口 /app/version/latest（均经 checkLatestVersion 封装）
  * - 有新版本时弹出弹窗：版本名 + changelog + 立即更新 / 本次忽略
  * - "本次忽略"用 sessionStorage 标记，同一会话不重复弹窗
  * - 强制更新时不显示"忽略"按钮，且不可关闭
@@ -87,8 +54,10 @@ export function UpdateDialog() {
 
     async function checkVersion() {
       try {
-        const result = await api.get<VersionCheckResult>(
-          `/app/version/latest?platform=${detectPlatform()}&versionCode=${getCurrentVersionCode()}`
+        const result = await checkLatestVersion(
+          detectPlatform(),
+          "stable",
+          getCurrentVersionCode()
         );
         if (cancelled || !result.hasUpdate || !result.latest) return;
 
@@ -127,14 +96,8 @@ export function UpdateDialog() {
     if (getPlatform().isTWA) {
       // TWA 模式：调用原生 APK 下载 + 安装流程
       androidBridge.installApk(latest.downloadUrl, latest.md5 ?? null);
-      // 上报下载次数（HEAD 请求，后端 downloadCount +1）
-      try {
-        await fetch(`${API_BASE}/app/version/download/${latest.id}`, {
-          method: "HEAD",
-        });
-      } catch {
-        // 上报失败静默
-      }
+      // 上报下载次数（302 代理端点，后端 downloadCount +1）
+      void trackDownload(latest.id);
     } else {
       // 浏览器模式：新窗口打开下载链接
       window.open(latest.downloadUrl, "_blank", "noopener");
