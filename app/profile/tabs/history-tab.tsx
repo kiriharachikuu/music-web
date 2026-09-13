@@ -3,7 +3,7 @@
 import * as React from "react";
 import { History, Trash2 } from "lucide-react";
 
-import type { PlayHistoryItem, ApiSong } from "@/lib/types";
+import type { PlayHistoryItem, ApiSong, Track } from "@/lib/types";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -13,11 +13,13 @@ import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/common/confirm-dialog";
+import { useToast } from "@/components/ui/toaster";
 
 /** 子模块 3：历史播放 */
 export function HistoryTab() {
   const [items, setItems] = React.useState<PlayHistoryItem[] | null>(null);
   const confirm = useConfirm();
+  const toast = useToast();
   const openLogin = useAuthStore((s) => s.openLogin);
   const likedIds = useFavoritesStore((s) => s.likedIds);
   const toggleLike = useFavoritesStore((s) => s.toggleLike);
@@ -33,8 +35,9 @@ export function HistoryTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 喜欢/取消喜欢（未登录时触发登录弹窗）
+  // 喜欢/取消喜欢（未登录时触发登录弹窗；歌切记录不走歌曲收藏）
   const handleLike = (song: ApiSong) => {
+    if (song.trackType === "live_clip") return;
     if (!getToken()) {
       openLogin();
       return;
@@ -45,6 +48,7 @@ export function HistoryTab() {
   const load = async () => {
     try {
       // 后端返回分页结构 { list, total, page, limit, totalPages }
+      // 每条记录 song / clip 二选一：歌切记录 song 为 null、clip 有值
       const data = await api.get<{ list: PlayHistoryItem[]; total: number }>(
         "/user/history"
       );
@@ -76,11 +80,17 @@ export function HistoryTab() {
     }
   };
 
-  // 删除单条播放历史
-  const deleteItem = async (songId: string) => {
+  // 删除单条播放历史（后端仅支持按歌曲 ID 删除，歌切记录提示暂不支持）
+  const deleteItem = async (track: ApiSong | Track) => {
+    if (track.trackType === "live_clip") {
+      toast.show("歌切记录暂不支持单独删除");
+      return;
+    }
     try {
-      await api.del(`/user/history/${songId}`);
-      setItems((prev) => prev ? prev.filter((it) => it.song.id !== songId) : prev);
+      await api.del(`/user/history/${track.id}`);
+      setItems(
+        (prev) => prev ? prev.filter((it) => it.song?.id !== track.id) : prev
+      );
     } catch {
       /* 忽略 */
     }
@@ -123,8 +133,11 @@ export function HistoryTab() {
             </h3>
             <div className="rounded-2xl border border-primary/10 bg-card/40 p-2 md:p-3">
               <SongList
-                songs={g.items.map((it) => it.song)}
-                onDelete={(song) => void deleteItem(song.id)}
+                songs={g.items
+                  .map(trackOf)
+                  .filter((t): t is ApiSong | Track => t !== null)}
+                showTrackType
+                onDelete={(track) => void deleteItem(track)}
                 likedIds={likedIds}
                 onLike={handleLike}
               />
@@ -134,6 +147,11 @@ export function HistoryTab() {
       )}
     </div>
   );
+}
+
+/** 历史记录 → 可渲染曲目：歌曲取 song，歌切取 clip（后端二选一返回） */
+function trackOf(it: PlayHistoryItem): ApiSong | Track | null {
+  return it.song ?? it.clip ?? null;
 }
 
 /** 按日期分组：今天 / 昨天 / 更早 */

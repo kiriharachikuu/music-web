@@ -260,7 +260,13 @@ export function QueueSheet({ open, onOpenChange }: QueueSheetProps) {
   );
 
   const handleClearQueue = React.useCallback(() => {
-    usePlayerStore.setState({ queue: [], currentIndex: 0 });
+    const { currentSong } = usePlayerStore.getState();
+    if (currentSong) {
+      // 保留正在播放的一首：播放不中断，next/prev 也不会静默失效
+      usePlayerStore.setState({ queue: [currentSong], currentIndex: 0 });
+    } else {
+      usePlayerStore.setState({ queue: [], currentIndex: 0 });
+    }
   }, []);
 
   return (

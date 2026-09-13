@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { API_BASE } from "@/lib/api";
+import { reportWebPlaybackState } from "@/lib/playback-sync";
 import { getToken } from "@/lib/auth";
 import type { AudioEngine, AudioEngineEvents } from "@/lib/audio-engine/engine";
 import { getCachedAudio } from "@/lib/db/audio-cache";
@@ -161,6 +162,11 @@ let playRequestId = 0;
 function getNextPreloadInfo(): [string, Record<string, string>] | null {
   const state = usePlayerStore.getState();
   if (state.playMode === "shuffle" || state.queue.length === 0) return null;
+  // 顺序模式已到末尾：不回绕预加载（否则末曲播完时引擎已同步开播第 0 首，
+  // 而 onAutoPlayNext 才发现到末尾，出现 UI 停止但实际发声的"幽灵播放"）
+  if (state.playMode === "sequential" && state.currentIndex >= state.queue.length - 1) {
+    return null;
+  }
   const nextIdx = (state.currentIndex + 1) % state.queue.length;
   if (nextIdx === state.currentIndex) return null;
   const nextSong = state.queue[nextIdx];
@@ -230,6 +236,8 @@ export const usePlayerStore = create<PlayerState>()(
           currentTime: 0,
           duration: 0,
           error: null,
+          // 新播放会接管引擎，取消上一首未完成的音质切换标记
+          isSwitchingQuality: false,
         });
 
         try {
@@ -252,7 +260,8 @@ export const usePlayerStore = create<PlayerState>()(
                 engine?.seek(0);
                 engine?.play();
               } else if (cur.playMode === "sequential" && cur.currentIndex >= cur.queue.length - 1) {
-                // 顺序播放：已到末尾，停止播放
+                // 顺序播放：已到末尾，停止播放（显式暂停引擎，确保无残余发声）
+                try { engine?.pause(); } catch { /* noop */ }
                 usePlayerStore.setState({ isPlaying: false, currentTime: 0 });
               } else {
                 // TWA 模式：同步切歌，避免 async play() 在后台 WebView 被延迟
@@ -298,7 +307,19 @@ export const usePlayerStore = create<PlayerState>()(
               }
             },
             onLoad: (duration) => usePlayerStore.setState({ duration }),
-            onTimeUpdate: (currentTime) => usePlayerStore.setState({ currentTime }),
+            onTimeUpdate: (currentTime) => {
+              usePlayerStore.setState({ currentTime });
+              // 跨端续播: 3s 节流上报云端播放状态 (PC 客户端可续播)
+              const s = get();
+              if (s.currentSong) {
+                void reportWebPlaybackState({
+                  songId: s.currentSong.trackType === 'live_clip' ? null : s.currentSong.id,
+                  clipId: s.currentSong.trackType === 'live_clip' ? s.currentSong.id : null,
+                  position: Math.round(currentTime),
+                  queueIds: s.queue.map((q) => q.id).slice(0, 100),
+                });
+              }
+            },
             onError: (message) =>
               usePlayerStore.setState({
                 isPlaying: false,
@@ -313,7 +334,8 @@ export const usePlayerStore = create<PlayerState>()(
               const cur = get();
               if (cur.queue.length === 0) return;
               if (cur.playMode === "sequential" && cur.currentIndex >= cur.queue.length - 1) {
-                // 顺序播放到末尾：预加载不会触发，但以防万一
+                // 顺序播放到末尾：显式暂停引擎（防御预加载已被同步开播的幽灵播放）
+                try { engine?.pause(); } catch { /* noop */ }
                 usePlayerStore.setState({ isPlaying: false, currentTime: 0 });
                 return;
               }
@@ -365,11 +387,21 @@ export const usePlayerStore = create<PlayerState>()(
                 headers = undefined;
                 usedLocalCache = true;
               } else {
+                // 未命中缓存：本曲走网络 URL，旧 blob 不再使用，立即释放防泄漏
+                if (currentBlobUrl) {
+                  URL.revokeObjectURL(currentBlobUrl);
+                  currentBlobUrl = null;
+                }
                 url = resolveMediaUrl(targetSong.url);
                 const token = getToken();
                 headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
               }
             } catch {
+              // 缓存读取异常：走网络 URL，同样释放旧 blob
+              if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+                currentBlobUrl = null;
+              }
               url = resolveMediaUrl(targetSong.url);
               const token = getToken();
               headers = token && !isExternalMediaUrl(url) ? { Authorization: `Bearer ${token}` } : undefined;
@@ -631,6 +663,10 @@ export const usePlayerStore = create<PlayerState>()(
         const quality = state.availableQualities.find((q) => q.level === level);
         if (!quality) return;
 
+        // 竞态守卫：与 play() 共用代次计数。切音质途中点了新歌，
+        // 晚完成的旧切换请求不得覆盖新歌播放
+        const myRequestId = ++playRequestId;
+
         // 保存当前播放位置（切换后从该位置继续播放，实现无缝切换）
         const currentTime = state.currentTime;
 
@@ -653,11 +689,13 @@ export const usePlayerStore = create<PlayerState>()(
             },
           });
 
+          // 切换期间用户点了新歌：本次结果作废
+          if (myRequestId !== playRequestId) return;
           set({ currentQuality: level });
         } catch {
-          set({ error: "切换音质失败" });
+          if (myRequestId === playRequestId) set({ error: "切换音质失败" });
         } finally {
-          set({ isSwitchingQuality: false });
+          if (myRequestId === playRequestId) set({ isSwitchingQuality: false });
         }
       },
 

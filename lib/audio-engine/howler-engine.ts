@@ -114,6 +114,14 @@ async function preloadNextSong(
       mute: true,
     });
     preloadUrl = url;
+    // 预加载失败（404/网络错误）时清理坏实例：
+    // 否则 onHowlEnd / tryConsumePreload 会复用它导致切歌后播放失败
+    preloadHowl.once("loaderror", () => {
+      // 延迟一帧卸载：避免在 Howl 自身事件回调内直接 unload（Howler 不安全）
+      setTimeout(() => {
+        if (preloadHowl && preloadUrl === url) clearPreload();
+      }, 0);
+    });
     // 主动把 audio 元素拉进 DOM 并设好 playsinline：
     // 不通过 play() 激活（play 在非用户手势下会污染 iOS 音频会话），
     // 只触发 audio.load() 让 iOS 提前"认识"这个元素、加载好元数据。
@@ -316,8 +324,22 @@ function registerHowlEvents(h: HowlType): void {
   h.on("loaderror", () => {
     try { events?.onError("音频加载失败"); } catch { /* noop */ }
   });
+  // playerror：先延迟 50ms 重试一次（iOS 切歌瞬间 play 被拦的兜底），
+  // 重试仍失败才上报错误；避免与切歌分支重复注册导致"重试成功仍弹错误提示"
+  let playRetryUsed = false;
   h.on("playerror", () => {
-    try { events?.onError("播放失败"); } catch { /* noop */ }
+    if (playRetryUsed) {
+      try { events?.onError("播放失败"); } catch { /* noop */ }
+      return;
+    }
+    playRetryUsed = true;
+    setTimeout(() => {
+      try {
+        if (h === howl) h.play();
+      } catch {
+        try { events?.onError("播放失败"); } catch { /* noop */ }
+      }
+    }, 50);
   });
   h.on("play", () => {
     try {
@@ -407,10 +429,11 @@ function onHowlEnd(): void {
       });
     }
 
-    // iOS 切歌 play 拦截兜底：
+    // iOS 切歌 play 拦截兜底（同步抛错路径）：
     // 根因是 iOS 在歌曲自然结束时触发的"end"事件不在用户手势栈里，
     // 即便 audio 元素已激活，iOS 仍可能因时序问题短暂拦截 play()。
-    // 同步抛错 / 异步 playerror 时延迟 50ms 重试一次，绝大多数情况能恢复。
+    // 同步抛错时延迟 50ms 重试一次；异步 playerror 由 registerHowlEvents
+    // 内统一的重试逻辑处理（不在此重复注册，避免重试成功仍弹错误提示）。
     let retried = false;
     const tryPlay = () => {
       if (howl !== nextHowl) return; // 期间已被新 play() 接管
@@ -426,14 +449,6 @@ function onHowlEnd(): void {
         }
       }
     };
-    // 监听 playerror：iOS 异步拦截时会触发此事件
-    try {
-      nextHowl.on("playerror", () => {
-        if (retried) return;
-        retried = true;
-        setTimeout(tryPlay, 50);
-      });
-    } catch { /* noop */ }
 
     // 同步开始播放（失败时由 tryPlay 内部兜底）
     tryPlay();

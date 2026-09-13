@@ -191,10 +191,11 @@ export interface UserProfile {
   createdAt: string;
 }
 
-/** 历史播放记录 */
+/** 历史播放记录（songId 或 clipId 二选一：歌切记录 song 为 null、clip 有值） */
 export interface PlayHistoryItem {
   id: string;
-  song: ApiSong;
+  song: ApiSong | null;
+  clip?: LiveClipTrack | null;
   playTime: string; // ISO 时间字符串
 }
 

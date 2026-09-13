@@ -85,15 +85,22 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   },
 
   loadFromServer: async () => {
+    // 分页拉全量收藏（此前硬编码 limit=500，超过 500 首后红心状态/收藏页不全）
+    const PAGE_SIZE = 500;
+    const ids: string[] = [];
     try {
-      const data = await api.get<{ list: { songId: string }[]; total: number }>(
-        "/user/favorites?limit=500"
-      );
-      const ids = data?.list?.map((f) => f.songId) ?? [];
-      set({ likedIds: new Set(ids), loaded: true });
+      for (let page = 1; page <= 20; page++) {
+        const data = await api.get<{ list: { songId: string }[]; total: number }>(
+          `/user/favorites?page=${page}&limit=${PAGE_SIZE}`
+        );
+        const list = data?.list ?? [];
+        ids.push(...list.map((f) => f.songId));
+        if (list.length < PAGE_SIZE) break;
+      }
     } catch {
-      set({ likedIds: new Set(), loaded: true });
+      // 翻页中途失败：保留已拉到的部分（首页就失败则为空集）
     }
+    set({ likedIds: new Set(ids), loaded: true });
   },
 
   loadFavoriteSessionsFromServer: async () => {

@@ -138,8 +138,11 @@ export function SearchClient({
     return () => clearTimeout(t);
   }, [query]);
 
-  // 执行搜索（debounced / sort / tag / dateRange 变化触发，每次重置到第 1 页）
+  // 执行搜索（debounced / sort / tag / dateRange / category 变化触发，每次重置到第 1 页）
+  // searchGenRef：搜索代次计数，"加载更多"的慢响应靠它判断自己是否已过期
+  const searchGenRef = React.useRef(0);
   React.useEffect(() => {
+    searchGenRef.current += 1;
     // 搜索条件变化时重置分页
     pageRef.current = 1;
     if (!debounced) {
@@ -182,7 +185,7 @@ export function SearchClient({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced, sort, tag, dateRange]);
+  }, [debounced, sort, tag, dateRange, category]);
 
   /** 记录搜索历史 */
   const addHistory = (q: string) => {
@@ -216,6 +219,7 @@ export function SearchClient({
   /** 加载更多歌曲（下一页，仅追加 songs 列表） */
   const handleLoadMore = async () => {
     if (loadingMore || !debounced) return;
+    const myGen = searchGenRef.current; // 代次守卫：期间发生新搜索则本次作废
     const nextPage = pageRef.current + 1;
     setLoadingMore(true);
     try {
@@ -229,6 +233,7 @@ export function SearchClient({
       if (dateRange.startDate) params.set("startDate", dateRange.startDate);
       if (dateRange.endDate) params.set("endDate", dateRange.endDate);
       const res = await api.get<SearchResult>(`/search?${params}`);
+      if (myGen !== searchGenRef.current) return; // 已过期：不追加旧结果
       setResults((prev) =>
         prev
           ? {

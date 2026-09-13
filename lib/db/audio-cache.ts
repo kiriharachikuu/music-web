@@ -14,7 +14,9 @@ import type { ApiSong } from "@/lib/types";
  */
 
 const DB_NAME = "xt-music-cache";
-const DB_VERSION = 1;
+// 必须与 lyric-cache.ts 的 DB_VERSION 一致：两者共用同一数据库，
+// 版本不一致会导致后打开方抛 VersionError，整个缓存体系失效
+const DB_VERSION = 2;
 const STORE_AUDIO = "audio";
 const STORE_META = "meta";
 
@@ -44,7 +46,7 @@ export interface DownloadListItem {
   cachedQuality: string;
 }
 
-let _dbPromise: Promise<IDBPDatabase> | null = null;
+let _dbPromise: Promise<IDBPDatabase | null> | null = null;
 
 /** 获取（懒加载）IndexedDB 连接，SSR / 不支持时返回 null */
 function getDB(): Promise<IDBPDatabase | null> {
@@ -54,13 +56,23 @@ function getDB(): Promise<IDBPDatabase | null> {
   if (!_dbPromise) {
     _dbPromise = openDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
+        // 统一创建全部 store（含歌词 store），保证无论本模块还是 lyric-cache
+        // 先打开数据库，三个 store 都已就绪，避免 NotFoundError
         if (!db.objectStoreNames.contains(STORE_AUDIO)) {
           db.createObjectStore(STORE_AUDIO, { keyPath: "songId" });
         }
         if (!db.objectStoreNames.contains(STORE_META)) {
           db.createObjectStore(STORE_META, { keyPath: "key" });
         }
+        if (!db.objectStoreNames.contains("lyrics")) {
+          db.createObjectStore("lyrics", { keyPath: "songId" });
+        }
       },
+    }).catch((err) => {
+      // 打开失败（如版本冲突/隐私模式）时重置，避免永久缓存 rejected promise
+      console.warn("[audio-cache] IndexedDB 打开失败，本会话禁用音频缓存:", err);
+      _dbPromise = null;
+      return null;
     });
   }
   return _dbPromise;
