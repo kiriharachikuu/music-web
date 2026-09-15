@@ -8,52 +8,81 @@ import { cn } from "@/lib/utils";
 export interface FramedAvatarProps {
   /** 头像图片地址 */
   avatarUrl?: string | null;
-  /** 头像框图片地址（透明环形 PNG，叠加在头像上层） */
+  /** 头像框图片地址（透明装饰画布 PNG，叠加在最上层） */
   frameUrl?: string | null;
-  /** 外层容器尺寸等样式，如 "h-14 w-14" */
+  /** 头像核心尺寸（CSS 长度，如 "2.5rem"）。
+   *  佩戴头像框时容器自动放大为 size / 0.6，头像框包在头像外围，头像视觉大小不变 */
+  size: string;
+  /** 容器附加样式（无框时会落在头像本身上，可加边框等） */
   className?: string;
-  /** 占位图标样式 */
-  iconClassName?: string;
   alt?: string;
 }
 
 /**
- * 带头像框的头像
- * - 圆形头像 + 可选头像框叠加（框图尺寸约 116%，覆盖头像边缘）
- * - 头像框为透明 PNG，缩放到容器 116% 后绝对定位居中
+ * 带头像框的头像（挂件布局）
+ * - 头像框素材为装饰画布：主体环内洞最大约 0.586（四款实测），四角为刻意压在头像上的延伸装饰
+ * - 头像核心按 size 渲染，容器 = size / 0.6，框图铺满容器 → 头像大小不随戴框改变
+ * - 无框时退化为普通圆形头像（直径 = size）
  */
+const AVATAR_INSET = 0.6;
+
 export function FramedAvatar({
   avatarUrl,
   frameUrl,
+  size,
   className,
-  iconClassName,
   alt = "avatar",
 }: FramedAvatarProps) {
-  return (
-    <div className={cn("relative shrink-0", className)}>
-      <div className="h-full w-full overflow-hidden rounded-full bg-primary/10">
-        {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={avatarUrl}
-            alt={alt}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-primary/60">
-            <User className={cn("h-1/2 w-1/2", iconClassName)} />
-          </div>
+  const coreStyle = { width: size, height: size };
+
+  const avatarCore = avatarUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={avatarUrl}
+      alt={alt}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <div className="flex h-full w-full items-center justify-center text-primary/60">
+      <User className="h-1/2 w-1/2" />
+    </div>
+  );
+
+  if (!frameUrl) {
+    return (
+      <div
+        style={coreStyle}
+        className={cn(
+          "relative shrink-0 overflow-hidden rounded-full bg-primary/10",
+          className
         )}
+      >
+        {avatarCore}
       </div>
-      {frameUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={frameUrl}
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[116%] w-[116%] -translate-x-1/2 -translate-y-1/2"
-        />
-      )}
+    );
+  }
+
+  return (
+    <div
+      style={{
+        width: `calc(${size} / ${AVATAR_INSET})`,
+        height: `calc(${size} / ${AVATAR_INSET})`,
+      }}
+      className={cn("relative shrink-0", className)}
+    >
+      <div
+        style={coreStyle}
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full"
+      >
+        {avatarCore}
+      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={frameUrl}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute inset-0 h-full w-full"
+      />
     </div>
   );
 }

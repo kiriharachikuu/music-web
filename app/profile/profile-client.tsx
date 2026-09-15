@@ -29,6 +29,7 @@ import type { UserProfile } from "@/lib/types";
 import { API_BASE, ADMIN_URL } from "@/lib/api";
 import { clearAuth, getToken, getUser, isAuthenticated, setUser } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useProfileStore } from "@/lib/store/profile-store";
 import { EmptyState } from "@/components/common/empty-state";
 import { PageSkeleton } from "@/components/common/loading-skeleton";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -75,7 +76,10 @@ const BASE_TABS: { key: Tab; label: string; icon: typeof Heart }[] = [
 export function ProfileClient() {
   const router = useRouter();
   const isMobile = useIsMobile();
-  const [profile, setProfile] = React.useState<UserProfile | null>(null);
+  // 全局 profile store：与 TopNav 共享，佩戴/摘下头像框后顶栏小头像实时更新
+  const profile = useProfileStore((s) => s.profile);
+  const setGlobalProfile = useProfileStore((s) => s.setProfile);
+  const clearGlobalProfile = useProfileStore((s) => s.clear);
   const [profileLoaded, setProfileLoaded] = React.useState(false);
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
@@ -116,7 +120,7 @@ export function ProfileClient() {
     const hasLocalAuth = isAuthenticated();
 
     if (cachedUser && hasLocalAuth) {
-      setProfile(cachedUser);
+      setGlobalProfile(cachedUser);
       setLoggedOut(false);
       setProfileLoaded(true);
     }
@@ -137,12 +141,12 @@ export function ProfileClient() {
       });
       if (res.status === 401) {
         clearAuth();
-        setProfile(null);
+        clearGlobalProfile();
         setLoggedOut(true);
       } else if (res.ok) {
         const json = await res.json();
         const userData = json.data ?? null;
-        setProfile(userData);
+        setGlobalProfile(userData);
         setLoggedOut(!userData);
         if (userData) {
           setUser(userData);
@@ -159,7 +163,7 @@ export function ProfileClient() {
 
   const handleLogout = () => {
     clearAuth();
-    setProfile(null);
+    clearGlobalProfile();
     setLoggedOut(true);
   };
 
@@ -194,14 +198,12 @@ export function ProfileClient() {
       {/* 用户信息卡片 */}
       <div className="rounded-2xl border border-primary/10 bg-card p-4">
         <div className="flex items-center gap-3">
-          <div className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background">
-            <FramedAvatar
-              avatarUrl={profile.avatar}
-              frameUrl={profile.avatarFrame?.imageUrl}
-              alt={profile.username}
-              className="h-14 w-14"
-            />
-          </div>
+          <FramedAvatar
+            avatarUrl={profile.avatar}
+            frameUrl={profile.avatarFrame?.imageUrl}
+            alt={profile.username}
+            size="5rem"
+          />
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-lg font-bold">{profile.username}</h2>
             <p className="truncate text-xs text-foreground/50">
@@ -279,14 +281,12 @@ export function ProfileClient() {
     <section className="hidden animate-fade-in space-y-6 md:block">
       {/* 用户信息头部 */}
       <header className="flex items-center gap-4">
-        <div className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background">
-          <FramedAvatar
-            avatarUrl={profile.avatar}
-            frameUrl={profile.avatarFrame?.imageUrl}
-            alt={profile.username}
-            className="h-16 w-16 md:h-20 md:w-20"
-          />
-        </div>
+        <FramedAvatar
+          avatarUrl={profile.avatar}
+          frameUrl={profile.avatarFrame?.imageUrl}
+          alt={profile.username}
+          size="6rem"
+        />
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl font-bold tracking-tight md:text-2xl">
             {profile.username}
@@ -398,7 +398,8 @@ export function ProfileClient() {
   );
 
   const handleProfileUpdated = (updated: UserProfile) => {
-    setProfile(updated);
+    // 写入全局 store：TopNav 顶栏小头像实时同步
+    setGlobalProfile(updated);
     setEditOpen(false);
   };
 

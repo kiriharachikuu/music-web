@@ -139,7 +139,8 @@ export function AvatarFramePicker({
                 >
                   <FramedAvatar
                     frameUrl={frame.imageUrl}
-                    className="h-16 w-16"
+                    // 核心 3rem，戴框容器 = 3/0.6 = 5rem（80px），与旧网格占位一致
+                    size="3rem"
                   />
                   <span className="w-full truncate text-center text-xs">
                     {frame.name}

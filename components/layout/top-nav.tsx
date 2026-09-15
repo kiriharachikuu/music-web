@@ -11,9 +11,8 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { usePlayerStore } from "@/lib/store/player-store";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { useProfileStore } from "@/lib/store/profile-store";
 import { getToken } from "@/lib/auth";
-import type { UserProfile } from "@/lib/types";
-import { API_BASE } from "@/lib/api";
 import { FramedAvatar } from "@/components/framed-avatar";
 
 /**
@@ -27,9 +26,12 @@ export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [scrolled, setScrolled] = React.useState(false);
-  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
-  const [frameUrl, setFrameUrl] = React.useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+  // 全局 profile store：佩戴/摘下头像框、编辑资料、登录/登出后实时同步，无需刷新页面
+  const profile = useProfileStore((s) => s.profile);
+  const isLoggedIn = useProfileStore((s) => s.isLoggedIn);
+  const fetchProfile = useProfileStore((s) => s.fetchProfile);
+  const avatarUrl = profile?.avatar ?? null;
+  const frameUrl = profile?.avatarFrame?.imageUrl ?? null;
   const toggleQueue = usePlayerStore((s) => s.toggleQueue);
   const isQueueOpen = usePlayerStore((s) => s.isQueueOpen);
 
@@ -52,42 +54,14 @@ export function TopNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // 仅在挂载时拉取一次用户头像信息：避免路由切换时重复请求
-  // （pathname 变化不触发；如需刷新登出/登录后的头像，调用 forceUpdate 即可）
-  const profileLoadedRef = React.useRef(false);
+  // 挂载时：已登录且全局 store 尚无资料才拉取一次（路由切换不重复请求；
+  // 后续资料变化由 store 驱动，登录成功回调里也会重新拉取）
   React.useEffect(() => {
-    if (profileLoadedRef.current) return;
-    profileLoadedRef.current = true;
-
-    const token = getToken();
-    if (!token) {
-      setIsLoggedIn(false);
-      setAvatarUrl(null);
-      setFrameUrl(null);
-      return;
+    if (!getToken()) return;
+    if (!useProfileStore.getState().profile) {
+      void fetchProfile();
     }
-    setIsLoggedIn(true);
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/user/profile`, {
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.ok) {
-          const json = await res.json();
-          const profile: UserProfile | null = json.data ?? null;
-          setAvatarUrl(profile?.avatar ?? null);
-          setFrameUrl(profile?.avatarFrame?.imageUrl ?? null);
-        }
-      } catch {
-        // ignore
-      }
-    };
-    void fetchProfile();
-  }, []);
+  }, [fetchProfile]);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -120,7 +94,8 @@ export function TopNav() {
     if (isLoggedIn) {
       router.push("/profile");
     } else {
-      openLogin();
+      // 登录成功后拉取资料，顶栏小头像实时出现
+      openLogin(() => void fetchProfile());
     }
   };
 
@@ -157,13 +132,19 @@ export function TopNav() {
           </Link>
           <button
             onClick={handleAvatarClick}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground/5 no-select"
+            // 戴框时去掉底衬，让头像框成为唯一视觉焦点
+            className={cn(
+              "flex shrink-0 items-center justify-center rounded-full no-select",
+              !frameUrl && "bg-foreground/5"
+            )}
             aria-label={isLoggedIn ? "个人中心" : "登录"}
           >
             <FramedAvatar
               avatarUrl={avatarUrl}
               frameUrl={frameUrl}
-              className="h-10 w-10 border-2 border-primary/30"
+              // 无框：核心 2.5rem（40px）；有框：核心 2.1rem，容器 = 2.1/0.6 = 3.5rem（56px）恰好填满导航栏高度
+              size={frameUrl ? "2.1rem" : "2.5rem"}
+              className={frameUrl ? undefined : "border-2 border-primary/30"}
             />
           </button>
         </div>
