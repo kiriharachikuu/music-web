@@ -181,12 +181,22 @@ export interface Tag {
 /** 用户角色 */
 export type UserRole = "USER" | "ADMIN";
 
+/** 头像框 */
+export interface AvatarFrame {
+  id: string;
+  name: string;
+  imageUrl: string;
+  sort: number;
+}
+
 /** 用户资料 */
 export interface UserProfile {
   id: string;
   username: string;
   email: string;
   avatar?: string | null;
+  /** 当前佩戴的头像框（多端同步） */
+  avatarFrame?: AvatarFrame | null;
   role: UserRole;
   createdAt: string;
 }

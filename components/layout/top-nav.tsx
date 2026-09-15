@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, ListMusic, User, ArrowLeft } from "lucide-react";
+import { Search, ListMusic, ArrowLeft } from "lucide-react";
 
 import { navItems } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,7 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { getToken } from "@/lib/auth";
 import type { UserProfile } from "@/lib/types";
 import { API_BASE } from "@/lib/api";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FramedAvatar } from "@/components/framed-avatar";
 
 /**
  * 顶部毛玻璃导航栏
@@ -28,6 +28,7 @@ export function TopNav() {
   const router = useRouter();
   const [scrolled, setScrolled] = React.useState(false);
   const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
+  const [frameUrl, setFrameUrl] = React.useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false);
   const toggleQueue = usePlayerStore((s) => s.toggleQueue);
   const isQueueOpen = usePlayerStore((s) => s.isQueueOpen);
@@ -62,6 +63,7 @@ export function TopNav() {
     if (!token) {
       setIsLoggedIn(false);
       setAvatarUrl(null);
+      setFrameUrl(null);
       return;
     }
     setIsLoggedIn(true);
@@ -78,6 +80,7 @@ export function TopNav() {
           const json = await res.json();
           const profile: UserProfile | null = json.data ?? null;
           setAvatarUrl(profile?.avatar ?? null);
+          setFrameUrl(profile?.avatarFrame?.imageUrl ?? null);
         }
       } catch {
         // ignore
@@ -157,15 +160,11 @@ export function TopNav() {
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground/5 no-select"
             aria-label={isLoggedIn ? "个人中心" : "登录"}
           >
-            <Avatar className="h-10 w-10 border-2 border-primary/30">
-              {avatarUrl ? (
-                <AvatarImage src={avatarUrl} alt="avatar" />
-              ) : (
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  <User className="h-5 w-5" />
-                </AvatarFallback>
-              )}
-            </Avatar>
+            <FramedAvatar
+              avatarUrl={avatarUrl}
+              frameUrl={frameUrl}
+              className="h-10 w-10 border-2 border-primary/30"
+            />
           </button>
         </div>
 

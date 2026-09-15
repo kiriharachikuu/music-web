@@ -12,6 +12,7 @@ import {
   Settings,
   Pencil,
   Shield,
+  Sparkles,
   ChevronDown,
   Info,
   Smartphone,
@@ -43,6 +44,8 @@ import { DownloadsTab } from "./tabs/downloads-tab";
 import { SettingsTab } from "./tabs/settings-tab";
 import { EditProfileSheet } from "./tabs/edit-profile-sheet";
 import { EditProfileDialog } from "./tabs/edit-profile-dialog";
+import { AvatarFramePicker } from "./tabs/avatar-frame-picker";
+import { FramedAvatar } from "@/components/framed-avatar";
 
 /** Tab 类型 */
 type Tab =
@@ -77,6 +80,7 @@ export function ProfileClient() {
   const [loggedOut, setLoggedOut] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<Tab>("favorites");
   const [editOpen, setEditOpen] = React.useState(false);
+  const [framePickerOpen, setFramePickerOpen] = React.useState(false);
   const [downloadAvailable, setDownloadAvailable] = React.useState(false);
   // "下载 App" 入口仅在非 Android / 非桌面端 / 非 iOS PWA 时展示：
   // 当前已运行在桌面客户端、Android 增强壳或 iOS PWA（已添加到主屏的 Web）时，
@@ -191,20 +195,12 @@ export function ProfileClient() {
       <div className="rounded-2xl border border-primary/10 bg-card p-4">
         <div className="flex items-center gap-3">
           <div className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background">
-            <div className="h-14 w-14 overflow-hidden rounded-full bg-primary/10">
-              {profile.avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={profile.avatar}
-                  alt={profile.username}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-primary/60">
-                  <User className="h-6 w-6" />
-                </div>
-              )}
-            </div>
+            <FramedAvatar
+              avatarUrl={profile.avatar}
+              frameUrl={profile.avatarFrame?.imageUrl}
+              alt={profile.username}
+              className="h-14 w-14"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-lg font-bold">{profile.username}</h2>
@@ -212,6 +208,15 @@ export function ProfileClient() {
               {profile.email}
             </p>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFramePickerOpen(true)}
+            className="shrink-0 rounded-full px-3"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            装扮
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -275,20 +280,12 @@ export function ProfileClient() {
       {/* 用户信息头部 */}
       <header className="flex items-center gap-4">
         <div className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background">
-          <div className="h-16 w-16 overflow-hidden rounded-full bg-primary/10 md:h-20 md:w-20">
-            {profile.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={profile.avatar}
-                alt={profile.username}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-primary/60">
-                <User className="h-8 w-8" />
-              </div>
-            )}
-          </div>
+          <FramedAvatar
+            avatarUrl={profile.avatar}
+            frameUrl={profile.avatarFrame?.imageUrl}
+            alt={profile.username}
+            className="h-16 w-16 md:h-20 md:w-20"
+          />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-xl font-bold tracking-tight md:text-2xl">
@@ -301,6 +298,15 @@ export function ProfileClient() {
             UID: {profile.id ? profile.id.slice(-8).toUpperCase() : "—"}
           </p>
         </div>
+        {/* 头像装扮按钮 */}
+        <Button
+          variant="outline"
+          onClick={() => setFramePickerOpen(true)}
+          className="rounded-full px-4"
+        >
+          <Sparkles className="h-4 w-4" />
+          头像装扮
+        </Button>
         {/* 编辑资料按钮 */}
         <Button
           variant="outline"
@@ -420,6 +426,14 @@ export function ProfileClient() {
           onUpdated={handleProfileUpdated}
         />
       )}
+
+      {/* 头像框选择器（自适应移动/PC） */}
+      <AvatarFramePicker
+        open={framePickerOpen}
+        onOpenChange={setFramePickerOpen}
+        profile={profile}
+        onUpdated={handleProfileUpdated}
+      />
     </>
   );
 }
