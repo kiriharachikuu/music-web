@@ -21,6 +21,7 @@ import {
   FileText,
   AlertTriangle,
   Scale,
+  ShieldCheck,
 } from "lucide-react";
 import { isDownloadAvailable } from "@/lib/download";
 import { AnimatePresence, motion } from "framer-motion";
@@ -252,7 +253,8 @@ export function ProfileClient() {
           onClick={() => window.open(FEEDBACK_URL, "_blank")}
         />
         <MenuLink icon={Info} label="关于项目" href="/about" />
-        <MenuLink icon={FileText} label="用户协议" href="/legal/user-agreement" />
+        <MenuLink icon={FileText} label="服务条款" href="/legal/user-agreement" />
+        <MenuLink icon={ShieldCheck} label="隐私政策" href="/legal/privacy-policy" />
         <MenuLink icon={AlertTriangle} label="免责声明" href="/legal/disclaimer" />
         <MenuLink icon={Scale} label="开源许可" href="/legal/open-source" />
         {showDownloadApp && (
@@ -389,7 +391,8 @@ export function ProfileClient() {
           <div className="rounded-2xl border border-primary/10 bg-card p-5">
             <p className="mb-4 text-sm font-semibold text-foreground/80">法律与信息</p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <LegalLink icon={FileText} label="用户协议" href="/legal/user-agreement" />
+              <LegalLink icon={FileText} label="服务条款" href="/legal/user-agreement" />
+              <LegalLink icon={ShieldCheck} label="隐私政策" href="/legal/privacy-policy" />
               <LegalLink icon={AlertTriangle} label="免责声明" href="/legal/disclaimer" />
               <LegalLink icon={Scale} label="开源许可" href="/legal/open-source" />
             </div>

@@ -763,11 +763,11 @@ function AndroidDownloadArea({
       {status === "idle" && !versionsLoading && (
         <p className="text-center text-[11px] text-white/50 sm:text-xs">
           点击下载即表示同意{" "}
-          <a href="/about" className="underline hover:text-white/80">
-            用户协议
+          <a href="/legal/user-agreement" className="underline hover:text-white/80">
+            服务条款
           </a>{" "}
           与{" "}
-          <a href="/about" className="underline hover:text-white/80">
+          <a href="/legal/privacy-policy" className="underline hover:text-white/80">
             隐私政策
           </a>
         </p>

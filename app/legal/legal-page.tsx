@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-interface LegalSection {
+export interface LegalSection {
   title: string;
   paragraphs?: string[];
   items?: string[];
