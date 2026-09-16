@@ -211,20 +211,21 @@ export function ProfileClient() {
               {profile.email}
             </p>
           </div>
+        </div>
+        {/* 装扮 / 编辑：独立一行等宽并列 */}
+        <div className="mt-3 flex gap-2">
           <Button
             variant="outline"
-            size="sm"
             onClick={() => setFramePickerOpen(true)}
-            className="shrink-0 rounded-full px-3"
+            className="flex-1 rounded-full"
           >
             <Sparkles className="h-3.5 w-3.5" />
             装扮
           </Button>
           <Button
             variant="outline"
-            size="sm"
             onClick={() => setEditOpen(true)}
-            className="shrink-0 rounded-full px-3"
+            className="flex-1 rounded-full"
           >
             <Pencil className="h-3.5 w-3.5" />
             编辑
