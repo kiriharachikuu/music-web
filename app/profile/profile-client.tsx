@@ -202,7 +202,8 @@ export function ProfileClient() {
             avatarUrl={profile.avatar}
             frameUrl={profile.avatarFrame?.imageUrl}
             alt={profile.username}
-            size="5rem"
+            // 戴框时容器 = size/0.6，移动端取 3.75rem 保证昵称区不被挤压
+            size="3.75rem"
           />
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-lg font-bold">{profile.username}</h2>

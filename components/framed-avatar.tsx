@@ -3,7 +3,7 @@
 import * as React from "react";
 import { User } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn, resolveMediaUrl } from "@/lib/utils";
 
 export interface FramedAvatarProps {
   /** 头像图片地址 */
@@ -33,12 +33,17 @@ export function FramedAvatar({
   className,
   alt = "avatar",
 }: FramedAvatarProps) {
+  // /uploads/ 相对路径按 NEXT_PUBLIC_API_BASE 补全后端 origin（对齐桌面端 AvatarWithFrame），
+  // 跨域部署时否则会打到前端域名导致 404、挂件不显示
+  const resolvedAvatar = resolveMediaUrl(avatarUrl);
+  const resolvedFrame = resolveMediaUrl(frameUrl);
+
   const coreStyle = { width: size, height: size };
 
-  const avatarCore = avatarUrl ? (
+  const avatarCore = resolvedAvatar ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={avatarUrl}
+      src={resolvedAvatar}
       alt={alt}
       className="h-full w-full object-cover"
     />
@@ -48,7 +53,7 @@ export function FramedAvatar({
     </div>
   );
 
-  if (!frameUrl) {
+  if (!resolvedFrame) {
     return (
       <div
         style={coreStyle}
@@ -78,7 +83,7 @@ export function FramedAvatar({
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={frameUrl}
+        src={resolvedFrame}
         alt=""
         aria-hidden
         className="pointer-events-none absolute inset-0 h-full w-full"
